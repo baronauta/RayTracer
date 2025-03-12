@@ -1,0 +1,4 @@
+name = "RayTracer"
+uuid = "74ea93b9-f251-46a3-9cde-0c1c250040ba"
+authors = ["Andrea Baroffio <andrea.baroff2000@gmail.com>"]
+version = "0.1.0"
