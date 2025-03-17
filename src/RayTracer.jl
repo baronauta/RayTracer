@@ -1,5 +1,9 @@
 module RayTracer
 
-greet() = print("Hello World!")
+import ColorTypes
+import Base: +, *, ≈
 
-end # module RayTracer
+export +, *, ≈, HdrImage, get_pixel, set_pixel!
+include("colors.jl")
+
+end
