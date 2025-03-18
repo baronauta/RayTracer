@@ -19,7 +19,7 @@ Base.:≈(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
 
 # Color to String
 function color_to_string(c::ColorTypes.RGB{Float32})
-    str = "< r:" * string(c.r) * ", g:" * string(c.g) * ", b:" * string(c.b) * raw">"
+    str = "< r:" * string(c.r) * ", g:" * string(c.g) * ", b:" * string(c.b) * " >"
     return str
 end
 
