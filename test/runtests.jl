@@ -16,15 +16,15 @@ end
 
 
 @testset "HdrImage" begin
-    height = 6
     width = 9
-    img = HdrImage(height, width)
+    height = 6
+    img = HdrImage(width, height)
     @test img.height == height
     @test img.width == width
-    x = 5
-    y = 7
+    x = 7
+    y = 5
     c = ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
     set_pixel!(img, x, y, c)
-    @test img.pixels[x, y] ≈ c
+    @test img.pixels[y, x] ≈ c
     @test c ≈ get_pixel(img, x, y)
 end
