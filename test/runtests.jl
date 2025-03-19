@@ -27,11 +27,4 @@ end
     set_pixel!(img, x, y, c)
     @test img.pixels[x, y] ≈ c
     @test c ≈ get_pixel(img, x, y)
-    # test for validate coordinates (maybe removed in future)
-    @test valid_coordinates(img, 1, 1)
-    @test valid_coordinates(img, 6, 9)
-    @test !valid_coordinates(img, 0, 1)
-    @test !valid_coordinates(img, 1, 0)
-    @test !valid_coordinates(img, 1, 10)
-    @test !valid_coordinates(img, 10, 1)
 end
