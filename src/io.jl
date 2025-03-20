@@ -61,7 +61,12 @@ function write(filename::String, image::HdrImage; endianness = my_endian)
 end
 
 # Read HdrImage from file
-# use Base.readline to read a line
+function read_pfm_image(filename::str)
+    io = open(filename, "r")
+    read_pfm_image(io)
+end
+
+# Read HdrImage froom stream
 function read_pfm_image(stream::IO)
     # Read the magic, expected "PF"
     magic = readline(stream)
@@ -69,9 +74,9 @@ function read_pfm_image(stream::IO)
         throw(ArgumentError("invalid magic in PFM file"))
     end
     # Read the image size, expected "<width> <height>"
-    (width, height) = _parse_img_size(readline(stream))
+    width, height = _parse_img_size(readline(stream))
     # Read the endianness, expected "+1.0" or "-1.0"
-    endiannes = _parse_endiannes(readline(stream))
+    endianness = _parse_endianness(readline(stream))
     # Create HdrImage
     image = HdrImage(width, height)
     # Read float and set the pixels
