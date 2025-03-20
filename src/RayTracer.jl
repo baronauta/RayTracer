@@ -17,7 +17,8 @@ export +,
     my_endian,
     check_endianness,
     EndiannessWrongValueError,
-    EndiannessZeroValueError
+    EndiannessZeroValueError,
+    WrongFileExtension
 
 const little_endian = Base.ENDIAN_BOM == 0x04030201 # true if the host is little endian, false otherwise
 my_endian = 0.0

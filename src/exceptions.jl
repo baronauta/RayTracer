@@ -34,3 +34,23 @@ function check_endianness(value)
         exit(1)
     end
 end
+
+struct WrongFileExtension <: Exception
+    message::String
+end
+WrongFileExtension(message) = new(message)
+
+function check_extension(s::String)
+    try
+        if !endswith(s, ".PFM")
+            throw(
+                WrongFileExtension(
+                    "the file must be a PFM file. Please insert the < .PFM > extension",
+                ),
+            )
+        end
+    catch e
+        println("ERROR: $(typeof(e)): $(e.message)")
+        exit(1)    
+    end
+end

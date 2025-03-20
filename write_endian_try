@@ -70,10 +70,12 @@ function main()
         (contents == BE_REFERENCE_BYTES),
     )
     println("\n")
-    buf4 = IOBuffer()
-    RayTracer.write(buf4, img; endianness = 0)
-    buf5 = IOBuffer()
-    RayTracer.write(buf5, img; endianness = 0)
+    #buf4 = IOBuffer()
+    #RayTracer.write(buf4, img; endianness = "pippo")
+    #buf5 = IOBuffer()
+    #RayTracer.write(buf5, img; endianness = 0)
+    name="nome"
+    RayTracer.write(name, img; endianness = 0)
 end
 
 main()

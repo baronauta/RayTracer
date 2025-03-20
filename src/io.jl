@@ -45,6 +45,7 @@ end
 
 # Writing HdrImage to file
 function write(filename::String, image::HdrImage; endianness = my_endian)
+    check_extension(filename)
     check_endianness(endianness)
     open(filename, "w") do io
         write(io, image, endianness)
