@@ -51,7 +51,7 @@ function check_extension(s::String)
         if !endswith(s, ".PFM")
             throw(
                 WrongFileExtension(
-                    "the file must be a PFM file. Please insert the < .PFM > extension",
+                    "the file must be a PFM file. Please insert a valid file name",
                 ),
             )
         end

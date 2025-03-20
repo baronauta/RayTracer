@@ -1,12 +1,12 @@
 # Input and Output
 
-# # Endiannes support
+# # Endianness support
 # struct _ENDIANNESS_FORMAT
-#     ENDIANNES::Int
+#     ENDIANNESS::Int
 # end
 
-# function _ENDIANNES_FORMAT()
-#     _ENDIANNES_FORMAT(ENDIAN_BOM)
+# function _ENDIANNESS_FORMAT()
+#     _ENDIANNESS_FORMAT(ENDIAN_BOM)
 # end
 
 # Writing Color to stream
@@ -71,7 +71,7 @@ function read_pfm_image(stream::IO)
     # Read the image size, expected "<width> <height>"
     (width, height) = _parse_img_size(readline(stream))
     # Read the endianness, expected "+1.0" or "-1.0"
-    endiannes = _parse_endiannes(readline(stream))
+    endianness = _parse_endianness(readline(stream))
     # Create HdrImage
     image = HdrImage(width, height)
     # Read float and set the pixels
