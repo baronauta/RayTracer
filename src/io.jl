@@ -1,14 +1,5 @@
 # Input and Output
 
-# # Endianness support
-# struct _ENDIANNESS_FORMAT
-#     ENDIANNESS::Int
-# end
-
-# function _ENDIANNESS_FORMAT()
-#     _ENDIANNESS_FORMAT(ENDIAN_BOM)
-# end
-
 # Writing Color to stream
 function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endian)
 
@@ -60,11 +51,11 @@ function write(filename::String, image::HdrImage; endianness = my_endian)
     end
 end
 
-# Read HdrImage from file
-function read_pfm_image(filename::str)
-    io = open(filename, "r")
-    read_pfm_image(io)
-end
+# # Read HdrImage from file
+# function read_pfm_image(filename::String)
+#     io = open(filename, "r")
+#     read_pfm_image(io)
+# end
 
 # Read HdrImage froom stream
 function read_pfm_image(stream::IO)
@@ -83,10 +74,11 @@ function read_pfm_image(stream::IO)
     for y = image.height:-1:1
         for x = 1:image.width
             (r, g, b) = [_read_float(stream, endianness) for _ = 1:3]
-            color = ColoTypes.RGB{Float32}(r, g, b)
-            image.set_pixel(image, x, y, color)
+            color = ColorTypes.RGB{Float32}(r, g, b)
+            set_pixel!(image, x, y, color)
         end
     end
+    return image
 end
 
 # Read image dimension
@@ -106,9 +98,9 @@ end
 function _parse_endianness(str::String)
     value = parse(Float32, str)
     if value > 0
-        return +1.0
+        return Float32(1.0)
     elseif value < 0
-        return -1.0
+        return Float32(-1.0)
     else
         throw(ArgumentErrort("invalid endianness specification"))
     end
