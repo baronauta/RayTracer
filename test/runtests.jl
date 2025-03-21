@@ -42,12 +42,12 @@ end
     for filename in ["reference_be.pfm", "reference_le.pfm"]
         stream = open(filename, "r")
         img = RayTracer.read_pfm_image(stream)
-        get_pixel(img, 1, 1) ≈ (ColorTypes.RGB{Float32}(1.0e1, 2.0e1, 3.0e1))
-        get_pixel(img, 2, 1) ≈ (ColorTypes.RGB{Float32}(4.0e1, 5.0e1, 6.0e1))
-        get_pixel(img, 3, 1) ≈ (ColorTypes.RGB{Float32}(7.0e1, 8.0e1, 9.0e1))
-        get_pixel(img, 1, 2) ≈ (ColorTypes.RGB{Float32}(1.0e2, 2.0e2, 3.0e2))
-        get_pixel(img, 2, 2) ≈ (ColorTypes.RGB{Float32}(4.0e2, 5.0e2, 6.0e2))
-        get_pixel(img, 3, 2) ≈ (ColorTypes.RGB{Float32}(7.0e2, 8.0e2, 9.0e2))
+        @test get_pixel(img, 1, 1) ≈ (ColorTypes.RGB{Float32}(1.0e1, 2.0e1, 3.0e1))
+        @test get_pixel(img, 2, 1) ≈ (ColorTypes.RGB{Float32}(4.0e1, 5.0e1, 6.0e1))
+        @test get_pixel(img, 3, 1) ≈ (ColorTypes.RGB{Float32}(7.0e1, 8.0e1, 9.0e1))
+        @test get_pixel(img, 1, 2) ≈ (ColorTypes.RGB{Float32}(1.0e2, 2.0e2, 3.0e2))
+        @test get_pixel(img, 2, 2) ≈ (ColorTypes.RGB{Float32}(4.0e2, 5.0e2, 6.0e2))
+        @test get_pixel(img, 3, 2) ≈ (ColorTypes.RGB{Float32}(7.0e2, 8.0e2, 9.0e2))
     end
 end
 
