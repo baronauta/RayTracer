@@ -14,12 +14,6 @@ struct EndiannessZeroValueError <: Exception
 end
 EndiannessZeroValueError(message) = new(message)
 
-# Exception to handle invalid format while reading PFM file
-# struct InvalidPfmFileFormat <: Exception
-#     msg::String
-# end
-# Base.showerror(io::IO, err::InvalidPfmFileFormat) = print(io, "Invalid PFM file format: ", err.msg)
-
 # functions
 function check_endianness(value)
     try
