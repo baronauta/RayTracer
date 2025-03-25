@@ -18,20 +18,14 @@ function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endi
     g = reinterpret(UInt32, color.g)
     b = reinterpret(UInt32, color.b)
 
-    need_to_convert = (
-        (little_endian == true && endianness > 0) ||
-        (little_endian == false && endianness < 0)
-    )
-    if need_to_convert == true
-        if little_endian == true
-            r = hton(r)
-            g = hton(g)
-            b = hton(b)
-        elseif little_endian == false
-            r = htol(r)
-            g = htol(g)
-            b = htol(b)
-        end
+    if endianness > 0
+        r = hton(r)
+        g = hton(g)
+        b = hton(b)
+    elseif endianness < 0
+        r = htol(r)
+        g = htol(g)
+        b = htol(b)
     end
 
     write(io, r)
@@ -66,7 +60,7 @@ function read_pfm_image(filename::str)
     read_pfm_image(io)
 end
 
-# Read HdrImage froom stream
+# Read HdrImage from stream
 function read_pfm_image(stream::IO)
     # Read the magic, expected "PF"
     magic = readline(stream)

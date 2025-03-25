@@ -26,7 +26,7 @@ function check_endianness(value)
         try
             0 > value
         catch
-            throw(EndiannessWrongValueError("endianness must be an Integer or Float32"))
+            throw(EndiannessWrongValueError("endianness must be an Integer or Float"))
         end
         if value == 0
             throw(
