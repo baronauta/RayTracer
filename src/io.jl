@@ -1,14 +1,5 @@
 # Input and Output
 
-# # Endianness support
-# struct _ENDIANNESS_FORMAT
-#     ENDIANNESS::Int
-# end
-
-# function _ENDIANNESS_FORMAT()
-#     _ENDIANNESS_FORMAT(ENDIAN_BOM)
-# end
-
 # Writing Color to stream
 function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endian)
 
@@ -54,32 +45,57 @@ function write(filename::String, image::HdrImage; endianness = my_endian)
     end
 end
 
-# Read HdrImage from file
-function read_pfm_image(filename::str)
-    io = open(filename, "r")
-    read_pfm_image(io)
-end
+# # Read HdrImage from file
+# function read_pfm_image(filename::String)
+#     io = open(filename, "r")
+#     read_pfm_image(io)
+# end
 
 # Read HdrImage from stream
 function read_pfm_image(stream::IO)
-    # Read the magic, expected "PF"
-    magic = readline(stream)
-    if magic != "PF"
-        throw(ArgumentError("invalid magic in PFM file"))
-    end
-    # Read the image size, expected "<width> <height>"
-    width, height = _parse_img_size(readline(stream))
-    # Read the endianness, expected "+1.0" or "-1.0"
-    endianness = _parse_endianness(readline(stream))
-    # Create HdrImage
-    image = HdrImage(width, height)
-    # Read float and set the pixels
-    for y = image.height:-1:1
-        for x = 1:image.width
-            (r, g, b) = [_read_float(stream, endianness) for _ = 1:3]
-            color = ColoTypes.RGB{Float32}(r, g, b)
-            image.set_pixel(image, x, y, color)
+    try
+        # Read the magic, expected "PF"
+        magic = readline(stream)
+        if magic != "PF"
+            throw(ArgumentError("invalid magic in PFM file"))
         end
+        # Read the image size, expected "<width> <height>"
+        width, height = _parse_img_size(readline(stream))
+        # Read the endianness, expected "+1.0" or "-1.0"
+        endianness = _parse_endianness(readline(stream))
+        # Create HdrImage
+        image = HdrImage(width, height)
+        # Calculate expected data size (width * height * 3 for RGB)
+        expected_float = width * height * 3
+        expected_bytes = expected_float * sizeof(Float32)
+        # Initialise byte counter
+        bytes_read = 0
+        # Read and process the data
+        # PFM stores from bottom-left
+        for y = image.height:-1:1
+            for x = 1:image.width
+                if bytes_read < expected_bytes
+                    # Read the three floats for the pixel
+                    (r, g, b) = [_read_float(stream, endianness) for _ = 1:3]
+                    bytes_read += 3 * sizeof(Float32)
+                    color = ColorTypes.RGB{Float32}(r, g, b)
+                    # Set pixel in HdrImage
+                    set_pixel!(image, x, y, color)
+                else
+                    throw(
+                        ArgumentError(
+                            "number of bytes read exceeds the expected number of bytes",
+                        ),
+                    )
+                end
+            end
+        end
+        if bytes_read != expected_bytes
+            throw(ArgumentError("expected $expected_bytes bytes, got $(length(raw_data))"))
+        end
+        return image
+    catch e
+        println("Error reading PFM file: ", e.msg)
     end
 end
 
@@ -100,11 +116,11 @@ end
 function _parse_endianness(str::String)
     value = parse(Float32, str)
     if value > 0
-        return +1.0
+        return Float32(1.0)
     elseif value < 0
-        return -1.0
+        return Float32(-1.0)
     else
-        throw(ArgumentErrort("invalid endianness specification"))
+        throw(ArgumentError("invalid endianness specification"))
     end
 end
 
@@ -118,4 +134,3 @@ function _read_float(stream::IO, endianness::Float32)
     x = (is_big_endian == true) ? ntoh(x) : ltoh(x)
     reinterpret(Float32, x)
 end
-
