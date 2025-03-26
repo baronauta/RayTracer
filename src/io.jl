@@ -57,7 +57,7 @@ function read_pfm_image(stream::IO)
         # Read the magic, expected "PF"
         magic = readline(stream)
         if magic != "PF"
-            throw(ArgumentError("invalid magic in PFM file"))
+            throw(WrongPFMformat("invalid magic in PFM file"))
         end
         # Read the image size, expected "<width> <height>"
         width, height = _parse_img_size(readline(stream))
@@ -83,7 +83,7 @@ function read_pfm_image(stream::IO)
                     set_pixel!(image, x, y, color)
                 else
                     throw(
-                        ArgumentError(
+                        WrongPFMformat(
                             "number of bytes read exceeds the expected number of bytes",
                         ),
                     )
@@ -91,11 +91,11 @@ function read_pfm_image(stream::IO)
             end
         end
         if bytes_read != expected_bytes
-            throw(ArgumentError("expected $expected_bytes bytes, got $(length(raw_data))"))
+            throw(WrongPFMformat("expected $expected_bytes bytes, got $(length(raw_data))"))
         end
         return image
     catch e
-        println("Error reading PFM file: ", e.msg)
+        println("$(typeof(e)): $(e.msg)")
     end
 end
 
@@ -103,11 +103,11 @@ end
 function _parse_img_size(str::String)
     parts = split(str, " ")
     if length(parts) != 2
-        throw(ArgumentError("invalid size of the image in PFM file"))
+        throw(WrongPFMformat("invalid size of the image in PFM file"))
     end
     width, height = parse.(Int, parts)
     if width <= 0 || height <= 0
-        throw(ArgumentError("size of the image must be positive"))
+        throw(WrongPFMformat("size of the image must be positive"))
     end
     return width, height
 end
@@ -120,7 +120,7 @@ function _parse_endianness(str::String)
     elseif value < 0
         return Float32(-1.0)
     else
-        throw(ArgumentError("invalid endianness specification"))
+        throw(WrongPFMformat("invalid endianness specification"))
     end
 end
 

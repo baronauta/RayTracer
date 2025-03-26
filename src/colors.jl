@@ -57,3 +57,5 @@ end
 function set_pixel!(img::HdrImage, x::Int, y::Int, new_color::ColorTypes.RGB{Float32})
     img.pixels[y, x] = new_color
 end
+
+# 

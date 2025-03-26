@@ -1,5 +1,7 @@
 # Defining personalized Exceptions
-
+struct WrongPFMformat <: Exception
+    msg::String
+end
 # Endianness Exceptions
 
 # Wrong Types of value
