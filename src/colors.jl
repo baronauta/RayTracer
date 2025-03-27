@@ -26,17 +26,17 @@ end
 
 # HDR_IMAGE
 #=
-HdrImage(x=width, y=height)
-HdrImage.pixels = [y, x]
+HdrImage(w=width, h=height)
+HdrImage.pixels = [h, w]
 =#
 mutable struct HdrImage
-    width::Int
-    height::Int
+    width::Integer
+    height::Integer
     pixels::Matrix{ColorTypes.RGB{Float32}}
 end
 
 # Create HdrImage as a black image
-function HdrImage(width::Int, height::Int) # HdrImage(column index, row index)
+function HdrImage(width::Integer, height::Integer) # HdrImage(column index, row index)
     pixels = fill(ColorTypes.RGB{Float32}(0.0, 0.0, 0.0), height, width)
     return HdrImage(width, height, pixels) # return the struct HdrImage
 end
@@ -49,13 +49,13 @@ end
 # end
 
 # Get pixel (R,G,B) from HdrImage
-function get_pixel(img::HdrImage, x::Int, y::Int)
-    return img.pixels[y, x]
+function get_pixel(img::HdrImage, w::Integer, h::Integer)
+    return img.pixels[h, w]
 end
 
 # Set pixel (R,G,B) in HdrImage
-function set_pixel!(img::HdrImage, x::Int, y::Int, new_color::ColorTypes.RGB{Float32})
-    img.pixels[y, x] = new_color
+function set_pixel!(img::HdrImage, w::Integer, h::Integer, new_color::ColorTypes.RGB{Float32})
+    img.pixels[h, w] = new_color
 end
 
 # 
