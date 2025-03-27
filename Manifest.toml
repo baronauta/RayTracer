@@ -2,7 +2,7 @@
 
 julia_version = "1.11.3"
 manifest_format = "2.0"
-project_hash = "d52ce942485b3f0ad34180a8bb54ffbee3cea162"
+project_hash = "eda1b83219f076f8cbca73ccdf5abac266cf760e"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
