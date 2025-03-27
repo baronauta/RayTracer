@@ -1,5 +1,9 @@
 # Defining personalized Exceptions
-# PFM exceptions
+# PFM
 struct WrongPFMformat <: Exception
+    msg::String
+end
+# Tone Mapping
+struct ToneMappingError <: Exception
     msg::String
 end
