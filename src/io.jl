@@ -1,14 +1,46 @@
 # Input and Output
 
+# setting my_endian = to host endian
+my_endian = 0.0
+if little_endian
+    my_endian = -1.0
+else
+    my_endian = 1.0
+end
+
+# functions to check if endianness and PFM file format are valid
+function check_endianness(value)
+    if typeof(value) <: Real
+        if value == 0
+            throw(WrongPFMformat("endianness can't be 0, choose a number >0 for big endian or <0 for little endian"))
+        end
+    else    
+        throw(WrongPFMformat("endianness must be an Integer or Float"))
+    end
+end
+
+function check_extension(s)
+    if !endswith(s, ".PFM")
+        throw(
+            WrongPFMformat(
+                "the file must be a PFM file. Please insert a valid file name",
+            ),
+        )
+    end
+end
+
 # Writing Color to stream
+
 function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endian)
 
     check_endianness(endianness)
+    
     # Convert a floating-point number to 32-bit (4 bytes) integer for binary writing
     r = reinterpret(UInt32, color.r)
     g = reinterpret(UInt32, color.g)
     b = reinterpret(UInt32, color.b)
 
+    # change endianness according to choosen one
     if endianness > 0
         r = hton(r)
         g = hton(g)
@@ -18,14 +50,14 @@ function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endi
         g = htol(g)
         b = htol(b)
     end
-
+    # writing colors to stream
     write(io, r)
     write(io, g)
     write(io, b)
 end
 
 # Writing HdrImage to stream
-function write(io::IO, image::HdrImage; endianness = my_endian)
+function Base.write(io::IO, image::HdrImage; endianness = my_endian)
     check_endianness(endianness)
     bytebuf = transcode(UInt8, "PF\n$(image.width) $(image.height)\n$endianness\n")
     write(io, bytebuf)
@@ -37,9 +69,8 @@ function write(io::IO, image::HdrImage; endianness = my_endian)
 end
 
 # Writing HdrImage to file
-function write(filename::String, image::HdrImage; endianness = my_endian)
+function Base.write(filename::String, image::HdrImage; endianness = my_endian)
     check_extension(filename)
-    check_endianness(endianness)
     open(filename, "w") do io
         write(io, image, endianness)
     end

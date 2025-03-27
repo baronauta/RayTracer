@@ -6,7 +6,12 @@ Pkg.activate(normpath(@__DIR__))
 using RayTracer
 
 function main()
-    RayTracer.greet()
+    try
+        # main part of the program
+        RayTracer.greet()
+    catch e
+        println("ERROR: $(typeof(e)): $(e.msg)")
+    end
 end
 
 main()
