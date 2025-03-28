@@ -4,9 +4,21 @@ using Pkg
 Pkg.activate(normpath(@__DIR__))
 
 using RayTracer
+import Crayons # enables colorful and expressive terminal output
 
 function main()
-    RayTracer.greet()
+    try
+        # main part of the program
+        RayTracer.greet()
+    catch e
+        # Define colors for the error message
+        red_bold = Crayons.crayon"bold red"  # Bold red text
+        reset = Crayons.crayon"reset"        # Reset color to default
+        
+        # Print the formatted error message
+        println(string(red_bold) * "ERROR " * string(reset), "$(typeof(e)): $(e.msg)")
+    end
+    
 end
 
 main()

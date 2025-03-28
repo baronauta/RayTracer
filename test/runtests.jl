@@ -6,8 +6,11 @@ import ColorTypes
 @testset "Colors" begin
     c1 = ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
     c2 = ColorTypes.RGB{Float32}(0.4, 0.5, 0.6)
+    c3 = ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
     @test c1 ≈ ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
+    @test c3 ≈ ColorTypes.RGB{Float32}(0.0001, 0.7001, 0.8)
     @test !(c1 ≈ c2)
+    @test !(c3 ≈ ColorTypes.RGB{Float32}(0.001, 0.7001, 0.8))
     @test c1 + c2 ≈ ColorTypes.RGB{Float32}(0.5, 0.7, 0.9)
     @test 2 * c1 ≈ ColorTypes.RGB{Float32}(0.2, 0.4, 0.6)
     @test c1 * c2 ≈ ColorTypes.RGB{Float32}(0.04, 0.1, 0.18)
@@ -76,32 +79,26 @@ end
     ]
     #! format: on
 
-    img = HdrImage(3, 2)
-    set_pixel!(img, 1, 1, RayTracer.ColorTypes.RGB{Float32}(1.0e1, 2.0e1, 3.0e1))
-    set_pixel!(img, 2, 1, RayTracer.ColorTypes.RGB{Float32}(4.0e1, 5.0e1, 6.0e1))
-    set_pixel!(img, 3, 1, RayTracer.ColorTypes.RGB{Float32}(7.0e1, 8.0e1, 9.0e1))
-    set_pixel!(img, 1, 2, RayTracer.ColorTypes.RGB{Float32}(1.0e2, 2.0e2, 3.0e2))
-    set_pixel!(img, 2, 2, RayTracer.ColorTypes.RGB{Float32}(4.0e2, 5.0e2, 6.0e2))
-    set_pixel!(img, 3, 2, RayTracer.ColorTypes.RGB{Float32}(7.0e2, 8.0e2, 9.0e2))
-
+    img = RayTracer.read_pfm_image(open("reference_le.pfm","r"))
     buf = IOBuffer()
-    RayTracer.write(buf, img, endianness = my_endian)
-    contents = take!(buf)
-    @test contents == LE_REFERENCE_BYTES
-
     write(buf, img)
     contents = take!(buf)
-    @test contents == LE_REFERENCE_BYTES
-
-    RayTracer.write(buf, img; endianness = 1.0)
+    if little_endian
+        @test contents == LE_REFERENCE_BYTES
+    else
+        @test contents == BE_REFERENCE_BYTES
+    end
+    write(buf, img, endianness = 1.0)
     contents = take!(buf)
     @test contents == BE_REFERENCE_BYTES
-
-    # test for exceptions (?)
-    # ...
-
 end
 
-@testset "Tone mapping" begin
-    
+@testset "ToneMapping" begin
+    # luminosity
+    col1 = ColorTypes.RGB{Float32}(10.0, 3.0, 2.0)
+    @test RayTracer.luminosity(col1) ≈ 6
+    @test RayTracer.luminosity(col1, mean_type = :arithmetic) ≈ 5
+    @test RayTracer.luminosity(col1, mean_type = :weighted) ≈ 5
+    @test RayTracer.luminosity(col1, mean_type = :weighted, weights=[1, 2, 5]) ≈ 3.25
+    @test isapprox(RayTracer.luminosity(col1, mean_type = :distance), 10.6301; atol=0.0001)
 end
