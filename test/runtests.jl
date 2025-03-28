@@ -101,4 +101,13 @@ end
     @test RayTracer.luminosity(col1, mean_type = :weighted) ≈ 5
     @test RayTracer.luminosity(col1, mean_type = :weighted, weights=[1, 2, 5]) ≈ 3.25
     @test isapprox(RayTracer.luminosity(col1, mean_type = :distance), 10.6301; atol=0.0001)
+
+    # Normalization
+    img = HdrImage(2, 1)
+    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(  5.0,   10.0,   15.0))
+    RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0))
+
+    normalize_image(img, factor=1000.0, lumi=100.0)
+    @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
+    @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
 end

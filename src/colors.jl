@@ -89,3 +89,19 @@ function luminosity(color::ColorTypes.RGB{Float32}; mean_type = :max_min, weight
         ))
     end
 end
+
+function normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
+    if lumi == Nothing
+        lumi = average_luminosity(img, delta; mean_type = mean_type, weights = weights)
+    end
+    a = factor / lumi
+    for w in 1:img.width
+        for h in 1:img.height
+            c = get_pixel(img, w, h)
+            r = c.r * a
+            g = c.g * a
+            b = c.b * a
+            set_pixel!(img, w, h, ColorTypes.RGB{Float32}(r,g,b))
+        end
+    end
+end
