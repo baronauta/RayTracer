@@ -101,3 +101,7 @@ end
     # ...
 
 end
+
+@testset "Tone mapping" begin
+    
+end

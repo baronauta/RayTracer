@@ -1,6 +1,7 @@
 module RayTracer
 
 import ColorTypes
+import Images
 import Base: +, *, ≈, write
 
 

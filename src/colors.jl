@@ -58,4 +58,44 @@ function set_pixel!(img::HdrImage, x::Int, y::Int, new_color::ColorTypes.RGB{Flo
     img.pixels[y, x] = new_color
 end
 
-# 
+"Compute the logarithmic average luminosity of an `HdrImage`."
+function log_average(image::HdrImage; delta=1e.10)
+    cumsum = 0
+    for pixel in image.pixels
+        cumsum += log10(luminosity(pixel)+delta)
+    end
+    # Logarithmic (base 10) average
+    10^(cumsum/size(HdrImage.pixels))
+end
+
+"Correct bright spots."
+function _clamp(x)
+    x / (1+x)
+end
+
+function clamp_image!(image::HdrImage)
+    for y in 1:image.height
+        for x in 1:image.width
+            r = _clamp(image.pixels[x,y].r)
+            g = _clamp(image.pixels[x,y].g)
+            b = _clamp(image.pixels[x,y].b)
+            color = colorTypes.RGB{Float32}(r, g, b)
+            set_pixel!(image, x, y, color)
+        end
+    end
+    image
+end
+
+# forse dovrei passare immagine nuova come stream!!
+function write_ldr_image(image::HdrImage, filename::String; gamma=1.0)
+    for y in 1:image.height
+        for x in 1:image.width
+            r = Int(255*image.pixels[x,y].r^(1/gamma))
+            g = Int(255*image.pixels[x,y].g^(1/gamma))
+            b = Int(255*image.pixels[x,y].b^(1/gamma))
+            color = colorTypes.RGB{Float32}(r, g, b)
+            set_pixel!(image, x, y, color)
+        end
+    end
+    Images.save(filename, image)
+end
