@@ -90,6 +90,20 @@ function luminosity(color::ColorTypes.RGB{Float32}; mean_type = :max_min, weight
     end
 end
 
+"Compute the logarithmic average luminosity of an `HdrImage`."
+function log_average(image::HdrImage; delta=1e-10)
+    cumsum = 0
+    for pixel in image.pixels
+        cumsum += log10(luminosity(pixel)+delta)
+    end
+    # Logarithmic (base 10) average
+    10^(cumsum/size(HdrImage.pixels))
+end
+
+"""
+    normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
+Normalize the values of an RGB color using the average luinosity and the normalization factor (to be specified by the user).
+"""
 function normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
     if lumi == Nothing
         lumi = average_luminosity(img, delta; mean_type = mean_type, weights = weights)
@@ -104,15 +118,6 @@ function normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e
             set_pixel!(img, w, h, ColorTypes.RGB{Float32}(r,g,b))
         end
     end
-end
-"Compute the logarithmic average luminosity of an `HdrImage`."
-function log_average(image::HdrImage; delta=1e10)
-    cumsum = 0
-    for pixel in image.pixels
-        cumsum += log10(luminosity(pixel)+delta)
-    end
-    # Logarithmic (base 10) average
-    10^(cumsum/size(HdrImage.pixels))
 end
 
 "Correct bright spots."
