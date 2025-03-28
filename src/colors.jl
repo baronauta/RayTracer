@@ -5,9 +5,9 @@ Base.:+(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
     ColorTypes.RGB{Float32}(c1.r + c2.r, c1.g + c2.g, c1.b + c2.b)
 
 # Color-Scalar Product
-Base.:*(scalar, c::ColorTypes.RGB{Float32}) =
+Base.:*(scalar::Real, c::ColorTypes.RGB{Float32}) =
     ColorTypes.RGB{Float32}(scalar * c.r, scalar * c.g, scalar * c.b)
-Base.:*(c::ColorTypes.RGB{Float32}, scalar) = scalar * c # use the method defined previously
+Base.:*(c::ColorTypes.RGB{Float32}, scalar::Real) = scalar * c # use the method defined previously
 
 # Color-Color Product
 Base.:*(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
@@ -91,7 +91,7 @@ function luminosity(color::ColorTypes.RGB{Float32}; mean_type = :max_min, weight
 end
 
 "Compute the logarithmic average luminosity of an `HdrImage`."
-function log_average(image::HdrImage; delta=1e.10)
+function log_average(image::HdrImage; delta=1e10)
     cumsum = 0
     for pixel in image.pixels
         cumsum += log10(luminosity(pixel)+delta)
