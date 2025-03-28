@@ -5,9 +5,9 @@ Base.:+(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
     ColorTypes.RGB{Float32}(c1.r + c2.r, c1.g + c2.g, c1.b + c2.b)
 
 # Color-Scalar Product
-Base.:*(scalar, c::ColorTypes.RGB{Float32}) =
+Base.:*(scalar::Real, c::ColorTypes.RGB{Float32}) =
     ColorTypes.RGB{Float32}(scalar * c.r, scalar * c.g, scalar * c.b)
-Base.:*(c::ColorTypes.RGB{Float32}, scalar) = scalar * c # use the method defined previously
+Base.:*(c::ColorTypes.RGB{Float32}, scalar::Real) = scalar * c # use the method defined previously
 
 # Color-Color Product
 Base.:*(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
@@ -104,4 +104,45 @@ function normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e
             set_pixel!(img, w, h, ColorTypes.RGB{Float32}(r,g,b))
         end
     end
+end
+"Compute the logarithmic average luminosity of an `HdrImage`."
+function log_average(image::HdrImage; delta=1e10)
+    cumsum = 0
+    for pixel in image.pixels
+        cumsum += log10(luminosity(pixel)+delta)
+    end
+    # Logarithmic (base 10) average
+    10^(cumsum/size(HdrImage.pixels))
+end
+
+"Correct bright spots."
+function _clamp(x)
+    x / (1+x)
+end
+
+function clamp_image!(image::HdrImage)
+    for y in 1:image.height
+        for x in 1:image.width
+            r = _clamp(image.pixels[x,y].r)
+            g = _clamp(image.pixels[x,y].g)
+            b = _clamp(image.pixels[x,y].b)
+            color = colorTypes.RGB{Float32}(r, g, b)
+            set_pixel!(image, x, y, color)
+        end
+    end
+    image
+end
+
+# forse dovrei passare immagine nuova come stream!!
+function write_ldr_image(image::HdrImage, filename::String; gamma=1.0)
+    for y in 1:image.height
+        for x in 1:image.width
+            r = Int(255*image.pixels[x,y].r^(1/gamma))
+            g = Int(255*image.pixels[x,y].g^(1/gamma))
+            b = Int(255*image.pixels[x,y].b^(1/gamma))
+            color = colorTypes.RGB{Float32}(r, g, b)
+            set_pixel!(image, x, y, color)
+        end
+    end
+    Images.save(filename, image)
 end
