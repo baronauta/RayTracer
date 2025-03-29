@@ -17,43 +17,58 @@ Base.:*(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
 Base.:≈(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
     ((isapprox(c1.r, c2.r, rtol=1e-3, atol=1e-3)) && (isapprox(c1.g, c2.g, rtol=1e-3, atol=1e-3)) && (isapprox(c1.b, c2.b, rtol=1e-3, atol=1e-3)))
 
-# Color to String
+"""
+    color_to_string(c::ColorTypes.RGB{Float32})
+
+Print RGB components of a color, e.g. `< r:0.1, g:0.2, b:0.3 >`
+"""
 function color_to_string(c::ColorTypes.RGB{Float32})
     str = "< r:" * string(c.r) * ", g:" * string(c.g) * ", b:" * string(c.b) * " >"
     return str
 end
 
 
-# HDR_IMAGE
-#=
-HdrImage(w=width, h=height)
-HdrImage.pixels = [h, w]
-=#
+"""
+    HdrImage
+
+A mutable struct representing a High Dynamic Range (HDR) image.
+
+# Fields
+- `width::Integer`: The width of the image.
+- `height::Integer`: The height of the image.
+- `pixels::Matrix{ColorTypes.RGB{Float32}}`: A 2D matrix of pixels, where each pixel is an RGB color with `Float32` components.
+"""
 mutable struct HdrImage
     width::Integer
     height::Integer
     pixels::Matrix{ColorTypes.RGB{Float32}}
 end
 
-# Create HdrImage as a black image
+"""
+    HdrImage(width::Integer, height::Integer)
+
+Create a new `HdrImage` with the specified dimensions. 
+All pixels are initially set to black, i.e. `RGB{Float32}(0.0, 0.0, 0.0)`.
+"""
 function HdrImage(width::Integer, height::Integer) # HdrImage(column index, row index)
     pixels = fill(ColorTypes.RGB{Float32}(0.0, 0.0, 0.0), height, width)
     return HdrImage(width, height, pixels) # return the struct HdrImage
 end
 
-# # Create HdrImage from .pfm file
-# function HdrImage(file::String)
-# end
+"""
+    get_pixel(img::HdrImage, w::Integer, h::Integer)
 
-# function HdrImage(stream::IO)
-# end
-
-# Get pixel (R,G,B) from HdrImage
+Retrieve the pixel (R, G, B) at column `w` and row `h` from the HDR image.
+"""
 function get_pixel(img::HdrImage, w::Integer, h::Integer)
     return img.pixels[h, w]
 end
 
-# Set pixel (R,G,B) in HdrImage
+"""
+    set_pixel!(img::HdrImage, w::Integer, h::Integer, new_color::ColorTypes.RGB{Float32})
+
+Set the pixel at column `w` and row `h` in the HDR image to `new_color`.
+"""
 function set_pixel!(img::HdrImage, w::Integer, h::Integer, new_color::ColorTypes.RGB{Float32})
     img.pixels[h, w] = new_color
 end
@@ -62,12 +77,14 @@ end
 
 """
     luminosity(color::ColorTypes.RGB{Float32}; mean_type = :max_min, weights = [1,1,1])
-Computes the luminosity of an RGB color using a specified method.\n
-Valid options for methods are:
-- `:max_min` Average of max and min channel values.
-- `:arithmetic` Arithmetic mean of all channels.
-- `:weighted` Weighted mean (requires `weights = [w_red, w_green, w_blue]`).
-- `:distance` Distance from black (0,0,0).
+
+Computes the luminosity of an RGB color using a specified method.
+
+# Valid options for methods
+- `:max_min`: Average of max and min channel values.
+- `:arithmetic`: Arithmetic mean of all channels.
+- `:weighted`: Weighted mean (requires `weights = [w_red, w_green, w_blue]`).
+- `:distance`: Distance from black (0,0,0).
 """
 function luminosity(color::ColorTypes.RGB{Float32}; mean_type = :max_min, weights = [1,1,1])
     r, g, b = color.r, color.g, color.b
@@ -90,7 +107,20 @@ function luminosity(color::ColorTypes.RGB{Float32}; mean_type = :max_min, weight
     end
 end
 
-"Compute the logarithmic average luminosity of an `HdrImage`."
+"""
+    log_average(image::HdrImage; delta=1e-10, mean_type=:max_min, weights=[1,1,1])
+
+Compute the logarithmic average luminosity of an `HdrImage`.
+
+# Arguments
+- `image::HdrImage`: The HDR image.
+- `delta`: A small constant added to avoid log of zero (default: 1e-10).
+- `mean_type`: The method for computing luminosity (default: `:max_min`).
+- `weights`: Weights for the luminosity computation (default: `[1,1,1]`).
+
+# Returns
+- The logarithmic (base 10) average luminosity of the image.
+"""
 function log_average(image::HdrImage; delta=1e-10, mean_type = :max_min, weights = [1,1,1])
     cumsum = 0
     for pixel in image.pixels
@@ -102,6 +132,7 @@ end
 
 """
     normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
+
 Normalize the values of an RGB color using the average luinosity and the normalization factor (to be specified by the user).
 """
 function normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
@@ -120,11 +151,20 @@ function normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e
     end
 end
 
-"Correct bright spots."
+"""
+    _clamp(x)
+
+Clamp a brightness value `x` to reduce extreme brightness by mapping it to the range [0,1].
+"""
 function _clamp(x)
     x / (1+x)
 end
 
+"""
+    clamp_image!(image::HdrImage)
+
+Adjust the image by clamping the RGB components of each pixel, thereby reducing overly bright spots. The operation is performed in-place.
+"""
 function clamp_image!(image::HdrImage)
     for y in 1:image.height
         for x in 1:image.width
@@ -138,7 +178,18 @@ function clamp_image!(image::HdrImage)
     image
 end
 
-# forse dovrei passare immagine nuova come stream!!
+"""
+    write_ldr_image(image::HdrImage, filename::String; gamma=1.0)
+
+Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image with gamma correction and save it to a file.
+
+# Arguments
+- `image::HdrImage`: The HDR image to be converted.
+- `filename::String`: The output file path.
+- `gamma`: The gamma correction factor (default: `1.0`).
+
+The function applies gamma correction and scales pixel values to the 0-255 range before saving.
+"""
 function write_ldr_image(image::HdrImage, filename::String; gamma=1.0)
     for y in 1:image.height
         for x in 1:image.width
