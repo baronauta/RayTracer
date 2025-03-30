@@ -216,11 +216,20 @@ function write_ldr_image(image::HdrImage, filename::String; gamma = 1.0)
         for w = 1:image.width
             pix = get_pixel(image, w, h)
             color = ColorTypes.RGB{Float32}(
-                Int(255 * pix.r^(1 / gamma)),
-                Int(255 * pix.g^(1 / gamma)),
-                Int(255 * pix.b^(1 / gamma)),
+                round(Int, 255 * pix.r^(1 / gamma)),
+                round(Int, 255 * pix.g^(1 / gamma)),
+                round(Int, 255 * pix.b^(1 / gamma)),
             )
             set_pixel!(image, w, h, color)
+        end
+    end
+    # problema che Image.save dice che sono valori fuori dalla norma, ciclo per vederli
+    a=0
+    for pixel in image.pixels
+        println(pixel)
+        a += 1
+        if a == 100
+            break
         end
     end
     # Using save function from Images packages

@@ -8,9 +8,31 @@ import Crayons # enables colorful and expressive terminal output
 
 function main()
     try
-        # main part of the program
+        # reading parameters from ARGS
         params = Parameters(ARGS)
-        println(params)
+        #println(params)
+
+        # #=
+
+        # reading image from input file
+        img = read_pfm_image(params.input_pfm_file_name)
+        println("$(params.input_pfm_file_name) has been read from disk.")
+        
+        # preparing the image to LDR conversion 
+        normalize_image!(img; factor = params.factor, delta = params.delta, mean_type = params.mean_type, weights =params.weights)
+        clamp_image!(img)
+
+        # converting the image to LDR format
+        # ...
+        #for pixel in img.pixels
+        #    println(pixel)
+        #end
+        # saving the LDR image on disk
+        write_ldr_image(img, params.output_png_file_name; gamma = 1.0)
+        println("$(params.output_png_file_name) has been written to disk.")
+    
+        # =#
+
     catch e
         # Define colors for the error message
         red_bold = Crayons.crayon"bold red"  # Bold red text

@@ -79,10 +79,11 @@ function Base.write(filename::String, image::HdrImage; endianness = my_endian)
 end
 
 # # Read HdrImage from file
-# function read_pfm_image(filename::String)
-#     io = open(filename, "r")
-#     read_pfm_image(io)
-# end
+function read_pfm_image(filename::String)
+    open(filename, "r") do io
+        return read_pfm_image(io)
+    end
+end
 
 # Read HdrImage from stream
 function read_pfm_image(stream::IO)
