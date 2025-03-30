@@ -9,7 +9,8 @@ import Crayons # enables colorful and expressive terminal output
 function main()
     try
         # main part of the program
-        RayTracer.greet()
+        params = Parameters(ARGS)
+        println(params)
     catch e
         # Define colors for the error message
         red_bold = Crayons.crayon"bold red"  # Bold red text

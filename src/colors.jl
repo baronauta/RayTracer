@@ -104,7 +104,7 @@ end
     normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
 Normalize the values of an RGB color using the average luinosity and the normalization factor (to be specified by the user).
 """
-function normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
+function normalize_image(img::HdrImage; factor = 0.2, lumi = Nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
     if lumi == Nothing
         lumi = log_average(img; delta=delta, mean_type = mean_type, weights = weights)
     end
