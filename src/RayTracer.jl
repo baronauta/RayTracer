@@ -42,8 +42,26 @@ mutable struct Parameters
     delta :: Real
 end
 
-function Parameters(A)
+"""
+    function Parameters(A)
 
+Parses and validates command-line arguments in basic or advanced mode.
+
+### Arguments:
+- `A`: Array of strings representing the command-line arguments.
+  - `factor`: multiplied factor in `log_avarage`
+  - `gamma`: monitor correction
+  - `mean_type`: type of mean used in `luminosity`
+  - `weights`: used in weighted `luminosity`
+  - `delta`: usefull to make - `log_avarage` near 0 values
+### Returns:
+- A `Parameters` struct with the parsed values:
+  - `input_pfm_file_name`, `factor`, `gamma`, `output_png_file_name`, `mean_type`, `weights`, `delta`.
+
+### Errors:
+- Throws errors for invalid types or incorrect argument count.
+"""
+function Parameters(A)
     if (length(A) != 5) && (length(A) != 7)
         throw(RuntimeError("""\n
         ------------------------------------------------------------
@@ -55,7 +73,7 @@ function Parameters(A)
              julia RayTracer INPUT_PFM_FILE FACTOR GAMMA OUTPUT_PNG_FILE MEAN_TYPE WEIGHTS DELTA
        
         Advanced notes:
-           - MEAN_TYPE must be a symbol(default = :max_min)
+           - MEAN_TYPE will be converted to a Symbol (default = max_min)
            - WEIGHTS must be a vector of numbers enclosed in quotes:
              Correct example: "[1.0, 2.0, 3.0]"
        
@@ -66,16 +84,22 @@ function Parameters(A)
     end
     factor=0.0
     gamma=0.0
+    input_pfm_file_name = A[1]
+    output_png_file_name = A[4]
     try
         factor = parse(Float32, A[2])
+    catch e
+        if isa(e, ArgumentError)
+            throw(RuntimeError("Invalid factor ($(A[2])), it must be a floating-point number."))
+        end
+    end
+    try
         gamma = parse(Float32, A[3])
     catch e
         if isa(e, ArgumentError)
-            throw(RuntimeError("Invalid Type of $(A[2]), it must be a floating-point number."))
+            throw(RuntimeError("Invalid gamma ($(A[3])), it must be a floating-point number."))
         end
     end
-    input_pfm_file_name = A[1]
-    output_png_file_name = A[4]
     if length(A) == 4
         mean_type = :max_min
         weights = [1.0, 1.0, 1.0]
@@ -83,8 +107,18 @@ function Parameters(A)
 
     else
         mean_type = Symbol(A[5])
-        weights = parse.(Float32, split(strip(A[6], ['[', ']']), ","))
-        delta = parse(Float32, A[7])
+        try
+            weights = parse.(Float32, split(strip(A[6], ['[', ']']), ","))
+        catch
+            throw(RuntimeError("Invalid weights ($(A[6])), it must be a floating-point numbers array, correct example: \"[1.0, 2.0, 3.0]\"."))
+        end
+        try
+            delta = parse(Float32, A[7])
+        catch
+            throw(RuntimeError("Invalid delta ($(A[7])), it must be a floating-point number."))
+
+        end
+        
 
     end
        
