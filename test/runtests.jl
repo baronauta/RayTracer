@@ -43,7 +43,8 @@ end
     @test RayTracer._parse_endianness(le) == -1.0
     # Integration test
     for filename in ["reference_be.pfm", "reference_le.pfm"]
-        stream = open(filename, "r")
+        file_data = read(filename)
+        stream = IOBuffer(file_data)
         img = RayTracer.read_pfm_image(stream)
         @test get_pixel(img, 1, 1) ≈ (ColorTypes.RGB{Float32}(1.0e1, 2.0e1, 3.0e1))
         @test get_pixel(img, 2, 1) ≈ (ColorTypes.RGB{Float32}(4.0e1, 5.0e1, 6.0e1))
@@ -66,7 +67,6 @@ end
     0x00, 0x00, 0x20, 0x42, 0x00, 0x00, 0x48, 0x42, 0x00, 0x00, 0x70, 0x42,
     0x00, 0x00, 0x8c, 0x42, 0x00, 0x00, 0xa0, 0x42, 0x00, 0x00, 0xb4, 0x42
     ]
-
     # This is the content of "reference_be.pfm" (big-endian file)
     BE_REFERENCE_BYTES = UInt8[
     0x50, 0x46, 0x0a, 0x33, 0x20, 0x32, 0x0a, 0x31, 0x2e, 0x30, 0x0a, 0x42,
@@ -78,8 +78,7 @@ end
     0x8c, 0x00, 0x00, 0x42, 0xa0, 0x00, 0x00, 0x42, 0xb4, 0x00, 0x00
     ]
     #! format: on
-
-    img = RayTracer.read_pfm_image(open("reference_le.pfm","r"))
+    img = RayTracer.read_pfm_image(open("reference_le.pfm", "r"))
     buf = IOBuffer()
     write(buf, img)
     contents = take!(buf)
@@ -94,23 +93,50 @@ end
 end
 
 @testset "ToneMapping" begin
-    # luminosity
+    # Luminosity
     col1 = ColorTypes.RGB{Float32}(10.0, 3.0, 2.0)
-    @test RayTracer.luminosity(col1) ≈ 6
+    @test RayTracer.luminosity(col1, mean_type = :max_min) ≈ 6
     @test RayTracer.luminosity(col1, mean_type = :arithmetic) ≈ 5
     @test RayTracer.luminosity(col1, mean_type = :weighted) ≈ 5
-    @test RayTracer.luminosity(col1, mean_type = :weighted, weights=[1, 2, 5]) ≈ 3.25
-    @test isapprox(RayTracer.luminosity(col1, mean_type = :distance), 10.6301; atol=0.0001)
-
-    # Normalization
+    @test RayTracer.luminosity(col1, mean_type = :weighted, weights = [1, 2, 5]) ≈ 3.25
+    @test isapprox(
+        RayTracer.luminosity(col1, mean_type = :distance),
+        10.6301;
+        atol = 0.0001,
+    )
+    # Logarithmic average
+    # Image for test
     img = HdrImage(2, 1)
-    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(  5.0,   10.0,   15.0))
+    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0)) # Luminosity (min-max): 10.0
+    RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0)) # Luminosity (min-max): 1000.0
+    @test RayTracer.log_average(img, mean_type = :max_min, delta = 0.0) ≈ 100.0
+    # Test that delta helps in avoiding log singularity when a pixel is black
+    img = HdrImage(2, 1)
+    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(50.0, 100.0, 150.0)) # Luminosity (min-max): 100.0
+    @test RayTracer.log_average(img, mean_type = :max_min) ≈ 1e-4
+    # Normalization
+    # Image for test
+    img = HdrImage(2, 1)
+    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0))
     RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0))
+    RayTracer.normalize_image(img, factor = 1000.0, lumi = 100.0)
+    @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
+    @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
+    RayTracer.normalize_image(img, factor = 1000.0)
+    @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
+    @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
+    # Clamp image
+    # Image for test
+    img = HdrImage(2, 1)
+    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0))
+    RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0))
+    # Just check that the R/G/B values are within the expected boundaries
+    RayTracer.clamp_image!(img)
+    for pixel in img.pixels
+        @test 0 <= pixel.r <= 1
+        @test 0 <= pixel.g <= 1
+        @test 0 <= pixel.b <= 1
+    end
+    # Write LDR image
 
-    normalize_image(img, factor=1000.0, lumi=100.0)
-    @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
-    @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
-    normalize_image(img, factor=1000.0)
-    @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
-    @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
 end

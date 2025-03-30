@@ -12,9 +12,13 @@ end
 function check_endianness(value)
     if typeof(value) <: Real
         if value == 0
-            throw(WrongPFMformat("endianness can't be 0, choose a number >0 for big endian or <0 for little endian"))
+            throw(
+                WrongPFMformat(
+                    "endianness can't be 0, choose a number >0 for big endian or <0 for little endian",
+                ),
+            )
         end
-    else    
+    else
         throw(WrongPFMformat("endianness must be an Integer or Float"))
     end
 end
@@ -22,9 +26,7 @@ end
 function check_extension(s)
     if !endswith(s, ".PFM")
         throw(
-            WrongPFMformat(
-                "the file must be a PFM file. Please insert a valid file name",
-            ),
+            WrongPFMformat("the file must be a PFM file. Please insert a valid file name"),
         )
     end
 end
@@ -34,7 +36,7 @@ end
 function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endian)
 
     check_endianness(endianness)
-    
+
     # Convert a floating-point number to 32-bit (4 bytes) integer for binary writing
     r = reinterpret(UInt32, color.r)
     g = reinterpret(UInt32, color.g)

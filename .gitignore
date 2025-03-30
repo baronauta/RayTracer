@@ -5,3 +5,5 @@
 
 #Files:
 # no files to ignore yet
+Manifest.toml
+*.png
