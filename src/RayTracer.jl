@@ -23,7 +23,10 @@ export +,
     log_average,
     Parameters,
     ToneMappingError,
-    RuntimeError
+    RuntimeError,
+    read_pfm_image,
+    clamp_image!,
+    write_ldr_image
 
 const little_endian = Base.ENDIAN_BOM == 0x04030201 # true if the host is little endian, false otherwise
 
@@ -62,7 +65,7 @@ Parses and validates command-line arguments in basic or advanced mode.
 - Throws errors for invalid types or incorrect argument count.
 """
 function Parameters(A)
-    if (length(A) != 5) && (length(A) != 7)
+    if (length(A) != 4) && (length(A) != 7)
         throw(RuntimeError("""\n
         ------------------------------------------------------------
         Correct command usage:
