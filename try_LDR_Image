@@ -12,6 +12,8 @@ function main()
     println("Immagine salvata come output.png")
     img1 = HdrImage(300, 300)
     set_pixel!(img1, 1, 1, RayTracer.ColorTypes.RGB{Float32}(1.0,1.0,1.0))
+    normalize_image!(img1)
+    clamp_image!(img1)
     write_ldr_image(img1, "output1.png", gamma=1.0)
     println("Immagine salvata come output1.png")
 end

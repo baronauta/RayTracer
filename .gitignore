@@ -1,10 +1,11 @@
 # Folders:
+example_pfm
 
-# no folders to ignore yet
 #---------------------------
 
 #Files:
-# no files to ignore yet
 Manifest.toml
 *.png
+*.tiff
+*.jpeg
 memorial.pfm
