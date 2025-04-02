@@ -19,6 +19,12 @@ struct Normal
     z::Real
 end
 
+# Conversion to string
+function to_string(V)
+    str = "< x:" * string(V.r) * ", y:" * string(V.y) * ", z:" * string(V.z) * " >"
+    return str
+end
+
 # Obj1 ≈ Obj2
 function Base.:≈(o1, o2)
     if typeof(o1) != typeof(o2)
