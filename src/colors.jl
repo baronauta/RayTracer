@@ -161,8 +161,11 @@ function normalize_image!(
     delta = 1e-10,
     mean_type = :max_min,
     weights = [1, 1, 1],
+)
+    lumi = something(
+        lumi,
+        log_average(img; delta = delta, mean_type = mean_type, weights = weights),
     )
-    lumi = something(lumi, log_average(img; delta = delta, mean_type = mean_type, weights = weights))
     a = factor / lumi
     for w = 1:img.width
         for h = 1:img.height

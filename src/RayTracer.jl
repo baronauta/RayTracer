@@ -36,13 +36,13 @@ include("io.jl")
 
 # Parameters
 mutable struct Parameters
-    input_pfm_file_name :: String
-    factor:: Real
-    gamma :: Real
-    output_png_file_name :: String
-    mean_type :: Symbol
-    weights ::Array{Real, 1}
-    delta :: Real
+    input_pfm_file_name::String
+    factor::Real
+    gamma::Real
+    output_png_file_name::String
+    mean_type::Symbol
+    weights::Array{Real,1}
+    delta::Real
 end
 
 """
@@ -66,41 +66,53 @@ Parses and validates command-line arguments in basic or advanced mode.
 """
 function Parameters(A)
     if (length(A) != 4) && (length(A) != 7)
-        throw(RuntimeError("""\n
-        ------------------------------------------------------------
-        Correct command usage:
-           - Basic mode:
-             julia RayTracer INPUT_PFM_FILE FACTOR GAMMA OUTPUT_PNG_FILE
-       
-           - Advanced mode:
-             julia RayTracer INPUT_PFM_FILE FACTOR GAMMA OUTPUT_PNG_FILE MEAN_TYPE WEIGHTS DELTA
-       
-        Advanced notes:
-           - MEAN_TYPE will be converted to a Symbol (default = max_min)
-           - WEIGHTS must be a vector of numbers enclosed in quotes:
-             Correct example: "[1.0, 2.0, 3.0]"
-       
-        Number of arguments received: $(length(A))
-       ------------------------------------------------------------
-       """))
+        throw(
+            RuntimeError(
+                """\n
+ ------------------------------------------------------------
+ Correct command usage:
+    - Basic mode:
+      julia RayTracer INPUT_PFM_FILE FACTOR GAMMA OUTPUT_PNG_FILE
+
+    - Advanced mode:
+      julia RayTracer INPUT_PFM_FILE FACTOR GAMMA OUTPUT_PNG_FILE MEAN_TYPE WEIGHTS DELTA
+
+ Advanced notes:
+    - MEAN_TYPE will be converted to a Symbol (default = max_min)
+    - WEIGHTS must be a vector of numbers enclosed in quotes:
+      Correct example: "[1.0, 2.0, 3.0]"
+
+ Number of arguments received: $(length(A))
+------------------------------------------------------------
+""",
+            ),
+        )
 
     end
-    factor=0.0
-    gamma=0.0
+    factor = 0.0
+    gamma = 0.0
     input_pfm_file_name = A[1]
     output_png_file_name = A[4]
     try
         factor = parse(Float32, A[2])
     catch e
         if isa(e, ArgumentError)
-            throw(RuntimeError("Invalid factor ($(A[2])), it must be a floating-point number."))
+            throw(
+                RuntimeError(
+                    "Invalid factor ($(A[2])), it must be a floating-point number.",
+                ),
+            )
         end
     end
     try
         gamma = parse(Float32, A[3])
     catch e
         if isa(e, ArgumentError)
-            throw(RuntimeError("Invalid gamma ($(A[3])), it must be a floating-point number."))
+            throw(
+                RuntimeError(
+                    "Invalid gamma ($(A[3])), it must be a floating-point number.",
+                ),
+            )
         end
     end
     if length(A) == 4
@@ -113,20 +125,36 @@ function Parameters(A)
         try
             weights = parse.(Float32, split(strip(A[6], ['[', ']']), ","))
         catch
-            throw(RuntimeError("Invalid weights ($(A[6])), it must be a floating-point numbers array, correct example: \"[1.0, 2.0, 3.0]\"."))
+            throw(
+                RuntimeError(
+                    "Invalid weights ($(A[6])), it must be a floating-point numbers array, correct example: \"[1.0, 2.0, 3.0]\".",
+                ),
+            )
         end
         try
             delta = parse(Float32, A[7])
         catch
-            throw(RuntimeError("Invalid delta ($(A[7])), it must be a floating-point number."))
+            throw(
+                RuntimeError(
+                    "Invalid delta ($(A[7])), it must be a floating-point number.",
+                ),
+            )
 
         end
-        
+
 
     end
-       
-    return Parameters(input_pfm_file_name, factor, gamma, output_png_file_name, mean_type, weights, delta)
-    
+
+    return Parameters(
+        input_pfm_file_name,
+        factor,
+        gamma,
+        output_png_file_name,
+        mean_type,
+        weights,
+        delta,
+    )
+
 end
 
 end
