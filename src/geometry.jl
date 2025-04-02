@@ -1,18 +1,24 @@
 # Vectors
-mutable struct Vec
+struct Vec
     x::Real
     y::Real
     z::Real
 end
 # Point
-mutable struct Point
+struct Point
     x::Real
     y::Real
     z::Real
 end
 # Normal
-mutable struct Normal
+struct Normal
     x::Real
     y::Real
     z::Real
 end
+
+function to_string(V)
+    str = "< x:" * string(V.r) * ", y:" * string(V.y) * ", z:" * string(V.z) * " >"
+    return str
+end
+
