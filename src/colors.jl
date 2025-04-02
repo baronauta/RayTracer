@@ -150,33 +150,25 @@ function log_average(
 end
 
 """
-    normalize_image(img::HdrImage; factor = 1.0, lumi = Nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
+    normalize_image(img::HdrImage; factor = 1.0, lumi = nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
 
 Normalize the values of an RGB color using the average luminosity and the normalization factor (to be specified by the user).
 """
-# Dal momento che questa func modifica la struct passata per argomento per convenzione di julia dovremmo definire la func con !
-function normalize_image(
+function normalize_image!(
     img::HdrImage;
-    factor = 1.0,
-    lumi = Nothing,
+    factor = 0.2,
+    lumi = nothing,
     delta = 1e-10,
     mean_type = :max_min,
     weights = [1, 1, 1],
-)
-    # Alternativa più sintetica (ma da verificare se funziona)
-    # lumi = something(lumi, log_average(img; delta=delta, mean_type=mean_type, weights=weights))
-    # something(a, b) returns a if it's not Nothing, otherwise it returns b.
-    if lumi == Nothing
-        lumi = log_average(img; delta = delta, mean_type = mean_type, weights = weights)
-    end
+    )
+    lumi = something(lumi, log_average(img; delta = delta, mean_type = mean_type, weights = weights))
     a = factor / lumi
     for w = 1:img.width
         for h = 1:img.height
             c = get_pixel(img, w, h)
-            r = c.r * a # qui potremmo usare * definita per color e scalare!
-            g = c.g * a
-            b = c.b * a
-            set_pixel!(img, w, h, ColorTypes.RGB{Float32}(r, g, b))
+            c *= a
+            set_pixel!(img, w, h, c)
         end
     end
 end
@@ -205,32 +197,4 @@ function clamp_image!(image::HdrImage)
             set_pixel!(image, w, h, color)
         end
     end
-end
-
-"""
-    write_ldr_image(image::HdrImage, filename::String; gamma=1.0)
-
-Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image with gamma correction and save it to a file.
-
-# Arguments
-- `image::HdrImage`: The HDR image to be converted.
-- `filename::String`: The output file path.
-- `gamma`: The gamma correction factor (default: `1.0`).
-
-The function applies gamma correction and scales pixel values to the 0-255 range before saving.
-"""
-function write_ldr_image(image::HdrImage, filename::String; gamma = 1.0)
-    for h = 1:image.height
-        for w = 1:image.width
-            pix = get_pixel(image, w, h)
-            color = ColorTypes.RGB{Float32}(
-                Int(255 * pix.r^(1 / gamma)),
-                Int(255 * pix.g^(1 / gamma)),
-                Int(255 * pix.b^(1 / gamma)),
-            )
-            set_pixel!(image, w, h, color)
-        end
-    end
-    # Using save function from Images packages
-    Images.save(filename, image.pixels)
 end

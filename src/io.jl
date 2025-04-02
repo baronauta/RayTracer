@@ -78,11 +78,42 @@ function Base.write(filename::String, image::HdrImage; endianness = my_endian)
     end
 end
 
-# # Read HdrImage from file
-# function read_pfm_image(filename::String)
-#     io = open(filename, "r")
-#     read_pfm_image(io)
-# end
+"""
+    write_ldr_image(image::HdrImage, filename::String; gamma=1.0)
+
+Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image with gamma correction and save it to a file.
+
+# Arguments
+- `image::HdrImage`: The HDR image to be converted.
+- `filename::String`: The output file path.
+- `gamma`: The gamma correction factor (default: `1.0`).
+
+The function applies gamma correction before saving.
+"""
+function write_ldr_image(image::HdrImage, filename::String; gamma = 1.0)
+    for h = 1:image.height
+        for w = 1:image.width
+            pix = get_pixel(image, w, h)
+            color = ColorTypes.RGB{Float32}(
+                pix.r^(1 / gamma),
+                pix.g^(1 / gamma),
+                pix.b^(1 / gamma),
+            )
+            set_pixel!(image, w, h, color)
+        end
+    end
+    # Using save function from Images packages
+    Images.save(filename, image.pixels)
+end
+
+
+
+# Read HdrImage from file
+function read_pfm_image(filename::String)
+    open(filename, "r") do io
+        return read_pfm_image(io)
+    end
+end
 
 # Read HdrImage from stream
 function read_pfm_image(stream::IO)

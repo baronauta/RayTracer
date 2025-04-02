@@ -19,3 +19,13 @@ Custom exception for errors encountered during tone mapping operations.
 struct ToneMappingError <: Exception
     msg::String
 end
+"""
+    struct RuntimeError <: Exception
+Custom exception for errors encountered while running RayTracer, after being precompiled.
+
+# Fields
+- `msg::String`: Error message describing the issue.
+"""
+struct RuntimeError <: Exception
+    msg::String
+end
