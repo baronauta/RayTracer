@@ -1,3 +1,4 @@
+import Base: write
 # Input and Output
 
 # setting my_endian = to host endian
