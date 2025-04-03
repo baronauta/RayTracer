@@ -19,6 +19,7 @@ Custom exception for errors encountered during tone mapping operations.
 struct ToneMappingError <: Exception
     msg::String
 end
+
 """
     struct RuntimeError <: Exception
 Custom exception for errors encountered while running RayTracer, after being precompiled.
@@ -27,5 +28,16 @@ Custom exception for errors encountered while running RayTracer, after being pre
 - `msg::String`: Error message describing the issue.
 """
 struct RuntimeError <: Exception
+    msg::String
+end
+
+"""
+    struct GeometryError <: Exception
+Custom exception for errors encountered during geometry operations (ex: comparing Vector and Point).
+
+# Fields
+- `msg::String`: Error message describing the issue.
+"""
+struct GeometryError <: Exception
     msg::String
 end
