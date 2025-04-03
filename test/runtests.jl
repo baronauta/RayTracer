@@ -140,3 +140,40 @@ end
     # Write LDR image
 
 end
+
+@testset "Geometry" begin
+
+    import RayTracer: Vec, Point, Normal
+
+    @testset "Vectors" begin
+        v = Vec(1.0, 2.0, 3.0)
+        u = Vec(4.0, 5.0, 6.0)
+        @test v ≈ v
+        @test !(v≈u)
+        @test RayTracer.to_string(v) == "< x:1.0, y:2.0, z:3.0 >"
+        @test (v+u)≈Vec(5.0,7.0,9.0)
+        @test (u-v)≈Vec(3.0,3.0,3.0)
+        @test (v*2)≈Vec(2.0,4.0,6.0)
+        @test (2*v)≈Vec(2.0,4.0,6.0)
+        @test RayTracer.neg(v) ≈ Vec(-1.0, -2.0, -3.0)
+        @test RayTracer.dot(v,u) ≈ 32.0
+        @test RayTracer.cross(v,u) ≈ Vec(-3.0,6.0,-3.0)
+        @test RayTracer.cross(u,v) ≈ Vec(3.0,-6.0,3.0)
+        @test RayTracer.squared_norm(v) ≈ 14.0
+        @test RayTracer.norm(v)^2 ≈ 14.0
+    end
+
+    @testset "Points" begin
+        a = Point(1.0, 2.0, 3.0)
+        b = Point(4.0, 5.0, 6.0)
+        @test a ≈ a
+        @test !(a≈b)
+        @test RayTracer.to_string(a) == "< x:1.0, y:2.0, z:3.0 >"
+        @test (b-a)≈Vec(3.0,3.0,3.0)
+        v = Vec(7.0,8.0,9.0)
+        @test (a+v)≈Point(8.0,10.0,12.0)
+        @test (v+a)≈Point(8.0,10.0,12.0)
+        @test (a-v)≈Point(-6.0,-6.0,-6.0)
+        @test (v-a)≈Point(6.0,6.0,6.0)
+    end    
+end

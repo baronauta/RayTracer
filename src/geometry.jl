@@ -1,184 +1,203 @@
-# Point
-struct Point
-    x::Real
-    y::Real
-    z::Real
+import Base: +, -, *, ≈
+
+"""
+    Abstract3DVector
+
+An abstract type representing a 3D vector in space. Concrete subtypes must define 
+three coordinate components (`x`, `y`, and `z`) of a numeric type.
+
+# Subtypes
+- `Point{T<:Real}`: Represents a point in 3D space.
+- `Vec{T<:Real}`: Represents a vector in 3D space.
+- `Normal{T<:Real}`: Represents a normal vector in 3D space.
+"""
+abstract type Abstract3DVector end
+
+"A 3D point with coordinates `(x, y, z)` of type `T`."
+struct Point{T<:Real} <: Abstract3DVector
+    x::T
+    y::T
+    z::T
 end
 
-# Vector:
-struct Vec
-    x::Real
-    y::Real
-    z::Real
+"A 3D vector with components `(x, y, z)` of type `T`."
+struct Vec{T<:Real} <: Abstract3DVector
+    x::T
+    y::T
+    z::T
 end
 
-# Normal
-struct Normal
-    x::Real
-    y::Real
-    z::Real
+"A 3D normal vector with components `(x, y, z)` of type `T`."
+# Ha senso definire un vettore come Normal anche se non è normal?
+struct Normal{T<:Real} <: Abstract3DVector
+    x::T
+    y::T
+    z::T
 end
 
-# Conversion to string
-function to_string(V)
-    str = "< x:" * string(V.r) * ", y:" * string(V.y) * ", z:" * string(V.z) * " >"
-    return str
+"Print components of an `Abstrac3DVector`, e.g. `< x:x, y:y, z:z >`. Return the string."
+function to_string(V::Abstract3DVector)
+    str = "< x:" * string(V.x) * ", y:" * string(V.y) * ", z:" * string(V.z) * " >"
 end
 
-# Obj1 ≈ Obj2
-function Base.:≈(o1, o2)
-    if typeof(o1) != typeof(o2)
-        #not sure object is a great name in Julia, must verify
-        throw(
-            GeometryError(
-                "Cannot compare $(typeof(o1)) with $(typeof(o2)). Ensure both objects are of the same type.",
-            ),
-        )
+"Compare two `Abstrac3DVector`, useful for testing."
+function ≈(V::Abstract3DVector, U::Abstract3DVector)
+    if typeof(V) != typeof(U)
+        throw(GeometryError("Cannot compare $(typeof(V)) with $(typeof(U)). Ensure both objects are of the same type."))
     else
-        return (
-            isapprox(o1.x, o2.x, rtol = 1e-5, atol = 1e-5) &&
-            isapprox(o1.y, o2.y, rtol = 1e-5, atol = 1e-5) &&
-            isapprox(o1.z, o2.z, rtol = 1e-5, atol = 1e-5)
-        )
+        return isapprox(V.x, U.x, rtol = 1e-5, atol = 1e-5) &&
+               isapprox(V.y, U.y, rtol = 1e-5, atol = 1e-5) &&
+               isapprox(V.z, U.z, rtol = 1e-5, atol = 1e-5)
     end
 end
 
+# Summation and subtraction
 
-# Vector & Normal
+"Adding vector `v` to vector `u` creates a new vector."
+function +(v::Vec, u::Vec)
+    Vec(v.x + u.x, v.y + u.y, v.z + u.z)
+end
 
-# scalar product
-# ATTENZIONE NON C'è TRA PUNTO E SCALARE??
-function Base.:*(scalar::Real, o2)
-    if o2 isa Point
+"Adding vector `v` to point `p` creates a new point."
+function +(p::Point, v::Vec)
+    Point(p.x + v.x, p.y + v.y, p.z + v.z)
+end
+
+"Adding point `p` to vector `v` creates a new point."
+function +(v::Vec, p::Point)
+    +(p, v)
+end
+
+"Subtracting two vectors gives a vector."
+function -(v::Vec, u::Vec)
+    Vec(v.x - u.x, v.y - u.y, v.z - u.z)
+end
+
+"Subtracting two points gives a vector."
+function -(p::Point, q::Point)
+    Vec(p.x - q.x, p.y - q.y, p.z - q.z)
+end
+
+"Substracting a vector `v` to point `p` creates a new point."
+function -(p::Point, v::Vec)
+    Point(p.x - v.x, p.y - v.y, p.z - v.z)
+end
+
+"Substracting a point `p` to vector `v` creates a new point."
+function -(v::Vec, p::Point)
+    Point(v.x - p.x, v.y - p.y, v.z - p.z)
+end
+
+# Product by a scalar
+# When I multiply a Normal by a scalar, it is not a Normal anymore, and it becomes a Vec
+
+"Product of a `Vec` or `Normal` with a scalar."
+function *(v::Abstract3DVector, scalar::Real)
+    if v isa Point
         throw(
             GeometryError(
                 "Cannot multiply a scalar with a Point type. Please use a Vec or Normal type.",
             ),
         )
     else
-        return typeof(o2)(scalar * o2.x, scalar * o2.y, scalar * o2.z)
+        return Vec(scalar * v.x, scalar * v.y, scalar * v.z)
     end
 end
-Base.:*(o1, scalar::Real) = scalar * o1
+"Product of a `Vec` or `Normal` with a scalar."
+function *(scalar::Real, v::Abstract3DVector)
+    *(v, scalar)
+end
 
-# negation 
-# not used Base.:-(v) = -1 * v perchè se poi devo fare sottrazioni tra vettori magari da fastidio con l'overloading di a-b
-function neg(o1)
-    if o1 isa Point
+"Multiply `Vec` or `Normal` with -1."
+function neg(v::Abstract3DVector)
+    if v isa Point
         throw(
-            GeometryError("Cannot make a negative Point. Please use a Vec or Normal type."),
+            GeometryError(
+                "Cannot multiply a scalar with a Point type. Please use a Vec or Normal type.",
+            ),
         )
     else
-        return (-1) * o1
+        (-1) * v
     end
 end
 
-
-# dot product ATTENZIONE LINEAR ALGEBRA
-# ATTENZIONE NORMAL NORMAL NO?
-function dot(o1, o2)
-    if o1 isa Point || o2 isa Point
+# Dot product
+""
+function dot(v::Abstract3DVector, u::Abstract3DVector)
+    if v isa Point || u isa Point
         throw(
             GeometryError(
                 "Cannot compute dot product with a Point type. Please use a Vec or Normal type.",
             ),
         )
-    elseif o1 isa Normal && o2 isa Normal
-        throw(
-            GeometryError(
-                "Cannot compute dot product between two Normal types. Please compute dot product between Vec and Vec or Vec and Normal.",
-            ),
-        )
     else
-        return o1.x * o2.x + o1.y * o2.y + o1.z * o2.z
+        return v.x * u.x + v.y * u.y + v.z * u.z
     end
 end
 
-# cross product ATTENZIONE LINEAR ALGEBRA
-# ATTENZIONE risultato cross tra vec e norm che cos'è? per ora solo vettore
-function cross(o1, o2)
-    if o1 isa Point || o2 isa Point
+# Cross product
+# Cross product of a vector with the vetor itself is the null vector
+# Cross product between two Normal is a Normal
+""
+function cross(v::Abstract3DVector, u::Abstract3DVector)
+    if v isa Point || u isa Point
         throw(
             GeometryError(
-                "Cannot make dot product with Point type. Please use a Vec or Normal type.",
+                "Cannot compute dot product with Point type. Please use a Vec or Normal type.",
             ),
+        )
+    elseif v ≈ u
+        return Vec(0.0,0.0,0.0)
+    elseif v isa Normal && u isa Normal
+        return Normal(
+            v.y * u.z - v.z * u.y,
+            v.z * u.x - v.x * u.z,
+            v.x * u.y - v.y * u.x,
         )
     else
         return Vec(
-            o1.y * o2.z - o1.z * o2.y,
-            o1.z * o2.x - o1.x * o2.z,
-            o1.x * o2.y - o1.y * o2.x,
+            v.y * u.z - v.z * u.y,
+            v.z * u.x - v.x * u.z,
+            v.x * u.y - v.y * u.x,
         )
     end
 end
 
-# norm and squared norm
-function squared_norm(o)
-    if o isa Point
+# Norm of a vector, squared norm and normalization
+""
+function squared_norm(v::Abstract3DVector)
+    if v isa Point
         throw(
             GeometryError(
-                "Cannot make the norm of a Point type. Please use a Vec or Normal type.",
+                "Cannot compute the norm of a Point type. Please use a Vec or Normal type.",
             ),
         )
     else
-        return o.x^2 + o.y^2 + o.z^2
+        return v.x^2 + v.y^2 + v.z^2
     end
 end
-norm(o) = √(squared_norm(o))
 
-# normalize
-function normalize(o)
-    if o isa Point
+""
+function norm(v::Abstract3DVector)
+    sqrt(squared_norm(v))
+end
+
+""
+function normalize(v::Abstract3DVector)
+    if v isa Point
         throw(
             GeometryError(
                 "Cannot normalize a Point type. Please use a Vec or Normal type.",
             ),
         )
     else
-        return norm(o)^(-1) * o
+        return v / norm(v)
     end
 end
 
+
 # Conversions
-Normal(v::Vec) = Normal(v.x, v.y, v.z)
+"Convert a `Vec` into `Normal`, i.e. normalizing a vector??."
+Normal(v::Vec) = Normal(normalize(v))
+"Convert a `Point` into `Vec`."
 Vec(p::Point) = Vec(p.x, p.y, p.z)
-
-
-# Sum
-
-# function Base.:+(o1, o2)
-#     return
-# end
-# function Base.:-(o1,o2)
-#     return
-# end
-
-#=
-    STATUS INDEX
-    Vec:
-- [x] Conversion to string, e.g., Vec(x=0.4, y=1.3, z=0.7);
-- [x] Comparison between vectors (for tests), using functions like are_close;
-- [] Sum and difference between vectors;
-- [x] Product by a scalar and negation (Vec.neg() returns −v−v);
-- [x] Dot product between two vectors and cross product;
-- [x] Calculation of ∥v∥2∥v∥2 (squared_norm) and of ∥v∥∥v∥ (norm);
-- [x] Function that normalizes the vector: v→v/∥v∥v→v/∥v∥;
-- [x] Function that converts a Vec into a Normal.
-
-    Normal:
-- [x] Conversion to string, e.g., Normal(x=0.4, y=1.3, z=0.7);
-- [x] Comparison between normals (for tests);
-- [x] Negation of a normal (−n⃗−n);
-- [x] Multiplication by a scalar;
-- [x] Dot product Vec·Normal and cross product Vec×Normal and Normal×Normal;
-- [x] Calculation of ∥n∥2∥n∥2 (squared_norm) and of ∥n∥∥n∥ (norm);
-- [x] Function that normalizes the normal: n→n/∥n∥n→n/∥n∥.
-
-    Point:
-- [x] Conversion to string, e.g., Point(x=0.4, y=1.3, z=0.7);
-- [x] Comparison between points (for tests);
-- [] Sum between Point and Vec, returning a Point;
-- [] Difference between two Points, returning a Vec;
-- [] Difference between Point and Vec, returning a Point;
-- [x] Conversion from Point to Vec (Point.to_vec()).
-=#
