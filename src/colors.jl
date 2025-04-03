@@ -1,4 +1,4 @@
-# COLOR METHODS
+import Base: +, *, ≈
 
 # Color-Color Sum
 Base.:+(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
