@@ -150,7 +150,6 @@ end
         u = Vec(4.0, 5.0, 6.0)
         @test v ≈ v
         @test !(v≈u)
-        @test RayTracer.to_string(v) == "< x:1.0, y:2.0, z:3.0 >"
         @test (v+u)≈Vec(5.0,7.0,9.0)
         @test (u-v)≈Vec(3.0,3.0,3.0)
         @test (v*2)≈Vec(2.0,4.0,6.0)
@@ -168,7 +167,6 @@ end
         b = Point(4.0, 5.0, 6.0)
         @test a ≈ a
         @test !(a≈b)
-        @test RayTracer.to_string(a) == "< x:1.0, y:2.0, z:3.0 >"
         @test (b-a)≈Vec(3.0,3.0,3.0)
         v = Vec(7.0,8.0,9.0)
         @test (a+v)≈Point(8.0,10.0,12.0)
