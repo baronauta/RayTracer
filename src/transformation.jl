@@ -1,8 +1,12 @@
 import LinearAlgebra: I
 
-struct Transformation{T<:Real}
+struct HomMatrix{T<:AbstractFloat}
     M::Matrix{T}
-    invM::Matrix{T}
+end
+
+struct Transformation{T<:AbstractFloat}
+    M::HomMatrix{T}
+    invM::HomMatrix{T}
 end
 
 const IDENTITY_MATR4x4 = Matrix{Float32}(I, 4, 4)

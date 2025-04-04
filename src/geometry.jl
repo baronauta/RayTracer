@@ -37,7 +37,7 @@ end
 
 "Print components of an `Abstrac3DVector`, e.g. `< x:x, y:y, z:z >`. Return the string."
 function to_string(V::Abstract3DVector)
-    str = "< x:" * string(V.x) * ", y:" * string(V.y) * ", z:" * string(V.z) * " >"
+    str = "[$(typeof(V))]< x:" * string(V.x) * ", y:" * string(V.y) * ", z:" * string(V.z) * " >"
 end
 
 "Compare two `Abstrac3DVector`, useful for testing."
