@@ -34,13 +34,6 @@ function *(A::Transformation, B::Transformation)
     return Transformation(M, invM)
 end
 
-""
-function *(T::Transformation, V::Abstract3DVector)
-    if V isa Normal
-
-    end
-end
-
 "Transformation of a `Point`. It is transformed into a `Point`."
 function *(T::Transformation, p::Point)
     # In homogeneous coordinates a point is (p.x, p.y, p.z, 1)
