@@ -27,8 +27,7 @@ struct Vec{T<:Real} <: Abstract3DVector
     z::T
 end
 
-"A 3D normal vector with components `(x, y, z)` of type `T`."
-# Ha senso definire un vettore come Normal anche se non è normal?
+"A 3D normal vector with components `(x, y, z)` of type `T`. Normal doesn't mean it is a normalized vector: it is the vector orthogonal to a surface."
 struct Normal{T<:Real} <: Abstract3DVector
     x::T
     y::T
@@ -89,8 +88,6 @@ function -(v::Vec, p::Point)
 end
 
 # Product by a scalar
-# When I multiply a Normal by a scalar, it is not a Normal anymore, and it becomes a Vec
-
 "Product of a `Vec` or `Normal` with a scalar."
 function *(v::Abstract3DVector, scalar::Real)
     if v isa Point
@@ -100,7 +97,7 @@ function *(v::Abstract3DVector, scalar::Real)
             ),
         )
     else
-        return Vec(scalar * v.x, scalar * v.y, scalar * v.z)
+        return typeof(v)(scalar * v.x, scalar * v.y, scalar * v.z)
     end
 end
 "Product of a `Vec` or `Normal` with a scalar."
@@ -137,7 +134,6 @@ end
 
 # Cross product
 # Cross product of a vector with the vetor itself is the null vector
-# Cross product between two Normal is a Normal
 ""
 function cross(v::Abstract3DVector, u::Abstract3DVector)
     if v isa Point || u isa Point
@@ -191,13 +187,13 @@ function normalize(v::Abstract3DVector)
             ),
         )
     else
-        return v / norm(v)
+        return v / norm(v) # controllare che julia capisca come è definito il /; noi abbiamo definito *
     end
 end
 
 
 # Conversions
 "Convert a `Vec` into `Normal`, i.e. normalizing a vector??."
-Normal(v::Vec) = Normal(normalize(v))
+Normal(v::Vec) = Normal(v.x, v.y, v.z)
 "Convert a `Point` into `Vec`."
 Vec(p::Point) = Vec(p.x, p.y, p.z)
