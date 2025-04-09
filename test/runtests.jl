@@ -173,5 +173,5 @@ end
         @test (v+a)≈Point(8.0,10.0,12.0)
         @test (a-v)≈Point(-6.0,-6.0,-6.0)
         @test (v-a)≈Point(6.0,6.0,6.0)
-    end    
+    end
 end

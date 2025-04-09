@@ -81,3 +81,15 @@ function translation(v::Vec)
     ])
     return Transformation(M, invM)
 end
+
+function rotation(theta::Real)
+    ##
+    ##
+    return Transformation(M, invM)
+end
+
+function scale(factor::Real)
+    ##
+    ##
+    return Transformation(M, invM)
+end
