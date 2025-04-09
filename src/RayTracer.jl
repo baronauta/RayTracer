@@ -35,6 +35,7 @@ include("colors.jl")
 include("io.jl")
 include("geometry.jl")
 include("transformation.jl")
+include("cameras.jl")
 
 # Parameters
 mutable struct Parameters
