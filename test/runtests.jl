@@ -137,41 +137,61 @@ end
         @test 0 <= pixel.g <= 1
         @test 0 <= pixel.b <= 1
     end
-    # Write LDR image
-
+    # Write LDR image ?
 end
 
 @testset "Geometry" begin
 
-    import RayTracer: Vec, Point, Normal
+    import RayTracer: Point, Vec, Normal
+
+    @testset "Point" begin
+        p = Point(1.0, 2.0, 3.0)
+        q = Point(4.0, 5.0, 6.0)
+        @test p ≈ p
+        @test !(p ≈ q)
+        # Difference between Point
+        @test (q - p) ≈ Vec(3.0, 3.0, 3.0)
+        # Sum/Difference between a Point and a Vec
+        v = Vec(7.0, 8.0, 9.0)
+        @test (p + v) ≈ Point(8.0, 10.0, 12.0)
+        @test (p - v) ≈ Point(-6.0, -6.0, -6.0)
+        # Conversion of a Point into a Vec
+        @test RayTracer.point_to_vec(p) ≈ Vec(1.0, 2.0, 3.0)
+    end
 
     @testset "Vectors" begin
         v = Vec(1.0, 2.0, 3.0)
         u = Vec(4.0, 5.0, 6.0)
         @test v ≈ v
-        @test !(v≈u)
-        @test (v+u)≈Vec(5.0,7.0,9.0)
-        @test (u-v)≈Vec(3.0,3.0,3.0)
-        @test (v*2)≈Vec(2.0,4.0,6.0)
-        @test (2*v)≈Vec(2.0,4.0,6.0)
+        @test !(v ≈ u)
+        # Vec sum
+        @test (v + u) ≈ Vec(5.0, 7.0, 9.0)
+        @test (u - v) ≈ Vec(3.0, 3.0, 3.0)
+        # Vec * scalar
+        @test (v * 2) ≈ Vec(2.0, 4.0, 6.0)
+        @test (2 * v) ≈ Vec(2.0, 4.0, 6.0)
         @test RayTracer.neg(v) ≈ Vec(-1.0, -2.0, -3.0)
-        @test RayTracer.dot(v,u) ≈ 32.0
-        @test RayTracer.cross(v,u) ≈ Vec(-3.0,6.0,-3.0)
-        @test RayTracer.cross(u,v) ≈ Vec(3.0,-6.0,3.0)
+        # Vec dot product, cross product and norm
+        @test RayTracer.dot(v, u) ≈ 32.0
+        @test RayTracer.cross(v, u) ≈ Vec(-3.0, 6.0, -3.0)
         @test RayTracer.squared_norm(v) ≈ 14.0
         @test RayTracer.norm(v)^2 ≈ 14.0
+        # Conversion Vec to Normal
+        @test RayTracer.vec_to_normal(v) ≈ Normal(1.0, 2.0, 3.0)
     end
 
-    @testset "Points" begin
-        a = Point(1.0, 2.0, 3.0)
-        b = Point(4.0, 5.0, 6.0)
-        @test a ≈ a
-        @test !(a≈b)
-        @test (b-a)≈Vec(3.0,3.0,3.0)
-        v = Vec(7.0,8.0,9.0)
-        @test (a+v)≈Point(8.0,10.0,12.0)
-        @test (v+a)≈Point(8.0,10.0,12.0)
-        @test (a-v)≈Point(-6.0,-6.0,-6.0)
-        @test (v-a)≈Point(6.0,6.0,6.0)
+    @testset "Normal" begin
+        n = Normal(0.1, 0.2, 0.3)
+        m = Normal(0.4, 0.5, 0.6)
+        @test n ≈ n
+        @test !(n ≈ m)
+        # Normal * scalar
+        @test (m * 0.5) ≈ Normal(0.2, 0.25, 0.3)
+        @test (0.5 * m) ≈ Normal(0.2, 0.25, 0.3)
+        # Normal dot product, cross product
+        @test RayTracer.dot(n, m) ≈ 0.32
+        @test RayTracer.cross(n, m) ≈ Normal(-0.03, 0.06, -0.03)
+        v = Vec(0.4, 0.5, 0.6)
+        @test RayTracer.cross(n, v) ≈ Vec(-0.03, 0.06, -0.03)
     end
 end
