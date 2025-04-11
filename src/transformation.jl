@@ -68,16 +68,16 @@ end
 ""
 function translation(v::Vec)
     M = HomMatrix([
-        1  0  0  v.x;
-        0  1  0  v.y;
-        0  0  1  v.z;
-        0  0  0  1
+        1 0 0 v.x
+        0 1 0 v.y
+        0 0 1 v.z
+        0 0 0 1
     ])
     invM = HomMatrix([
-        1  0  0  -v.x;
-        0  1  0  -v.y;
-        0  0  1  -v.z;
-        0  0  0   1
+        1 0 0 -v.x
+        0 1 0 -v.y
+        0 0 1 -v.z
+        0 0 0 1
     ])
     return Transformation(M, invM)
 end
