@@ -2,8 +2,7 @@ module RayTracer
 
 import ColorTypes
 import Images
-import Base: +, *, ≈, write
-
+import LinearAlgebra
 
 export +,
     *,
@@ -26,13 +25,16 @@ export +,
     RuntimeError,
     read_pfm_image,
     clamp_image!,
-    write_ldr_image
+    write_ldr_image,
+    GeometryError
 
 const little_endian = Base.ENDIAN_BOM == 0x04030201 # true if the host is little endian, false otherwise
 
 include("exceptions.jl")
 include("colors.jl")
 include("io.jl")
+include("geometry.jl")
+include("transformation.jl")
 
 # Parameters
 mutable struct Parameters
