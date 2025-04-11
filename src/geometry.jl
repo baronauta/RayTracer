@@ -135,27 +135,28 @@ function neg(v::Union{Vec, Normal})
     (-1) * v
 end
 
-"Compute the dot product between two vectors, either of type `Vec` or `Normal`."
+"Dot product between two vectors, either of type `Vec` or `Normal`."
 function dot(v::Union{Vec, Normal}, u::Union{Vec, Normal})
     return v.x * u.x + v.y * u.y + v.z * u.z
 end
 
-"Compute the cross product between two `Vec` types. Returns a `Vec`."
+"Cross product between two `Vec` types. Returns a `Vec`."
 function cross(v::Vec, u::Vec)
     return Vec(v.y * u.z - v.z * u.y, v.z * u.x - v.x * u.z, v.x * u.y - v.y * u.x)
 end
 
-"Compute the cross product between a `Vec` and a `Normal`. Returns a `Vec`."
+"Cross product between a `Vec` and a `Normal`. Returns a `Vec`."
 function cross(v::Vec, n::Normal)
     return Vec(v.y * n.z - v.z * n.y, v.z * n.x - v.x * n.z, v.x * n.y - v.y * n.x)
 end
 
-"Compute the cross product between a `Normal` and a `Vec`. Returns a `Vec`."
+"Cross product between a `Normal` and a `Vec`. Returns a `Vec`."
 function cross(n::Normal, v::Vec)
-    return cross(v, n)
+    # ( v × u ) = -( u × v )
+    return -1 * cross(v, n)
 end
 
-"Compute the cross product between two `Normal` types. Returns a `Normal`."
+"Cross product between two `Normal` types. Returns a `Normal`."
 function cross(n::Normal, m::Normal)
     return Normal(n.y * m.z - n.z * m.y, n.z * m.x - n.x * m.z, n.x * m.y - n.y * m.x)
 end
