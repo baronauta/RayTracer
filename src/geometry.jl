@@ -28,6 +28,10 @@ struct Normal{T<:AbstractFloat}
     z::T
 end
 
+const VEC_X = Vec(1.0, 0.0, 0.0)
+const VEC_Y = Vec(0.0, 1.0, 0.0)
+const VEC_Z = Vec(0.0, 0.0, 1.0)
+
 # ─────────────────────────────────────────────────────────────
 # Methods to_string and comparison
 # ─────────────────────────────────────────────────────────────
