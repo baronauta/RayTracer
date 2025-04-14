@@ -1,9 +1,12 @@
 module RayTracer
 
+import Base: +, -, *, ≈
+import Base: write, show
 import ColorTypes
 import Images
 import LinearAlgebra
 
+export Point, Vec, Normal, Ray
 export +,
     *,
     ≈,
@@ -35,6 +38,7 @@ include("colors.jl")
 include("io.jl")
 include("geometry.jl")
 include("transformation.jl")
+include("cameras.jl")
 
 # Parameters
 mutable struct Parameters
