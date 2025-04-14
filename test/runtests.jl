@@ -6,7 +6,7 @@ import ColorTypes
 import RayTracer: Point, Vec, Normal
 import RayTracer: HomMatrix, Transformation
 import RayTracer: translation, rotation_x, rotation_y, rotation_z, scaling
-import RayTracer: Ray, transform
+import RayTracer: Ray, transform!
 
 @testset "Colors" begin
     c1 = ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
@@ -323,9 +323,6 @@ end
         @test RayTracer._is_consistent(rotation_x(0.1))
         @test RayTracer._is_consistent(rotation_y(0.1))
         @test RayTracer._is_consistent(rotation_z(0.1))
-        VEC_X = Vec(1.0, 0.0, 0.0)
-        VEC_Y = Vec(0.0, 1.0, 0.0)
-        VEC_Z = Vec(0.0, 0.0, 1.0)
         @test (rotation_x(90) * VEC_Y) ≈ VEC_Z
         @test (rotation_y(90) * VEC_Z) ≈ VEC_X
         @test (rotation_z(90) * VEC_X) ≈ VEC_Y
@@ -360,7 +357,7 @@ end
     # Ray transformation
     ray = Ray(Point(1.0, 2.0, 3.0), Vec(6.0, 5.0, 4.0))
     transformation = translation(Vec(10.0, 11.0, 12.0)) * rotation_x(90.0)
-    newray = transform(ray, transformation)
-    @test newray.origin ≈ Point(11.0, 8.0, 14.0)
-    @test newray.dir ≈ Vec(6.0, -4.0, 5.0)
+    transform!(ray, transformation)
+    @test ray.origin ≈ Point(11.0, 8.0, 14.0)
+    @test ray.dir ≈ Vec(6.0, -4.0, 5.0)
 end
