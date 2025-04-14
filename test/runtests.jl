@@ -3,10 +3,10 @@ using Test
 
 import ColorTypes
 
-import RayTracer: Point, Vec, Normal
+import RayTracer: Point, Vec, Normal, dot, cross, norm, squared_norm
 import RayTracer: HomMatrix, Transformation
 import RayTracer: translation, rotation_x, rotation_y, rotation_z, scaling
-import RayTracer: Ray, transform, OrthogonalCamera, PerspectiveCamera
+import RayTracer: Ray, transform, OrthogonalCamera, PerspectiveCamera, fire_ray
 
 @testset "Colors" begin
     c1 = ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
@@ -362,25 +362,27 @@ end
     @test newray.dir ≈ Vec(6.0, -4.0, 5.0)
 end
 
-# @testset "Camera" begin
+@testset "Camera" begin
     
-#     @testset "OrthogonalCamera" begin
-#         cam = OrthogonalCamera(aspect_ratio=2.0)
+    @testset "OrthogonalCamera" begin
+        aspect_ratio = 2.0
+        cam = OrthogonalCamera(aspect_ratio)
+        ray1 = fire_ray(cam, 0.0, 0.0)
+        ray2 = fire_ray(cam, 1.0, 0.0)
+        ray3 = fire_ray(cam, 0.0, 1.0)
+        ray4 = fire_ray(cam, 1.0, 1.0)
+        # Verify that the rays are parallel by verifying that cross-products vanish
+        @test squared_norm(cross(ray1.dir, ray2.dir)) ≈ 0.0
+        @test squared_norm(cross(ray1.dir, ray3.dir)) ≈ 0.0
+        @test squared_norm(cross(ray1.dir, ray4.dir)) ≈ 0.0
+        # Verify that the ray hitting the corners have the right coordinates
+        @test RayTracer.at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
+        @test RayTracer.at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
+        @test RayTracer.at(ray3, 1.0) ≈ Point(0.0, 2.0, 1.0)
+        @test RayTracer.at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
+    end
 
-#         ray1 = cam.fire_ray(0.0, 0.0)
-#         ray2 = cam.fire_ray(1.0, 0.0)
-#         ray3 = cam.fire_ray(0.0, 1.0)
-#         ray4 = cam.fire_ray(1.0, 1.0)
-    
-#         # Verify that the rays are parallel by verifying that cross-products vanish
-#         assert are_close(0.0, ray1.dir.cross(ray2.dir).squared_norm())
-#         assert are_close(0.0, ray1.dir.cross(ray3.dir).squared_norm())
-#         assert are_close(0.0, ray1.dir.cross(ray4.dir).squared_norm())
-    
-#         # Verify that the ray hitting the corners have the right coordinates
-#         assert ray1.at(1.0).is_close(Point(0.0, 2.0, -1.0))
-#         assert ray2.at(1.0).is_close(Point(0.0, -2.0, -1.0))
-#         assert ray3.at(1.0).is_close(Point(0.0, 2.0, 1.0))
-#         assert ray4.at(1.0).is_close(Point(0.0, -2.0, 1.0))
-#     end
-# end
+    @testset "PerspectiveCamera" begin
+        
+    end
+end

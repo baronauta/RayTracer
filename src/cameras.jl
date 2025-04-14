@@ -65,17 +65,18 @@ end
 
 # Default constructor with implicit transformation (identity)
 function OrthogonalCamera(aspect_ratio::Union{Rational{Int64}, T}) where {T<:AbstractFloat}
-    OrthogonalCamera{T}(aspect_ratio, Transformation{T}(I))
+    transformation = Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+    OrthogonalCamera{T}(aspect_ratio, transformation)
 end
 
 function fire_ray(cam::OrthogonalCamera, u::AbstractFloat, v::AbstractFloat)
     x = -1.0
     y = (1.0 - 2.0 * u) * cam.aspect_ratio
-    z = 2. * v -1
+    z = 2. * v -1.0
     origin = Point(x, y, z)
     dir = VEC_X
     ray = Ray(origin, dir)
-    return transform!(ray, cam.transformation)
+    return transform(ray, cam.transformation)
 end
 
 struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T}
