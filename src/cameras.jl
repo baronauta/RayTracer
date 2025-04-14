@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# 
+# Ray
 # ─────────────────────────────────────────────────────────────
 
 """
@@ -36,26 +36,43 @@ function ≈(ray1::Ray, ray2::Ray)
 end
 
 function at(ray::Ray, t::AbstractFloat)
-    # r(t) = O + t ⋅ d, where O is a Point, d a vector and t a scalar
+    # r(t) = O + t ⋅ d;
+    # O is a Point, d a vector and t a scalar.
     return ray.origin + t * ray.dir 
 end
 
-function transform(ray::Ray, T::Transformation)
-    origin = T * ray.origin
-    dir = T * ray.dir
-    return Ray(origin, dir)
+"In place transformation of the Ray (see !)."
+function transform!(ray::Ray, T::Transformation)
+    ray.origin = T * ray.origin
+    ray.dir = T * ray.dir
+    return ray
 end
 
 # ─────────────────────────────────────────────────────────────
-# 
+# Camera
+# - OrthogonalCamera
+# - PerspectiveCamera
+#
+# Spatial coordinates are named with (x, y, z).
+# Screen coordinates are named (u,v).
 # ─────────────────────────────────────────────────────────────
 
 abstract type Camera{T<:AbstractFloat} end
 
-struct OrthogonalCamera{T<:AbstractFloat} <: Camera{T}
-
+mutable struct OrthogonalCamera{T<:AbstractFloat} <: Camera{T}
+    aspect_ratio::Union{Rational{Int64}, T}
+    transformation::Transformation
 end
 
-struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T}
+function fire_ray(cam::OrthogonalCamera, u::AbstractFloat, v::AbstractFloat)
+    x = -1.0
+    y = (1.0 - 2.0 * u) * cam.aspect_ratio
+    z = 2. * v -1
+    origin = Point(x, y, z)
+    dir = VEC_X
+    ray = Ray(origin, dir)
+    return transform!(ray, transformation)
+end
 
+mutable struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T}
 end
