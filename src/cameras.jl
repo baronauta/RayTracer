@@ -17,7 +17,7 @@ Represents a ray in 3D space.
 # Type Parameters
 - `T<:AbstractFloat`: The numeric type used for coordinates and ray parameters, usually `Float32` or `Float64`.
 """
-mutable struct Ray{T<:AbstractFloat}
+struct Ray{T<:AbstractFloat}
     origin::Point{T}
     dir::Vec{T}
     tmin::T
@@ -41,11 +41,10 @@ function at(ray::Ray, t::AbstractFloat)
     return ray.origin + t * ray.dir 
 end
 
-"In place transformation of the Ray (see !)."
-function transform!(ray::Ray, T::Transformation)
-    ray.origin = T * ray.origin
-    ray.dir = T * ray.dir
-    return ray
+function transform(ray::Ray, T::Transformation)
+    origin = T * ray.origin
+    dir = T * ray.dir
+    return Ray(origin, dir)
 end
 
 # ─────────────────────────────────────────────────────────────
@@ -59,9 +58,14 @@ end
 
 abstract type Camera{T<:AbstractFloat} end
 
-mutable struct OrthogonalCamera{T<:AbstractFloat} <: Camera{T}
+struct OrthogonalCamera{T<:AbstractFloat} <: Camera{T}
     aspect_ratio::Union{Rational{Int64}, T}
     transformation::Transformation
+end
+
+# Default constructor with implicit transformation (identity)
+function OrthogonalCamera(aspect_ratio::Union{Rational{Int64}, T}) where {T<:AbstractFloat}
+    OrthogonalCamera{T}(aspect_ratio, Transformation{T}(I))
 end
 
 function fire_ray(cam::OrthogonalCamera, u::AbstractFloat, v::AbstractFloat)
@@ -71,8 +75,8 @@ function fire_ray(cam::OrthogonalCamera, u::AbstractFloat, v::AbstractFloat)
     origin = Point(x, y, z)
     dir = VEC_X
     ray = Ray(origin, dir)
-    return transform!(ray, transformation)
+    return transform!(ray, cam.transformation)
 end
 
-mutable struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T}
+struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T}
 end
