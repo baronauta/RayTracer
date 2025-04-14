@@ -380,6 +380,12 @@ end
         @test RayTracer.at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
         @test RayTracer.at(ray3, 1.0) ≈ Point(0.0, 2.0, 1.0)
         @test RayTracer.at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
+        # Verify correctness of the transformation applied to Camera
+        aspect_ratio = 2.0
+        transformation = translation(RayTracer.neg(VEC_Y) * 2.0) * rotation_z(90)
+        cam = OrthogonalCamera(aspect_ratio, transformation)
+        ray = fire_ray(cam, 0.5, 0.5)
+        @test RayTracer.at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
     end
 
     @testset "PerspectiveCamera" begin
