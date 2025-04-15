@@ -1,9 +1,12 @@
 module RayTracer
 
+import Base: +, -, *, ≈
+import Base: write, show
 import ColorTypes
 import Images
 import LinearAlgebra
 
+export Point, Vec, Normal, VEC_X, VEC_Y, VEC_Z, Ray
 export +,
     *,
     ≈,
