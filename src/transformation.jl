@@ -138,17 +138,17 @@ A `Transformation` instance representing the rotation around the x-axis and its 
 function rotation_x(ang_deg::Real)
     # Convert degrees to radians
     ang_rad = deg2rad(ang_deg)
-    
+
     cosang = cos(ang_rad)
     sinang = sin(ang_rad)
-    
-    M = HomMatrix([ 
+
+    M = HomMatrix([
         1 0 0 0
         0 cosang -sinang 0
         0 sinang cosang 0
         0 0 0 1
     ])
-    invM = HomMatrix([ 
+    invM = HomMatrix([
         1 0 0 0
         0 cosang sinang 0
         0 -sinang cosang 0
@@ -171,17 +171,17 @@ A `Transformation` instance representing the rotation around the y-axis and its 
 function rotation_y(ang_deg::Real)
     # Convert degrees to radians
     ang_rad = deg2rad(ang_deg)
-    
+
     cosang = cos(ang_rad)
     sinang = sin(ang_rad)
-    
-    M = HomMatrix([ 
+
+    M = HomMatrix([
         cosang 0 sinang 0
         0 1 0 0
         -sinang 0 cosang 0
         0 0 0 1
     ])
-    invM = HomMatrix([ 
+    invM = HomMatrix([
         cosang 0 -sinang 0
         0 1 0 0
         sinang 0 cosang 0
@@ -204,17 +204,17 @@ A `Transformation` instance representing the rotation around the z-axis and its 
 function rotation_z(ang_deg::Real)
     # Convert degrees to radians
     ang_rad = deg2rad(ang_deg)
-    
+
     cosang = cos(ang_rad)
     sinang = sin(ang_rad)
-    
-    M = HomMatrix([ 
+
+    M = HomMatrix([
         cosang -sinang 0 0
         sinang cosang 0 0
         0 0 1 0
         0 0 0 1
     ])
-    invM = HomMatrix([ 
+    invM = HomMatrix([
         cosang sinang 0 0
         -sinang cosang 0 0
         0 0 1 0

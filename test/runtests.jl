@@ -3,9 +3,10 @@ using Test
 
 import ColorTypes
 
-import RayTracer: Point, Vec, Normal
+import RayTracer: Point, Vec, Normal, dot, cross, norm, squared_norm
 import RayTracer: HomMatrix, Transformation
 import RayTracer: translation, rotation_x, rotation_y, rotation_z, scaling
+import RayTracer: Ray, transform, OrthogonalCamera, PerspectiveCamera, fire_ray, ImageTracer, fire_all_rays!
 
 @testset "Colors" begin
     c1 = ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
@@ -91,7 +92,7 @@ end
     else
         @test contents == BE_REFERENCE_BYTES
     end
-    write(buf, img, endianness = 1.0)
+    write(buf, img, endianness=1.0)
     contents = take!(buf)
     @test contents == BE_REFERENCE_BYTES
 end
@@ -99,34 +100,34 @@ end
 @testset "ToneMapping" begin
     # Luminosity
     col1 = ColorTypes.RGB{Float32}(10.0, 3.0, 2.0)
-    @test RayTracer.luminosity(col1, mean_type = :max_min) ≈ 6
-    @test RayTracer.luminosity(col1, mean_type = :arithmetic) ≈ 5
-    @test RayTracer.luminosity(col1, mean_type = :weighted) ≈ 5
-    @test RayTracer.luminosity(col1, mean_type = :weighted, weights = [1, 2, 5]) ≈ 3.25
+    @test RayTracer.luminosity(col1, mean_type=:max_min) ≈ 6
+    @test RayTracer.luminosity(col1, mean_type=:arithmetic) ≈ 5
+    @test RayTracer.luminosity(col1, mean_type=:weighted) ≈ 5
+    @test RayTracer.luminosity(col1, mean_type=:weighted, weights=[1, 2, 5]) ≈ 3.25
     @test isapprox(
-        RayTracer.luminosity(col1, mean_type = :distance),
+        RayTracer.luminosity(col1, mean_type=:distance),
         10.6301;
-        atol = 0.0001,
+        atol=0.0001,
     )
     # Logarithmic average
     # Image for test
     img = HdrImage(2, 1)
     RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0)) # Luminosity (min-max): 10.0
     RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0)) # Luminosity (min-max): 1000.0
-    @test RayTracer.log_average(img, mean_type = :max_min, delta = 0.0) ≈ 100.0
+    @test RayTracer.log_average(img, mean_type=:max_min, delta=0.0) ≈ 100.0
     # Test that delta helps in avoiding log singularity when a pixel is black
     img = HdrImage(2, 1)
     RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(50.0, 100.0, 150.0)) # Luminosity (min-max): 100.0
-    @test RayTracer.log_average(img, mean_type = :max_min) ≈ 1e-4
+    @test RayTracer.log_average(img, mean_type=:max_min) ≈ 1e-4
     # Normalization
     # Image for test
     img = HdrImage(2, 1)
     RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0))
     RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0))
-    RayTracer.normalize_image!(img, factor = 1000.0, lumi = 100.0)
+    RayTracer.normalize_image!(img, factor=1000.0, lumi=100.0)
     @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
     @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
-    RayTracer.normalize_image!(img, factor = 1000.0)
+    RayTracer.normalize_image!(img, factor=1000.0)
     @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
     @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
     # Clamp image
@@ -197,22 +198,24 @@ end
         @test RayTracer.cross(n, v) ≈ Vec(-0.03, 0.06, -0.03)
     end
 end
-
+#! format: off
 @testset "Transformation" begin
 
     @testset "Consistency" begin
         m = Matrix{Float32}([
-            1.0  2.0  3.0  4.0;
-            5.0  6.0  7.0  8.0;
-            9.0  9.0  8.0  7.0;
-            6.0  5.0  4.0  1.0;
+            1.0 2.0 3.0 4.0
+            5.0 6.0 7.0 8.0
+            9.0 9.0 8.0 7.0
+            6.0 5.0 4.0 1.0
         ])
-        invm = Matrix{Float32}([
-            -3.75   2.75  -1.0  0.0;
-            4.375  -3.875  2.0  -0.5;
-            0.5    0.5   -1.0  1.0;
-            -1.375  0.875  0.0  -0.5;
-        ])
+        invm = Matrix{Float32}(
+            [
+                 -3.75   2.75 -1.0  0.0
+                 4.375 -3.875  2.0 -0.5
+                   0.5    0.5 -1.0  1.0
+                -1.375  0.875  0.0 -0.5
+            ],
+        )
         T = Transformation(HomMatrix(m), HomMatrix(invm))
         @test RayTracer._is_consistent(T)
         # Create a copy of the matrices so that each Transformation has its own copy of the data
@@ -221,58 +224,66 @@ end
         T3 = Transformation(HomMatrix(copy(m)), HomMatrix(copy(invm)))
         @test T ≈ T1
         # Change one element of T.M: this makes T not consistent
-        T2.M.matrix[1,1] += 1
+        T2.M.matrix[1, 1] += 1
         @test !(T ≈ T2)
         @test !(RayTracer._is_consistent(T2))
         # Change one element of T.invM: this makes T not consistent
-        T3.invM.matrix[1,3] += 1
+        T3.invM.matrix[1, 3] += 1
         @test !(T ≈ T3)
         @test !(RayTracer._is_consistent(T3))
     end
 
     @testset "Multiplication" begin
         m1 = Matrix{Float32}([
-            1.0  2.0  3.0  4.0;
-            5.0  6.0  7.0  8.0;
-            9.0  9.0  8.0  7.0;
-            6.0  5.0  4.0  1.0;
+            1.0 2.0 3.0 4.0
+            5.0 6.0 7.0 8.0
+            9.0 9.0 8.0 7.0
+            6.0 5.0 4.0 1.0
         ])
-        invm1 = Matrix{Float32}([
-            -3.75   2.75  -1.0  0.0;
-            4.375  -3.875  2.0  -0.5;
-            0.5    0.5   -1.0  1.0;
-            -1.375  0.875  0.0  -0.5;
-        ])
+        invm1 = Matrix{Float32}(
+            [
+                 -3.75   2.75 -1.0  0.0
+                 4.375 -3.875  2.0 -0.5
+                   0.5    0.5 -1.0  1.0
+                -1.375  0.875  0.0 -0.5
+            ],
+        )
         T1 = Transformation(HomMatrix(m1), HomMatrix(invm1))
         @test RayTracer._is_consistent(T1)
 
         m2 = Matrix{Float32}([
-            3.0   5.0   2.0   4.0;
-            4.0   1.0   0.0   5.0;
-            6.0   3.0   2.0   0.0;
-            1.0   4.0   2.0   1.0;
+            3.0 5.0 2.0 4.0
+            4.0 1.0 0.0 5.0
+            6.0 3.0 2.0 0.0
+            1.0 4.0 2.0 1.0
         ])
-        invm2 = Matrix{Float32}([
-            0.4   -0.2    0.2   -0.6;
-            2.9   -1.7    0.2   -3.1;
-        -5.55   3.15  -0.4    6.45;
-        -0.9    0.7   -0.2    1.1;
-        ])
+        invm2 = Matrix{Float32}(
+            [
+                  0.4 -0.2  0.2 -0.6
+                  2.9 -1.7  0.2 -3.1
+                -5.55 3.15 -0.4 6.45
+                 -0.9  0.7 -0.2  1.1
+            ],
+        )
         T2 = Transformation(HomMatrix(m2), HomMatrix(invm2))
         @test RayTracer._is_consistent(T2)
 
-        expected_m = Matrix{Float32}([
-            33.0   32.0   16.0   18.0;
-            89.0   84.0   40.0   58.0;
-            118.0 106.0   48.0   88.0;
-            63.0   51.0   22.0   50.0;
-        ])
-        expected_invm = Matrix{Float32}([
-           -1.45    1.45   -1.0    0.6;
-          -13.95   11.95   -6.5    2.6;
-           25.525 -22.025  12.25  -5.2;
-            4.825  -4.325   2.5   -1.1;
-        ])
+        expected_m = Matrix{Float32}(
+            [
+                 33.0  32.0 16.0 18.0
+                 89.0  84.0 40.0 58.0
+                118.0 106.0 48.0 88.0
+                 63.0  51.0 22.0 50.0
+            ],
+        )
+        expected_invm = Matrix{Float32}(
+            [
+                 -1.45    1.45  -1.0  0.6
+                -13.95   11.95  -6.5  2.6
+                25.525 -22.025 12.25 -5.2
+                 4.825  -4.325   2.5 -1.1
+            ],
+        )
         expected = Transformation(HomMatrix(expected_m), HomMatrix(expected_invm))
         @test RayTracer._is_consistent(expected)
 
@@ -282,17 +293,19 @@ end
 
     @testset "× Vec/Point/Normal" begin
         m_mat = Matrix{Float32}([
-            1.0  2.0  3.0  4.0;
-            5.0  6.0  7.0  8.0;
-            9.0  9.0  8.0  7.0;
-            0.0  0.0  0.0  1.0;
+            1.0 2.0 3.0 4.0
+            5.0 6.0 7.0 8.0
+            9.0 9.0 8.0 7.0
+            0.0 0.0 0.0 1.0
         ])
-        invm_mat = Matrix{Float32}([
-            -3.75   2.75  -1.0   0.0;
-            5.75  -4.75   2.0   1.0;
-            -2.25   2.25  -1.0  -2.0;
-            0.0    0.0    0.0   1.0;
-        ])
+        invm_mat = Matrix{Float32}(
+            [
+                -3.75  2.75 -1.0  0.0
+                 5.75 -4.75  2.0  1.0
+                -2.25  2.25 -1.0 -2.0
+                  0.0   0.0  0.0  1.0
+            ],
+        )
         T = Transformation(HomMatrix(m_mat), HomMatrix(invm_mat))
         @test RayTracer._is_consistent(T)
 
@@ -322,9 +335,6 @@ end
         @test RayTracer._is_consistent(rotation_x(0.1))
         @test RayTracer._is_consistent(rotation_y(0.1))
         @test RayTracer._is_consistent(rotation_z(0.1))
-        VEC_X = Vec(1.0, 0.0, 0.0)
-        VEC_Y = Vec(0.0, 1.0, 0.0)
-        VEC_Z = Vec(0.0, 0.0, 1.0)
         @test (rotation_x(90) * VEC_Y) ≈ VEC_Z
         @test (rotation_y(90) * VEC_Z) ≈ VEC_X
         @test (rotation_z(90) * VEC_X) ≈ VEC_Y
@@ -339,5 +349,104 @@ end
         @test RayTracer._is_consistent(prod)
         expected = scaling(6.0, 10.0, 40.0)
         @test prod ≈ expected
+    end
+end
+#! format: on
+
+@testset "Ray" begin
+    # ≈
+    ray1 = Ray(Point(1.0, 2.0, 3.0), Vec(5.0, 4.0, -1.0))
+    ray2 = Ray(Point(1.0, 2.0, 3.0), Vec(5.0, 4.0, -1.0))
+    ray3 = Ray(Point(1.0, 2.0, 3.0), Vec(3.0, 9.0, 4.0))
+    ray4 = Ray(Point(5.0, 1.0, 4.0), Vec(5.0, 4.0, -1.0))
+    @test ray1 ≈ ray2
+    @test !(ray1 ≈ ray3)
+    @test !(ray1 ≈ ray4)
+    # at method
+    ray = Ray(Point(1.0, 2.0, 4.0), Vec(4.0, 2.0, 1.0))
+    RayTracer.at(ray, 0.0) ≈ ray.origin
+    RayTracer.at(ray, 1.0) ≈ Point(5.0, 4.0, 5.0)
+    RayTracer.at(ray, 2.0) ≈ Point(9.0, 6.0, 6.0)
+    # Ray transformation
+    ray = Ray(Point(1.0, 2.0, 3.0), Vec(6.0, 5.0, 4.0))
+    transformation = translation(Vec(10.0, 11.0, 12.0)) * rotation_x(90.0)
+    newray = transform(ray, transformation)
+    @test newray.origin ≈ Point(11.0, 8.0, 14.0)
+    @test newray.dir ≈ Vec(6.0, -4.0, 5.0)
+end
+
+@testset "Camera" begin
+
+    @testset "OrthogonalCamera" begin
+        aspect_ratio = 2.0
+        cam = OrthogonalCamera(aspect_ratio)
+        ray1 = fire_ray(cam, 0.0, 0.0)
+        ray2 = fire_ray(cam, 1.0, 0.0)
+        ray3 = fire_ray(cam, 0.0, 1.0)
+        ray4 = fire_ray(cam, 1.0, 1.0)
+        # Verify that the rays are parallel by verifying that cross-products vanish
+        @test squared_norm(cross(ray1.dir, ray2.dir)) ≈ 0.0
+        @test squared_norm(cross(ray1.dir, ray3.dir)) ≈ 0.0
+        @test squared_norm(cross(ray1.dir, ray4.dir)) ≈ 0.0
+        # Verify that the ray hitting the corners have the right coordinates
+        @test RayTracer.at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
+        @test RayTracer.at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
+        @test RayTracer.at(ray3, 1.0) ≈ Point(0.0, 2.0, 1.0)
+        @test RayTracer.at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
+        # Verify correctness of the transformation applied to Camera
+        aspect_ratio = 2.0
+        transformation = translation(RayTracer.neg(VEC_Y) * 2.0) * rotation_z(90)
+        cam = OrthogonalCamera(aspect_ratio, transformation)
+        ray = fire_ray(cam, 0.5, 0.5)
+        @test RayTracer.at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
+    end
+
+    @testset "PerspectiveCamera" begin
+        aspect_ratio = 2.0
+        cam = PerspectiveCamera(aspect_ratio)
+
+        ray1 = fire_ray(cam, 0.0, 0.0)
+        ray2 = fire_ray(cam, 1.0, 0.0)
+        ray3 = fire_ray(cam, 0.0, 1.0)
+        ray4 = fire_ray(cam, 1.0, 1.0)
+
+        # Verify that all the rays depart from the same point
+        @test ray1.origin ≈ ray2.origin
+        @test ray2.origin ≈ ray3.origin
+        @test ray3.origin ≈ ray4.origin
+
+        # Verify that the ray hitting the corners have the right coordinates
+        @test RayTracer.at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
+        @test RayTracer.at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
+        @test RayTracer.at(ray3, 1.0) ≈ Point(0.0, 2.0, 1.0)
+        @test RayTracer.at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
+        # Verify correctness of the transformation applied to Camera
+        aspect_ratio = 2.0
+        screen_distance = 1.0
+        transformation = translation(RayTracer.neg(VEC_Y) * 2.0) * rotation_z(90)
+        cam = PerspectiveCamera(screen_distance, aspect_ratio, transformation)
+        ray = fire_ray(cam, 0.5, 0.5)
+        @test RayTracer.at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
+    end
+
+    @testset "ImageTracer" begin
+        aspect_ratio = 2.0
+        width = 4
+        height = 2
+        img = HdrImage(width, height)
+        cam = PerspectiveCamera(aspect_ratio)
+        tracer = ImageTracer(img, cam)
+        ray1 = fire_ray(tracer, 1, 1, u_pixel=2.5, v_pixel=1.5)
+        ray2 = fire_ray(tracer, 3, 2, u_pixel=0.5, v_pixel=0.5)
+        @test ray1 ≈ ray2
+        function lambda(ray::Ray)
+            return ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+        end
+        fire_all_rays!(tracer, lambda)
+        for row = 1:tracer.image.height
+            for col = 1:tracer.image.width
+                @test RayTracer.get_pixel(img, col, row) ≈ ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+            end
+        end
     end
 end

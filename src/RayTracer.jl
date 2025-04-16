@@ -1,9 +1,12 @@
 module RayTracer
 
+import Base: +, -, *, ≈
+import Base: write, show
 import ColorTypes
 import Images
 import LinearAlgebra
 
+export Point, Vec, Normal, VEC_X, VEC_Y, VEC_Z, Ray
 export +,
     *,
     ≈,
@@ -35,8 +38,11 @@ include("colors.jl")
 include("io.jl")
 include("geometry.jl")
 include("transformation.jl")
+include("cameras.jl")
 
-# Parameters
+# ─────────────────────────────────────────────────────────────
+# Parameters for PFM file conversion
+# ─────────────────────────────────────────────────────────────
 mutable struct Parameters
     input_pfm_file_name::String
     factor::Real

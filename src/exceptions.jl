@@ -1,3 +1,6 @@
+# ─────────────────────────────────────────────────────────────
+# Defining new customized Exceptions
+# ─────────────────────────────────────────────────────────────
 """
     struct WrongPFMformat <: Exception
 Custom exception for handling incorrect PFM file format errors.
