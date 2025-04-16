@@ -18,7 +18,8 @@ jobs:
     strategy:
       matrix:
         julia-version:
-          - '1.x'
+          - '1.10'  # Test on Julia 1.10 (current LTS)
+          - '1.11'  # Test on Julia 1.11 (latest stable)
         os:
           - ubuntu-latest
           - windows-latest
