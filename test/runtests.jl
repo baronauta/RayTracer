@@ -414,7 +414,7 @@ end
         @test ray1.origin ≈ ray2.origin
         @test ray2.origin ≈ ray3.origin
         @test ray3.origin ≈ ray4.origin
-    
+
         # Verify that the ray hitting the corners have the right coordinates
         @test RayTracer.at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
         @test RayTracer.at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
