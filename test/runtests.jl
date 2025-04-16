@@ -402,6 +402,30 @@ end
     end
 
     @testset "PerspectiveCamera" begin
+        aspect_ratio = 2.0
+        cam = PerspectiveCamera(aspect_ratio)
 
+        ray1 = fire_ray(cam, 0.0, 0.0)
+        ray2 = fire_ray(cam, 1.0, 0.0)
+        ray3 = fire_ray(cam, 0.0, 1.0)
+        ray4 = fire_ray(cam, 1.0, 1.0)
+
+        # Verify that all the rays depart from the same point
+        @test ray1.origin ≈ ray2.origin
+        @test ray2.origin ≈ ray3.origin
+        @test ray3.origin ≈ ray4.origin
+    
+        # Verify that the ray hitting the corners have the right coordinates
+        @test RayTracer.at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
+        @test RayTracer.at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
+        @test RayTracer.at(ray3, 1.0) ≈ Point(0.0, 2.0, 1.0)
+        @test RayTracer.at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
+        # Verify correctness of the transformation applied to Camera
+        aspect_ratio = 2.0
+        screen_distance = 1.0
+        transformation = translation(RayTracer.neg(VEC_Y) * 2.0) * rotation_z(90)
+        cam = PerspectiveCamera(screen_distance, aspect_ratio, transformation)
+        ray = fire_ray(cam, 0.5, 0.5)
+        @test RayTracer.at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
     end
 end

@@ -64,6 +64,7 @@ end
 
 abstract type Camera{T<:AbstractFloat} end
 
+#Orthogonal Camera
 struct OrthogonalCamera{T<:AbstractFloat} <: Camera{T}
     aspect_ratio::Union{Rational{Int64},T}
     transformation::Transformation
@@ -86,4 +87,27 @@ function fire_ray(cam::OrthogonalCamera, u::AbstractFloat, v::AbstractFloat)
     return transform(ray, cam.transformation)
 end
 
-struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T} end
+# Prospective Camera
+struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T} 
+    distance::AbstractFloat
+    aspect_ratio::Union{Rational{Int64},T}
+    transformation::Transformation
+end
+
+# Default constructor with implicit transformation (identity)
+function PerspectiveCamera(aspect_ratio::Union{Rational{Int64},T}) where {T<:AbstractFloat}
+    distance = 1.0
+    transformation =
+        Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+    PerspectiveCamera{T}(distance, aspect_ratio, transformation)
+end
+
+function fire_ray(cam::PerspectiveCamera, u::AbstractFloat, v::AbstractFloat)
+    x = - cam.distance
+    y = 0.0
+    z = 0.0
+    origin = Point(x, y, z)
+    dir = Vec(cam.distance, (1.0 - 2.0 * u) * cam.aspect_ratio, 2.0 * v - 1.0)
+    ray = Ray(origin, dir)
+    return transform(ray, cam.transformation)
+end
