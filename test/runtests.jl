@@ -6,7 +6,7 @@ import ColorTypes
 import RayTracer: Point, Vec, Normal, dot, cross, norm, squared_norm
 import RayTracer: HomMatrix, Transformation
 import RayTracer: translation, rotation_x, rotation_y, rotation_z, scaling
-import RayTracer: Ray, transform, OrthogonalCamera, PerspectiveCamera, fire_ray
+import RayTracer: Ray, transform, OrthogonalCamera, PerspectiveCamera, fire_ray, ImageTracer, fire_all_rays!
 
 @testset "Colors" begin
     c1 = ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
@@ -92,7 +92,7 @@ end
     else
         @test contents == BE_REFERENCE_BYTES
     end
-    write(buf, img, endianness = 1.0)
+    write(buf, img, endianness=1.0)
     contents = take!(buf)
     @test contents == BE_REFERENCE_BYTES
 end
@@ -100,34 +100,34 @@ end
 @testset "ToneMapping" begin
     # Luminosity
     col1 = ColorTypes.RGB{Float32}(10.0, 3.0, 2.0)
-    @test RayTracer.luminosity(col1, mean_type = :max_min) ≈ 6
-    @test RayTracer.luminosity(col1, mean_type = :arithmetic) ≈ 5
-    @test RayTracer.luminosity(col1, mean_type = :weighted) ≈ 5
-    @test RayTracer.luminosity(col1, mean_type = :weighted, weights = [1, 2, 5]) ≈ 3.25
+    @test RayTracer.luminosity(col1, mean_type=:max_min) ≈ 6
+    @test RayTracer.luminosity(col1, mean_type=:arithmetic) ≈ 5
+    @test RayTracer.luminosity(col1, mean_type=:weighted) ≈ 5
+    @test RayTracer.luminosity(col1, mean_type=:weighted, weights=[1, 2, 5]) ≈ 3.25
     @test isapprox(
-        RayTracer.luminosity(col1, mean_type = :distance),
+        RayTracer.luminosity(col1, mean_type=:distance),
         10.6301;
-        atol = 0.0001,
+        atol=0.0001,
     )
     # Logarithmic average
     # Image for test
     img = HdrImage(2, 1)
     RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0)) # Luminosity (min-max): 10.0
     RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0)) # Luminosity (min-max): 1000.0
-    @test RayTracer.log_average(img, mean_type = :max_min, delta = 0.0) ≈ 100.0
+    @test RayTracer.log_average(img, mean_type=:max_min, delta=0.0) ≈ 100.0
     # Test that delta helps in avoiding log singularity when a pixel is black
     img = HdrImage(2, 1)
     RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(50.0, 100.0, 150.0)) # Luminosity (min-max): 100.0
-    @test RayTracer.log_average(img, mean_type = :max_min) ≈ 1e-4
+    @test RayTracer.log_average(img, mean_type=:max_min) ≈ 1e-4
     # Normalization
     # Image for test
     img = HdrImage(2, 1)
     RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0))
     RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0))
-    RayTracer.normalize_image!(img, factor = 1000.0, lumi = 100.0)
+    RayTracer.normalize_image!(img, factor=1000.0, lumi=100.0)
     @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
     @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
-    RayTracer.normalize_image!(img, factor = 1000.0)
+    RayTracer.normalize_image!(img, factor=1000.0)
     @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
     @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
     # Clamp image
@@ -427,5 +427,26 @@ end
         cam = PerspectiveCamera(screen_distance, aspect_ratio, transformation)
         ray = fire_ray(cam, 0.5, 0.5)
         @test RayTracer.at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
+    end
+
+    @testset "ImageTracer" begin
+        aspect_ratio = 2.0
+        width = 4
+        height = 2
+        img = HdrImage(width, height)
+        cam = PerspectiveCamera(aspect_ratio)
+        tracer = ImageTracer(img, cam)
+        ray1 = fire_ray(tracer, 1, 1, u_pixel=2.5, v_pixel=1.5)
+        ray2 = fire_ray(tracer, 3, 2, u_pixel=0.5, v_pixel=0.5)
+        @test ray1 ≈ ray2
+        function lambda(ray::Ray)
+            return ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+        end
+        fire_all_rays!(tracer, lambda)
+        for row = 1:tracer.image.height
+            for col = 1:tracer.image.width
+                @test RayTracer.get_pixel(img, col, row) ≈ ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+            end
+        end
     end
 end
