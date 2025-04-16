@@ -31,7 +31,7 @@ jobs:
           version: ${{ matrix.julia-version }}
 
       - name: Install dependencies
-        run: julia -e 'using Pkg; Pkg.instantiate()'
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
 
       - name: Run tests
-        run: julia -e 'using Pkg; Pkg.test()'
+        run: julia --project=. -e "using Pkg; Pkg.test()"
