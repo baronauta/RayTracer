@@ -135,12 +135,12 @@ function *(scalar::Real, n::Normal)
 end
 
 "Multiply a `Vec` or a `Normal` with -1."
-function neg(v::Union{Vec, Normal})
+function neg(v::Union{Vec,Normal})
     (-1) * v
 end
 
 "Dot product between two vectors, either of type `Vec` or `Normal`."
-function dot(v::Union{Vec, Normal}, u::Union{Vec, Normal})
+function dot(v::Union{Vec,Normal}, u::Union{Vec,Normal})
     return v.x * u.x + v.y * u.y + v.z * u.z
 end
 
@@ -170,17 +170,17 @@ end
 # ─────────────────────────────────────────────────────────────
 
 "Given a vector, either of type `Vec` or `Normal`, compute the squared norm, i.e. v.x^2 + v.y^2 + v.z^2."
-function squared_norm(v::Union{Vec, Normal})
+function squared_norm(v::Union{Vec,Normal})
     return v.x^2 + v.y^2 + v.z^2
 end
 
 "Given a vector, either of type `Vec` or `Normal`, compute the norm, i.e. ||v|| = √(v.x^2 + v.y^2 + v.z^2)."
-function norm(v::Union{Vec, Normal})
+function norm(v::Union{Vec,Normal})
     sqrt(squared_norm(v))
 end
 
 "Given a vector, either of type `Vec` or `Normal`, normalize it, i.e. v → v / ||v||."
-function normalize(v::Union{Vec, Normal})
+function normalize(v::Union{Vec,Normal})
     return v / norm(v)
 end
 

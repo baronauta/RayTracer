@@ -198,22 +198,24 @@ end
         @test RayTracer.cross(n, v) ≈ Vec(-0.03, 0.06, -0.03)
     end
 end
-
+#! format: off
 @testset "Transformation" begin
 
     @testset "Consistency" begin
         m = Matrix{Float32}([
-            1.0  2.0  3.0  4.0;
-            5.0  6.0  7.0  8.0;
-            9.0  9.0  8.0  7.0;
-            6.0  5.0  4.0  1.0;
+            1.0 2.0 3.0 4.0
+            5.0 6.0 7.0 8.0
+            9.0 9.0 8.0 7.0
+            6.0 5.0 4.0 1.0
         ])
-        invm = Matrix{Float32}([
-            -3.75   2.75  -1.0  0.0;
-            4.375  -3.875  2.0  -0.5;
-            0.5    0.5   -1.0  1.0;
-            -1.375  0.875  0.0  -0.5;
-        ])
+        invm = Matrix{Float32}(
+            [
+                 -3.75   2.75 -1.0  0.0
+                 4.375 -3.875  2.0 -0.5
+                   0.5    0.5 -1.0  1.0
+                -1.375  0.875  0.0 -0.5
+            ],
+        )
         T = Transformation(HomMatrix(m), HomMatrix(invm))
         @test RayTracer._is_consistent(T)
         # Create a copy of the matrices so that each Transformation has its own copy of the data
@@ -222,58 +224,66 @@ end
         T3 = Transformation(HomMatrix(copy(m)), HomMatrix(copy(invm)))
         @test T ≈ T1
         # Change one element of T.M: this makes T not consistent
-        T2.M.matrix[1,1] += 1
+        T2.M.matrix[1, 1] += 1
         @test !(T ≈ T2)
         @test !(RayTracer._is_consistent(T2))
         # Change one element of T.invM: this makes T not consistent
-        T3.invM.matrix[1,3] += 1
+        T3.invM.matrix[1, 3] += 1
         @test !(T ≈ T3)
         @test !(RayTracer._is_consistent(T3))
     end
 
     @testset "Multiplication" begin
         m1 = Matrix{Float32}([
-            1.0  2.0  3.0  4.0;
-            5.0  6.0  7.0  8.0;
-            9.0  9.0  8.0  7.0;
-            6.0  5.0  4.0  1.0;
+            1.0 2.0 3.0 4.0
+            5.0 6.0 7.0 8.0
+            9.0 9.0 8.0 7.0
+            6.0 5.0 4.0 1.0
         ])
-        invm1 = Matrix{Float32}([
-            -3.75   2.75  -1.0  0.0;
-            4.375  -3.875  2.0  -0.5;
-            0.5    0.5   -1.0  1.0;
-            -1.375  0.875  0.0  -0.5;
-        ])
+        invm1 = Matrix{Float32}(
+            [
+                 -3.75   2.75 -1.0  0.0
+                 4.375 -3.875  2.0 -0.5
+                   0.5    0.5 -1.0  1.0
+                -1.375  0.875  0.0 -0.5
+            ],
+        )
         T1 = Transformation(HomMatrix(m1), HomMatrix(invm1))
         @test RayTracer._is_consistent(T1)
 
         m2 = Matrix{Float32}([
-            3.0   5.0   2.0   4.0;
-            4.0   1.0   0.0   5.0;
-            6.0   3.0   2.0   0.0;
-            1.0   4.0   2.0   1.0;
+            3.0 5.0 2.0 4.0
+            4.0 1.0 0.0 5.0
+            6.0 3.0 2.0 0.0
+            1.0 4.0 2.0 1.0
         ])
-        invm2 = Matrix{Float32}([
-            0.4   -0.2    0.2   -0.6;
-            2.9   -1.7    0.2   -3.1;
-        -5.55   3.15  -0.4    6.45;
-        -0.9    0.7   -0.2    1.1;
-        ])
+        invm2 = Matrix{Float32}(
+            [
+                  0.4 -0.2  0.2 -0.6
+                  2.9 -1.7  0.2 -3.1
+                -5.55 3.15 -0.4 6.45
+                 -0.9  0.7 -0.2  1.1
+            ],
+        )
         T2 = Transformation(HomMatrix(m2), HomMatrix(invm2))
         @test RayTracer._is_consistent(T2)
 
-        expected_m = Matrix{Float32}([
-            33.0   32.0   16.0   18.0;
-            89.0   84.0   40.0   58.0;
-            118.0 106.0   48.0   88.0;
-            63.0   51.0   22.0   50.0;
-        ])
-        expected_invm = Matrix{Float32}([
-           -1.45    1.45   -1.0    0.6;
-          -13.95   11.95   -6.5    2.6;
-           25.525 -22.025  12.25  -5.2;
-            4.825  -4.325   2.5   -1.1;
-        ])
+        expected_m = Matrix{Float32}(
+            [
+                 33.0  32.0 16.0 18.0
+                 89.0  84.0 40.0 58.0
+                118.0 106.0 48.0 88.0
+                 63.0  51.0 22.0 50.0
+            ],
+        )
+        expected_invm = Matrix{Float32}(
+            [
+                 -1.45    1.45  -1.0  0.6
+                -13.95   11.95  -6.5  2.6
+                25.525 -22.025 12.25 -5.2
+                 4.825  -4.325   2.5 -1.1
+            ],
+        )
         expected = Transformation(HomMatrix(expected_m), HomMatrix(expected_invm))
         @test RayTracer._is_consistent(expected)
 
@@ -283,17 +293,19 @@ end
 
     @testset "× Vec/Point/Normal" begin
         m_mat = Matrix{Float32}([
-            1.0  2.0  3.0  4.0;
-            5.0  6.0  7.0  8.0;
-            9.0  9.0  8.0  7.0;
-            0.0  0.0  0.0  1.0;
+            1.0 2.0 3.0 4.0
+            5.0 6.0 7.0 8.0
+            9.0 9.0 8.0 7.0
+            0.0 0.0 0.0 1.0
         ])
-        invm_mat = Matrix{Float32}([
-            -3.75   2.75  -1.0   0.0;
-            5.75  -4.75   2.0   1.0;
-            -2.25   2.25  -1.0  -2.0;
-            0.0    0.0    0.0   1.0;
-        ])
+        invm_mat = Matrix{Float32}(
+            [
+                -3.75  2.75 -1.0  0.0
+                 5.75 -4.75  2.0  1.0
+                -2.25  2.25 -1.0 -2.0
+                  0.0   0.0  0.0  1.0
+            ],
+        )
         T = Transformation(HomMatrix(m_mat), HomMatrix(invm_mat))
         @test RayTracer._is_consistent(T)
 
@@ -339,6 +351,7 @@ end
         @test prod ≈ expected
     end
 end
+#! format: on
 
 @testset "Ray" begin
     # ≈
@@ -363,7 +376,7 @@ end
 end
 
 @testset "Camera" begin
-    
+
     @testset "OrthogonalCamera" begin
         aspect_ratio = 2.0
         cam = OrthogonalCamera(aspect_ratio)
@@ -389,6 +402,6 @@ end
     end
 
     @testset "PerspectiveCamera" begin
-        
+
     end
 end

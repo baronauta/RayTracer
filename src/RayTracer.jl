@@ -40,7 +40,9 @@ include("geometry.jl")
 include("transformation.jl")
 include("cameras.jl")
 
-# Parameters
+# ─────────────────────────────────────────────────────────────
+# Parameters for PFM file conversion
+# ─────────────────────────────────────────────────────────────
 mutable struct Parameters
     input_pfm_file_name::String
     factor::Real

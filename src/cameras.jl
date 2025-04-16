@@ -27,7 +27,13 @@ end
 
 
 # Outer constructor with defaults
-function Ray(origin::Point{T}, dir::Vec{T}; tmin::T=1e-5, tmax::T=typemax(T), depth::Integer=0) where {T}
+function Ray(
+    origin::Point{T},
+    dir::Vec{T};
+    tmin::T = 1e-5,
+    tmax::T = typemax(T),
+    depth::Integer = 0,
+) where {T}
     Ray{T}(origin, dir, tmin, tmax, depth)
 end
 
@@ -38,7 +44,7 @@ end
 function at(ray::Ray, t::AbstractFloat)
     # r(t) = O + t ⋅ d;
     # O is a Point, d a vector and t a scalar.
-    return ray.origin + t * ray.dir 
+    return ray.origin + t * ray.dir
 end
 
 function transform(ray::Ray, T::Transformation)
@@ -59,25 +65,25 @@ end
 abstract type Camera{T<:AbstractFloat} end
 
 struct OrthogonalCamera{T<:AbstractFloat} <: Camera{T}
-    aspect_ratio::Union{Rational{Int64}, T}
+    aspect_ratio::Union{Rational{Int64},T}
     transformation::Transformation
 end
 
 # Default constructor with implicit transformation (identity)
-function OrthogonalCamera(aspect_ratio::Union{Rational{Int64}, T}) where {T<:AbstractFloat}
-    transformation = Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+function OrthogonalCamera(aspect_ratio::Union{Rational{Int64},T}) where {T<:AbstractFloat}
+    transformation =
+        Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
     OrthogonalCamera{T}(aspect_ratio, transformation)
 end
 
 function fire_ray(cam::OrthogonalCamera, u::AbstractFloat, v::AbstractFloat)
     x = -1.0
     y = (1.0 - 2.0 * u) * cam.aspect_ratio
-    z = 2. * v -1.0
+    z = 2.0 * v - 1.0
     origin = Point(x, y, z)
     dir = VEC_X
     ray = Ray(origin, dir)
     return transform(ray, cam.transformation)
 end
 
-struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T}
-end
+struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T} end

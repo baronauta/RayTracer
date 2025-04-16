@@ -1,5 +1,10 @@
+# Input/Output utilities
+
 import Base: write
-# Input and Output
+
+# ─────────────────────────────────────────────────────────────
+# Endianness functions
+# ─────────────────────────────────────────────────────────────
 
 # setting my_endian = to host endian
 my_endian = 0.0
@@ -9,7 +14,7 @@ else
     my_endian = 1.0
 end
 
-# functions to check if endianness and PFM file format are valid
+"Check if the endianness format is valid and not zero"
 function check_endianness(value)
     if typeof(value) <: Real
         if value == 0
@@ -24,6 +29,12 @@ function check_endianness(value)
     end
 end
 
+
+# ─────────────────────────────────────────────────────────────
+# Methods for writing Color and images to stream or file
+# ─────────────────────────────────────────────────────────────
+
+"Check if the PFM file format is valid"
 function check_extension(s)
     if !endswith(s, ".PFM")
         throw(
@@ -32,8 +43,16 @@ function check_extension(s)
     end
 end
 
-# Writing Color to stream
+"""
+    write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endian)
 
+Writes an RGB Color to a stream in the specified endianness.
+
+# Arguments:
+- `io::IO`: The output stream to write to;
+- `color::ColorTypes.RGB{Float32}`: The color to write;
+- `endianness`: The byte order for writing (default: `my_endian`).
+"""
 function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endian)
 
     check_endianness(endianness)
@@ -59,7 +78,16 @@ function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endi
     write(io, b)
 end
 
-# Writing HdrImage to stream
+"""
+    write(io::IO, image::HdrImage; endianness = my_endian)
+
+Writes a PFM image to a stream in the specified endianness.
+
+# Arguments:
+- `io::IO`: The output stream to write to;
+- `image::HdrImage`: The HDR image to write;
+- `endianness`: The byte order for writing (default: `my_endian`).
+"""
 function Base.write(io::IO, image::HdrImage; endianness = my_endian)
     check_endianness(endianness)
     bytebuf = transcode(UInt8, "PF\n$(image.width) $(image.height)\n$endianness\n")
@@ -71,7 +99,16 @@ function Base.write(io::IO, image::HdrImage; endianness = my_endian)
     end
 end
 
-# Writing HdrImage to file
+"""
+    write(filename::String, image::HdrImage; endianness = my_endian)
+
+Writes an HDR image to a file in the specified endianness.
+
+# Arguments:
+- `filename::String`: The name of the file to write to;
+- `image::HdrImage`: The HDR image to write;
+- `endianness`: The byte order for writing (default: `my_endian`).
+"""
 function Base.write(filename::String, image::HdrImage; endianness = my_endian)
     check_extension(filename)
     open(filename, "w") do io
@@ -107,16 +144,28 @@ function write_ldr_image(image::HdrImage, filename::String; gamma = 1.0)
     Images.save(filename, image.pixels)
 end
 
+# ─────────────────────────────────────────────────────────────
+# Reading PFM Images functions
+# ─────────────────────────────────────────────────────────────
 
-
-# Read HdrImage from file
+"""
+    read_pfm_image(filename::String)
+Read a PFM Image from a file
+# Returns
+- The corresponding HdrImage.
+"""
 function read_pfm_image(filename::String)
     open(filename, "r") do io
         return read_pfm_image(io)
     end
 end
 
-# Read HdrImage from stream
+"""
+    read_pfm_image(stream::IO)
+Read a PFM Image from a stream
+# Returns
+- The corresponding HdrImage.
+"""
 function read_pfm_image(stream::IO)
     try
         # Read the magic, expected "PF"

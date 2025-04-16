@@ -1,5 +1,9 @@
 import Base: +, *, ≈
 
+# ─────────────────────────────────────────────────────────────
+# Color's Base operations and to_string conversion
+# ─────────────────────────────────────────────────────────────
+
 # Color-Color Sum
 Base.:+(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
     ColorTypes.RGB{Float32}(c1.r + c2.r, c1.g + c2.g, c1.b + c2.b)
@@ -30,6 +34,10 @@ function color_to_string(c::ColorTypes.RGB{Float32})
     return str
 end
 
+
+# ─────────────────────────────────────────────────────────────
+# Defining HdrImage and their functions
+# ─────────────────────────────────────────────────────────────
 
 """
     HdrImage
@@ -81,7 +89,9 @@ function set_pixel!(
     img.pixels[h, w] = new_color
 end
 
-# TONE MAPPING
+# ─────────────────────────────────────────────────────────────
+# Tone Mapping
+# ─────────────────────────────────────────────────────────────
 
 """
     luminosity(color::ColorTypes.RGB{Float32}; mean_type = :max_min, weights = [1,1,1])
