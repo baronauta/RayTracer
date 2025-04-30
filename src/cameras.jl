@@ -179,7 +179,7 @@ function fire_ray(
     =#
 
     u = (col - 1 + u_pixel) / (tracer.image.width)
-    v = (row - 1 + v_pixel) / (tracer.image.height)
+    v = 1 - (row -1 + v_pixel) / (tracer.image.height)
     return fire_ray(tracer.camera, u, v)
 end
 
