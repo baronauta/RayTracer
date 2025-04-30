@@ -430,23 +430,50 @@ end
     end
 
     @testset "ImageTracer" begin
-        aspect_ratio = 2.0
-        width = 4
-        height = 2
-        img = HdrImage(width, height)
-        cam = PerspectiveCamera(aspect_ratio)
-        tracer = ImageTracer(img, cam)
-        ray1 = fire_ray(tracer, 1, 1, u_pixel=2.5, v_pixel=1.5)
-        ray2 = fire_ray(tracer, 3, 2, u_pixel=0.5, v_pixel=0.5)
-        @test ray1 ≈ ray2
-        function lambda(ray::Ray)
-            return ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+        #Set up
+        function setup()
+            aspect_ratio = 2.0
+            width = 4
+            height = 2
+            img = HdrImage(width, height)
+            cam = PerspectiveCamera(aspect_ratio)
+            tracer = ImageTracer(img, cam)
+            return tracer
         end
-        fire_all_rays!(tracer, lambda)
-        for row = 1:tracer.image.height
-            for col = 1:tracer.image.width
-                @test RayTracer.get_pixel(img, col, row) ≈ ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+
+        # Test for pixel's coordinates (u,v)
+        function test1(tracer)
+            ray1 = fire_ray(tracer, 1, 1, u_pixel = 2.5, v_pixel = 1.5)
+            ray2 = fire_ray(tracer, 3, 2, u_pixel = 0.5, v_pixel = 0.5)
+            @test ray1 ≈ ray2
+        end
+
+        # Test for image coverage
+        function test2(tracer)
+            function lambda(ray::Ray)
+                return ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+            end
+            fire_all_rays!(tracer, lambda)
+            for row = 1:tracer.image.height
+                for col = 1:tracer.image.width
+                    @test RayTracer.get_pixel(tracer.image, col, row) ≈
+                          ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+                end
             end
         end
+
+        # Test for orientation
+        function test3(tracer)
+            top_left_ray = fire_ray(tracer, 1, 1, u_pixel = 0.0, v_pixel = 0.0)
+            bottom_right_ray = fire_ray(tracer, 4, 2, u_pixel = 1.0, v_pixel = 1.0)
+            @test Point(0.0, 2.0, 1.0) ≈ RayTracer.at(top_left_ray, 1)
+            @test Point(0.0, -2.0, -1.0) ≈ RayTracer.at(bottom_right_ray, 1)
+        end
+
+        # Do the tests
+        for test in [test1, test2, test3]
+            test(setup())
+        end
+
     end
 end
