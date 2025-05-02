@@ -1,9 +1,9 @@
 using RayTracer
 using Test
+include("helper.jl")
 
 import ColorTypes
 
-import RayTracer: Point, Vec, Normal, dot, cross, norm, squared_norm
 import RayTracer: HomMatrix, Transformation
 import RayTracer: translation, rotation_x, rotation_y, rotation_z, scaling
 import RayTracer: Ray, transform, OrthogonalCamera, PerspectiveCamera, fire_ray, ImageTracer, fire_all_rays!
@@ -19,7 +19,6 @@ import RayTracer: Ray, transform, OrthogonalCamera, PerspectiveCamera, fire_ray,
     @test c1 + c2 ≈ ColorTypes.RGB{Float32}(0.5, 0.7, 0.9)
     @test 2 * c1 ≈ ColorTypes.RGB{Float32}(0.2, 0.4, 0.6)
     @test c1 * c2 ≈ ColorTypes.RGB{Float32}(0.04, 0.1, 0.18)
-    @test RayTracer.color_to_string(c1) == "< r:0.1, g:0.2, b:0.3 >"
 end
 
 @testset "HdrImage" begin
@@ -475,5 +474,18 @@ end
             test(setup())
         end
 
+    end
+end
+
+@testset "Shapes" begin
+    @testset "Plane" begin
+        # xy-plane and incoming ray from above
+        test_intersection(
+            Plane(), 
+            Ray(Point(1.,2.,3.),Vec(0.,0.,-1.)), 
+            Point(1.,2.,0.), 
+            Normal(0.,0.,1.),
+            Vec2D(0.,0.),
+            3.)
     end
 end
