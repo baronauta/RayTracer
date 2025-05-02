@@ -25,10 +25,14 @@ end
 
 "Compare two `HitRecord` types. Useful for tests."
 function ≈(hr1::HitRecord, hr2::HitRecord)
-    hr1.world_point ≈ hr2.world_point &&
-    hr1.normal ≈ hr2.normal &&
-    hr1.surface_point ≈ hr2.surface_point &&
-    hr1.t ≈ hr2.t
+    if isnothing(hr1) || isnothing(hr2)
+        return hr1 == hr2
+    else        
+        hr1.world_point ≈ hr2.world_point &&
+        hr1.normal ≈ hr2.normal &&
+        hr1.surface_point ≈ hr2.surface_point &&
+        hr1.t ≈ hr2.t
+    end
 end
 
 """
