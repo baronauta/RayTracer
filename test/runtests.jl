@@ -1,8 +1,6 @@
 using Test
 include("helper.jl")
 
-import ColorTypes
-
 @testset "Colors" begin
     c1 = RGB(0.1, 0.2, 0.3)
     c2 = RGB(0.4, 0.5, 0.6)
@@ -86,7 +84,7 @@ end
     else
         @test contents == BE_REFERENCE_BYTES
     end
-    write(buf, img, endianness=1.0)
+    write(buf, img, endianness = 1.0)
     contents = take!(buf)
     @test contents == BE_REFERENCE_BYTES
 end
@@ -94,34 +92,30 @@ end
 @testset "ToneMapping" begin
     # Luminosity
     col1 = RGB(10.0, 3.0, 2.0)
-    @test luminosity(col1, mean_type=:max_min) ≈ 6
-    @test luminosity(col1, mean_type=:arithmetic) ≈ 5
-    @test luminosity(col1, mean_type=:weighted) ≈ 5
-    @test luminosity(col1, mean_type=:weighted, weights=[1, 2, 5]) ≈ 3.25
-    @test isapprox(
-        luminosity(col1, mean_type=:distance),
-        10.6301;
-        atol=0.0001,
-    )
+    @test luminosity(col1, mean_type = :max_min) ≈ 6
+    @test luminosity(col1, mean_type = :arithmetic) ≈ 5
+    @test luminosity(col1, mean_type = :weighted) ≈ 5
+    @test luminosity(col1, mean_type = :weighted, weights = [1, 2, 5]) ≈ 3.25
+    @test isapprox(luminosity(col1, mean_type = :distance), 10.6301; atol = 0.0001)
     # Logarithmic average
     # Image for test
     img = HdrImage(2, 1)
     set_pixel!(img, 1, 1, RGB(5.0, 10.0, 15.0)) # Luminosity (min-max): 10.0
     set_pixel!(img, 2, 1, RGB(500.0, 1000.0, 1500.0)) # Luminosity (min-max): 1000.0
-    @test log_average(img, mean_type=:max_min, delta=0.0) ≈ 100.0
+    @test log_average(img, mean_type = :max_min, delta = 0.0) ≈ 100.0
     # Test that delta helps in avoiding log singularity when a pixel is black
     img = HdrImage(2, 1)
     set_pixel!(img, 1, 1, RGB(50.0, 100.0, 150.0)) # Luminosity (min-max): 100.0
-    @test log_average(img, mean_type=:max_min) ≈ 1e-4
+    @test log_average(img, mean_type = :max_min) ≈ 1e-4
     # Normalization
     # Image for test
     img = HdrImage(2, 1)
     set_pixel!(img, 1, 1, RGB(5.0, 10.0, 15.0))
     set_pixel!(img, 2, 1, RGB(500.0, 1000.0, 1500.0))
-    normalize_image!(img, factor=1000.0, lumi=100.0)
+    normalize_image!(img, factor = 1000.0, lumi = 100.0)
     @test get_pixel(img, 1, 1) ≈ RGB(0.5e2, 1.0e2, 1.5e2)
     @test get_pixel(img, 2, 1) ≈ RGB(0.5e4, 1.0e4, 1.5e4)
-    normalize_image!(img, factor=1000.0)
+    normalize_image!(img, factor = 1000.0)
     @test get_pixel(img, 1, 1) ≈ RGB(0.5e2, 1.0e2, 1.5e2)
     @test get_pixel(img, 2, 1) ≈ RGB(0.5e4, 1.0e4, 1.5e4)
     # Clamp image
@@ -450,8 +444,7 @@ end
             fire_all_rays!(tracer, lambda)
             for row = 1:tracer.image.height
                 for col = 1:tracer.image.width
-                    @test get_pixel(tracer.image, col, row) ≈
-                          RGB(0.0, 0.7, 0.8)
+                    @test get_pixel(tracer.image, col, row) ≈ RGB(0.0, 0.7, 0.8)
                 end
             end
         end
@@ -476,11 +469,12 @@ end
     @testset "Plane" begin
         # xy-plane and incoming ray from above
         test_intersection(
-            Plane(), 
-            Ray(Point(1.,2.,3.),Vec(0.,0.,-1.)), 
-            Point(1.,2.,0.), 
-            Normal(0.,0.,1.),
-            Vec2D(0.,0.),
-            3.)
+            Plane(),
+            Ray(Point(1.0, 2.0, 3.0), Vec(0.0, 0.0, -1.0)),
+            Point(1.0, 2.0, 0.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            3.0,
+        )
     end
 end
