@@ -21,6 +21,15 @@ struct Vec{T<:AbstractFloat}
     z::T
 end
 
+"""
+A 2D vector with components `(u, v)` of type `T`. 
+Use it for describing surfaces, 2D objects, of 3D shapes.
+"""
+struct Vec2D{T<:AbstractFloat}
+    u::T
+    v::T
+end
+
 "A 3D vector, orthogonal to a surface, with components `(x, y, z)` of type `T`."
 struct Normal{T<:AbstractFloat}
     x::T
