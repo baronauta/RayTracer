@@ -24,7 +24,7 @@ struct HitRecord{T<:AbstractFloat}
 end
 
 "Compare two `HitRecord` types. Useful for tests."
-function ≈(hr1::HitRecord, hr2::HitRecord)
+function ≈(hr1::Union{HitRecord, Nothing}, hr2::Union{HitRecord, Nothing})
     if isnothing(hr1) || isnothing(hr2)
         return hr1 == hr2
     else        
