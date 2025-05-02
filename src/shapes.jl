@@ -23,6 +23,14 @@ struct HitRecord{T<:AbstractFloat}
     ray::Ray{T}
 end
 
+"Compare two `HitRecord` types. Useful for tests."
+function ≈(hr1::HitRecord, hr2::HitRecord)
+    hr1.world_point ≈ hr2.world_point &&
+    hr1.normal ≈ hr2.normal &&
+    hr1.surface_point ≈ hr2.surface_point &&
+    hr1.t ≈ hr2.t
+end
+
 """
 Adjust surface normal to face against the incoming ray direction.
 Ensures dot(n, d) < 0.
