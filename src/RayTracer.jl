@@ -39,6 +39,7 @@ include("io.jl")
 include("geometry.jl")
 include("transformation.jl")
 include("cameras.jl")
+include("shapes.jl")
 
 # ─────────────────────────────────────────────────────────────
 # Parameters for PFM file conversion
