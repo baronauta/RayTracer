@@ -49,19 +49,9 @@ import RayTracer:
     fire_ray,
     fire_all_rays!
 # from shapes.jl
-import RayTracer: Shape, Plane, ray_intersection
+import RayTracer: Shape, Plane, HitRecord, ray_intersection
 
-function test_intersection(
-    s::Shape,
-    r::Ray,
-    wp::Point,
-    n::Normal,
-    sp::Vec2D,
-    t::AbstractFloat,
-)
+function test_intersection(s::Shape, r::Ray, expected_hr::Union{HitRecord, Nothing})
     hitrecord = ray_intersection(s, r)
-    @test hitrecord.world_point ≈ wp
-    @test hitrecord.normal ≈ n
-    @test hitrecord.surface_point ≈ sp
-    @test hitrecord.t ≈ t
+    @test hitrecord ≈ expected_hr
 end
