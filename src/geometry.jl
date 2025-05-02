@@ -83,6 +83,12 @@ function ≈(v::Vec, u::Vec)
            isapprox(v.z, u.z, rtol = 1e-5, atol = 1e-5)
 end
 
+"Compare two `Vec2D` types. Useful for tests."
+function ≈(a::Vec2D, b::Vec2D)
+    return isapprox(a.u, b.u, rtol = 1e-5, atol = 1e-5) &&
+           isapprox(a.v, b.v, rtol = 1e-5, atol = 1e-5)
+end
+
 "Compare two `Normal` types. Useful for tests."
 function ≈(n::Normal, m::Normal)
     return isapprox(n.x, m.x, rtol = 1e-5, atol = 1e-5) &&
