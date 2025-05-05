@@ -1,9 +1,12 @@
+# ─────────────────────────────────────────────────────────────
+# Shape type and functions
+# ─────────────────────────────────────────────────────────────
 """ 
 Abstract base type for geometric shapes.
 
 Subtypes:
-- `Sphere`
 - `Plane`
+- `Sphere`
 """
 abstract type Shape{T<:AbstractFloat} end
 
@@ -42,6 +45,10 @@ Ensures dot(n, d) < 0.
 function _adjustnormal(normal::Normal, ray::Ray)
     dot(normal, ray.dir) < 0 ? normal : -1 * normal
 end
+
+# ─────────────────────────────────────────────────────────────
+# Plane definition and functions
+# ─────────────────────────────────────────────────────────────
 
 """
 Define a xy-plane (z=0) and associate a transformation to it.
@@ -96,4 +103,46 @@ function ray_intersection(plane::Plane, ray::Ray)
         Vec2D(hit_point.x - floor(hit_point.x), hit_point.y - floor(hit_point.y))
 
     return HitRecord(world_point, normal, surface_point, t, ray)
+end
+
+
+# ─────────────────────────────────────────────────────────────
+# Sphere definition and functions
+# ─────────────────────────────────────────────────────────────
+
+"""
+Define a 3D unit sphere centered on the origin of the axes
+and associate a transformation to it.
+"""
+struct Sphere{T<:AbstractFloat} <: Shape{T}
+    transformation::Transformation{T}
+end
+
+"""
+Define a 3D unit sphere centered on the origin of the axes.
+Associated transformation is identity.
+"""
+function Sphere()
+    transformation =
+        Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+    Sphere(transformation)
+end
+
+"""
+Convert a 3D point on the surface of the unit sphere into a (u, v) 2D point
+"""
+function _sphere_point_to_uv(point::Point)
+    return Vec2D(
+        u = (atan(point.y, point.x) + π) / (2.0 * π),
+        v = acos(point.z) / π
+    )
+end
+
+"""
+Compute the normal of a unit sphere.
+The normal is computed for a point (`Point`) on the surface of the
+sphere and the right direction is choosen using `_adjustnormal`.
+"""
+function _sphere_normal(point::Point, ray::Ray)
+    _adjustnormal(Normal(point.x, point.y, point.z), ray)
 end
