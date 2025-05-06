@@ -468,144 +468,147 @@ end
 @testset "Shapes" begin
     @testset "Plane" begin
         # xy-plane and incoming orthogonal ray from above
-        ray_above = Ray(Point(1., 2., 3.), Vec(0., 0., -1.))
+        ray_above = Ray(Point(1.0, 2.0, 3.0), Vec(0.0, 0.0, -1.0))
         hr_above = HitRecord(
-            Point(1., 2., 0.),
-            Normal(0., 0., 1.),
-            Vec2D(0., 0.),
-            3.,
-            ray_above)
+            Point(1.0, 2.0, 0.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            3.0,
+            ray_above,
+        )
         test_intersection(Plane(), ray_above, hr_above)
         # xy-plane and incoming 45° ray from below
-        ray_diag = Ray(Point(1., 1., -1.), Vec(-1., -1., 1.))
+        ray_diag = Ray(Point(1.0, 1.0, -1.0), Vec(-1.0, -1.0, 1.0))
         hr_diag = HitRecord(
-            Point(0., 0., 0.),
-            Normal(0., 0., -1.),
-            Vec2D(0., 0.),
-            1.,
-            ray_diag
+            Point(0.0, 0.0, 0.0),
+            Normal(0.0, 0.0, -1.0),
+            Vec2D(0.0, 0.0),
+            1.0,
+            ray_diag,
         )
         test_intersection(Plane(), ray_diag, hr_diag)
         # xy-plane and ray in x-direction: no intersection
-        ray_x = Ray(Point(1., 2., 3.), Vec(1., 0., 0.))
+        ray_x = Ray(Point(1.0, 2.0, 3.0), Vec(1.0, 0.0, 0.0))
         hr_x = nothing
         test_intersection(Plane(), ray_x, hr_x)
         # xz-plane (y=0) and ray in y-direction: intersection;
         # test also 2D coordinates.
-        ray_y = Ray(Point(0.1, -1., 0.), Vec(0., 1., 0.))
+        ray_y = Ray(Point(0.1, -1.0, 0.0), Vec(0.0, 1.0, 0.0))
         plane_rotated = Plane(rotation_x(90))
         hr_rotated = HitRecord(
-            Point(0.1, 0., 0.),
-            Normal(0., -1., 0.),
-            Vec2D(0.1, 0.),
-            1.,
-            ray_y
+            Point(0.1, 0.0, 0.0),
+            Normal(0.0, -1.0, 0.0),
+            Vec2D(0.1, 0.0),
+            1.0,
+            ray_y,
         )
         test_intersection(Plane(rotation_x(90)), ray_y, hr_rotated)
         # Ray with origin (0,0,2) and direction (0,0,1):
         # xy-plane (z=0): no intersection
         # translated xy-plane (e.g. z=3): intersection
-        ray_z = Ray(Point(0., 0., 2.), Vec(0., 0., 1.))
+        ray_z = Ray(Point(0.0, 0.0, 2.0), Vec(0.0, 0.0, 1.0))
         hr_z0 = nothing
         hr_z3 = HitRecord(
-            Point(0., 0., 3.),
-            Normal(0., 0., -1.),
-            Vec2D(0., 0.),
-            1.,
-            ray_z
+            Point(0.0, 0.0, 3.0),
+            Normal(0.0, 0.0, -1.0),
+            Vec2D(0.0, 0.0),
+            1.0,
+            ray_z,
         )
         test_intersection(Plane(), ray_z, hr_z0)
-        test_intersection(Plane(translation(Vec(0.,0.,3.))), ray_z, hr_z3)
+        test_intersection(Plane(translation(Vec(0.0, 0.0, 3.0))), ray_z, hr_z3)
     end
 
     @testset "Sphere" begin
         # centered unit sphere
         ## ray from above
-        ray_above = Ray(Point(0.,0.,2.), neg(VEC_Z))
+        ray_above = Ray(Point(0.0, 0.0, 2.0), neg(VEC_Z))
         hr_above = HitRecord(
-            Point(0., 0., 1.),
-            Normal(0., 0., 1.),
-            Vec2D(0., 0.),
-            1.,
-            ray_above)
+            Point(0.0, 0.0, 1.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            1.0,
+            ray_above,
+        )
         test_intersection(Sphere(), ray_above, hr_above)
         ## ray from x
-        ray_x = Ray(Point(3.,0.,0.), neg(VEC_X))
+        ray_x = Ray(Point(3.0, 0.0, 0.0), neg(VEC_X))
         hr_x = HitRecord(
-            Point(1., 0., 0.),
-            Normal(1., 0., 0.),
-            Vec2D(0., 0.5),
-            2.,
-            ray_x)
+            Point(1.0, 0.0, 0.0),
+            Normal(1.0, 0.0, 0.0),
+            Vec2D(0.0, 0.5),
+            2.0,
+            ray_x,
+        )
         test_intersection(Sphere(), ray_x, hr_x)
         ## ray from Origin towards x
-        ray_x = Ray(Point(0.,0.,0.), VEC_X)
+        ray_x = Ray(Point(0.0, 0.0, 0.0), VEC_X)
         hr_x = HitRecord(
-            Point(1., 0., 0.),
-            Normal(-1., 0., 0.),
-            Vec2D(0., 0.5),
-            1.,
-            ray_x)
+            Point(1.0, 0.0, 0.0),
+            Normal(-1.0, 0.0, 0.0),
+            Vec2D(0.0, 0.5),
+            1.0,
+            ray_x,
+        )
         test_intersection(Sphere(), ray_x, hr_x)
         ## ray from x, no intersection
-        ray = Ray(Point(1.5,0.,0.), VEC_X)
+        ray = Ray(Point(1.5, 0.0, 0.0), VEC_X)
         hr = nothing
         test_intersection(Sphere(), ray, hr)
         ## ray from x, no intersection
-        ray = Ray(Point(-1.5,0.,1.5), VEC_X)
+        ray = Ray(Point(-1.5, 0.0, 1.5), VEC_X)
         hr = nothing
         test_intersection(Sphere(), ray, hr)
 
         # translated unit sphere
         ## x_transltion, ray from above
-        sphere = Sphere(translation(Vec(10.0,0.,0.)))
-        ray = Ray(Point(10.,0.,3.), neg(VEC_Z))
+        sphere = Sphere(translation(Vec(10.0, 0.0, 0.0)))
+        ray = Ray(Point(10.0, 0.0, 3.0), neg(VEC_Z))
         hr = HitRecord(
-            Point(10., 0., 1.),
-            Normal(0., 0., 1.),
-            Vec2D(0., 0.),
-            2.,
-            ray)
+            Point(10.0, 0.0, 1.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            2.0,
+            ray,
+        )
         test_intersection(sphere, ray, hr)
         ## x_transltion, ray from above, no intersections
-        sphere = Sphere(translation(Vec(10.0,0.,0.)))
-        ray = Ray(Point(0.,0.,3.), neg(VEC_Z))
+        sphere = Sphere(translation(Vec(10.0, 0.0, 0.0)))
+        ray = Ray(Point(0.0, 0.0, 3.0), neg(VEC_Z))
         hr = nothing
         test_intersection(sphere, ray, hr)
         ## x_transltion, no intersections
-        sphere = Sphere(translation(Vec(10.0,0.,0.)))
-        ray = Ray(Point(1.,1.,1.), Vec(-1.,-1.,-1.))
+        sphere = Sphere(translation(Vec(10.0, 0.0, 0.0)))
+        ray = Ray(Point(1.0, 1.0, 1.0), Vec(-1.0, -1.0, -1.0))
         hr = nothing
         test_intersection(sphere, ray, hr)
 
         #rotated unit sphere
         ## 45° z rotation, ray from x_pos
         sphere = Sphere(rotation_z(45))
-        ray = Ray(Point(14.,0.,0.), neg(VEC_X))
+        ray = Ray(Point(14.0, 0.0, 0.0), neg(VEC_X))
         hr = HitRecord(
-            Point(1., 0., 0.),
-            Normal(1., 0., 0.),
+            Point(1.0, 0.0, 0.0),
+            Normal(1.0, 0.0, 0.0),
             Vec2D(0.875, 0.5),
-            13.,
-            ray)
+            13.0,
+            ray,
+        )
         test_intersection(sphere, ray, hr)
-        ## WORK IN PROGRESS_________________________________
+
         # -45° z rotation, *2 uniform scaling
         ## ray from 45° angle from every axes
-        # rotation_z(-45)*scaling(2., 2., 2.)
-        #=
-        sphere = Sphere(scaling(2., 2., 2.))
-        d = 2/sqrt(3)
-        ray = Ray(Point(2*d,2*d,2*d), Vec(-1.,-1.,-1.))
+        sphere = Sphere(rotation_z(-45) * scaling(2.0, 2.0, 2.0))
+        d = 2 / sqrt(3)
+        ray = Ray(Point(2 * d, 2 * d, 2 * d), Vec(-1.0, -1.0, -1.0))
         hr = HitRecord(
             Point(d, d, d),
-            Normal(d, d, d),
-            Vec2D(0.125, acos(d/2)/π),
+            Normal(0.28867, 0.28867, 0.28867), # is the right direction but is not normalized. 
+            #Should we normalize the Normal just before saving it in the HitRecord?
+            Vec2D(0.25, acos(d / 2) / π),
             d,
-            ray)
+            ray,
+        )
         test_intersection(sphere, ray, hr)
-        #____________________________________________________
-        
-        =#
     end
 end
