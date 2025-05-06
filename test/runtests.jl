@@ -517,4 +517,95 @@ end
         test_intersection(Plane(), ray_z, hr_z0)
         test_intersection(Plane(translation(Vec(0.,0.,3.))), ray_z, hr_z3)
     end
+
+    @testset "Sphere" begin
+        # centered unit sphere
+        ## ray from above
+        ray_above = Ray(Point(0.,0.,2.), neg(VEC_Z))
+        hr_above = HitRecord(
+            Point(0., 0., 1.),
+            Normal(0., 0., 1.),
+            Vec2D(0., 0.),
+            1.,
+            ray_above)
+        test_intersection(Sphere(), ray_above, hr_above)
+        ## ray from x
+        ray_x = Ray(Point(3.,0.,0.), neg(VEC_X))
+        hr_x = HitRecord(
+            Point(1., 0., 0.),
+            Normal(1., 0., 0.),
+            Vec2D(0., 0.5),
+            2.,
+            ray_x)
+        test_intersection(Sphere(), ray_x, hr_x)
+        ## ray from Origin towards x
+        ray_x = Ray(Point(0.,0.,0.), VEC_X)
+        hr_x = HitRecord(
+            Point(1., 0., 0.),
+            Normal(-1., 0., 0.),
+            Vec2D(0., 0.5),
+            1.,
+            ray_x)
+        test_intersection(Sphere(), ray_x, hr_x)
+        ## ray from x, no intersection
+        ray = Ray(Point(1.5,0.,0.), VEC_X)
+        hr = nothing
+        test_intersection(Sphere(), ray, hr)
+        ## ray from x, no intersection
+        ray = Ray(Point(-1.5,0.,1.5), VEC_X)
+        hr = nothing
+        test_intersection(Sphere(), ray, hr)
+
+        # translated unit sphere
+        ## x_transltion, ray from above
+        sphere = Sphere(translation(Vec(10.0,0.,0.)))
+        ray = Ray(Point(10.,0.,3.), neg(VEC_Z))
+        hr = HitRecord(
+            Point(10., 0., 1.),
+            Normal(0., 0., 1.),
+            Vec2D(0., 0.),
+            2.,
+            ray)
+        test_intersection(sphere, ray, hr)
+        ## x_transltion, ray from above, no intersections
+        sphere = Sphere(translation(Vec(10.0,0.,0.)))
+        ray = Ray(Point(0.,0.,3.), neg(VEC_Z))
+        hr = nothing
+        test_intersection(sphere, ray, hr)
+        ## x_transltion, no intersections
+        sphere = Sphere(translation(Vec(10.0,0.,0.)))
+        ray = Ray(Point(1.,1.,1.), Vec(-1.,-1.,-1.))
+        hr = nothing
+        test_intersection(sphere, ray, hr)
+
+        #rotated unit sphere
+        ## 45° z rotation, ray from x_pos
+        sphere = Sphere(rotation_z(45))
+        ray = Ray(Point(14.,0.,0.), neg(VEC_X))
+        hr = HitRecord(
+            Point(1., 0., 0.),
+            Normal(1., 0., 0.),
+            Vec2D(0.875, 0.5),
+            13.,
+            ray)
+        test_intersection(sphere, ray, hr)
+        ## WORK IN PROGRESS_________________________________
+        # -45° z rotation, *2 uniform scaling
+        ## ray from 45° angle from every axes
+        # rotation_z(-45)*scaling(2., 2., 2.)
+        #=
+        sphere = Sphere(scaling(2., 2., 2.))
+        d = 2/sqrt(3)
+        ray = Ray(Point(2*d,2*d,2*d), Vec(-1.,-1.,-1.))
+        hr = HitRecord(
+            Point(d, d, d),
+            Normal(d, d, d),
+            Vec2D(0.125, acos(d/2)/π),
+            d,
+            ray)
+        test_intersection(sphere, ray, hr)
+        #____________________________________________________
+        
+        =#
+    end
 end
