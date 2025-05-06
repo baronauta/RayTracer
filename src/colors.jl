@@ -21,8 +21,8 @@ end
 "Compare two `ColorTypes.RGB` types. Useful for tests."
 function ≈(x::ColorTypes.RGB, y::ColorTypes.RGB)
     isapprox(x.r, y.r, rtol = 1e-3, atol = 1e-3) &&
-    isapprox(x.g, y.g, rtol = 1e-3, atol = 1e-3) &&
-    isapprox(x.b, y.b, rtol = 1e-3, atol = 1e-3)
+        isapprox(x.g, y.g, rtol = 1e-3, atol = 1e-3) &&
+        isapprox(x.b, y.b, rtol = 1e-3, atol = 1e-3)
 end
 
 """

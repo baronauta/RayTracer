@@ -27,14 +27,14 @@ struct HitRecord{T<:AbstractFloat}
 end
 
 "Compare two `HitRecord` types. Useful for tests."
-function ≈(hr1::Union{HitRecord, Nothing}, hr2::Union{HitRecord, Nothing})
+function ≈(hr1::Union{HitRecord,Nothing}, hr2::Union{HitRecord,Nothing})
     if isnothing(hr1) || isnothing(hr2)
         return hr1 == hr2
-    else        
+    else
         hr1.world_point ≈ hr2.world_point &&
-        hr1.normal ≈ hr2.normal &&
-        hr1.surface_point ≈ hr2.surface_point &&
-        hr1.t ≈ hr2.t
+            hr1.normal ≈ hr2.normal &&
+            hr1.surface_point ≈ hr2.surface_point &&
+            hr1.t ≈ hr2.t
     end
 end
 
@@ -134,7 +134,7 @@ Convert a 3D point on the surface of the unit sphere into a (u, v) 2D point
 function _sphere_point_to_uv(point::Point)
     u = atan(point.y, point.x) / (2.0 * π)
     v = acos(point.z) / π
-    (u ≥ 0) ? Vec2D(u,v) : Vec2D(u+1,v)
+    (u ≥ 0) ? Vec2D(u, v) : Vec2D(u + 1, v)
 end
 
 """
