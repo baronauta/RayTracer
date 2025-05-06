@@ -132,10 +132,9 @@ end
 Convert a 3D point on the surface of the unit sphere into a (u, v) 2D point
 """
 function _sphere_point_to_uv(point::Point)
-    return Vec2D(
-        u = (atan(point.y, point.x) + π) / (2.0 * π),
-        v = acos(point.z) / π
-    )
+    u = atan(point.y, point.x) / (2.0 * π)
+    v = acos(point.z) / π
+    (u ≥ 0) ? Vec2D(u,v) : Vec2D(u+1,v)
 end
 
 """
@@ -145,4 +144,54 @@ sphere and the right direction is choosen using `_adjustnormal`.
 """
 function _sphere_normal(point::Point, ray::Ray)
     _adjustnormal(Normal(point.x, point.y, point.z), ray)
+end
+
+
+"""
+Checks if a ray intersects the Sphere.
+Return a `HitRecord`, or `nothing` if no intersection was found.
+"""
+function ray_intersection(sphere::Sphere, ray::Ray)
+    # Consider the ray into the sphere frame of reference
+    # applying the inverse transformation.
+    inv_ray = transform(ray, inverse(sphere.transformation))
+
+    # the equation for sphere intersection is: t^2∥​d∥^​2+2t(O⋅d)+∥​O∥^​2−1=0
+    # where O is the ray origin, d the ray direction
+    # tangent intersections are not considered, so there are
+    # intersections only if Δ > 0.
+
+    # defining reduced Δ:
+    # delta ≡ Δ/4 = (O ⋅ d)^2 − ||d||^2 ⋅ (||O||^2 − 1) = b^2 -a*c
+    origin_vec = point_to_vec(inv_ray.origin)
+    a = squared_norm(inv_ray.dir)
+    b = dot(origin_vec, inv_ray.dir)
+    c = squared_norm(origin_vec) - 1.0
+
+    delta = b^2 - a * c
+    if delta ≤ 0.0
+        return nothing
+    end
+    # finding the 2 t solutions
+    sqrt_delta = sqrt(delta)
+    tmin = (-b - sqrt_delta) / (a)
+    tmax = (-b + sqrt_delta) / (a)
+    # choosing the closest solution
+    if inv_ray.tmin < tmin < inv_ray.tmax
+        t = tmin
+    elseif inv_ray.tmin < tmax < inv_ray.tmax
+        t = tmax
+    else
+        return nothing
+    end
+    # intersection point into the sphere reference of frame
+    hit_point = at(inv_ray, t)
+
+    # traspose the intersection point, normal and 
+    # surface point into the original frame of reference.
+    world_point = sphere.transformation * hit_point
+    normal = sphere.transformation * _sphere_normal(hit_point, inv_ray)
+    surface_point = _sphere_point_to_uv(hit_point)
+
+    return HitRecord(world_point, normal, surface_point, t, ray)
 end
