@@ -11,54 +11,81 @@ function OnOff_Tracing(world::World, ray::Ray)
     isnothing(ray_intersection(world, ray)) ? RGB(0.0, 0.0, 0.0) : RGB(1.0, 1.0, 1.0)
 end
 
+# parameters function
+function Params(A)
+    if (length(A) != 3)
+        throw(
+            RuntimeError(
+                """\n
+ ------------------------------------------------------------
+ Correct command usage:
+      julia demo [ARGUMENTS]
+
+      Arguments:
+      - width INTEGER   Image width in pixels
+      - height INTEGER  Image height in pixels
+      - camera STRING   Type of camera: Orthogonal or Perspective
+
+Number of arguments received: $(length(A))
+------------------------------------------------------------
+""",
+            ),
+        )
+
+    end
+    return (parse(Int, A[1]),parse(Int, A[2]), A[3])
+end
+
 function main()
     try
         # HdrImage
-        aspect_ratio = 2.0
-        width = 1000
-        height = Int(width/aspect_ratio)
+        (width,height,mode) = Params(ARGS)
         img = HdrImage(width, height)
         
         # Cameras
-        aspect_ratio = 2.0
+        aspect_ratio = width/height
         distance = 1.0
-        cameras = [
-                OrthogonalCamera(aspect_ratio,translation(Vec(-2.0, 0.0, 0.0))), 
-                PerspectiveCamera(distance,aspect_ratio,translation(Vec(-2.0, 0.0, 0.0)))
-                ]
-        names = ["demo_orthogonal", "demo_perspective"]
-        # Image Generation
-        for (cam, name) in zip(cameras, names)
-            # ImageTracer
-            tracer = ImageTracer(img, cam)
-            # World
-            scale = scaling(0.1, 0.1, 0.1)
-            sphere_list = [
-                            Sphere(translation(Vec(-0.5,-0.5,-0.5))*scale),
-                            Sphere(translation(Vec(-0.5,-0.5, 0.5))*scale),
-                            Sphere(translation(Vec(-0.5, 0.5,-0.5))*scale),
-                            Sphere(translation(Vec( 0.5,-0.5,-0.5))*scale),
-                            Sphere(translation(Vec(-0.5, 0.5, 0.5))*scale),
-                            Sphere(translation(Vec( 0.5, 0.5,-0.5))*scale),
-                            Sphere(translation(Vec( 0.5,-0.5, 0.5))*scale),
-                            Sphere(translation(Vec( 0.5, 0.5, 0.5))*scale),
-                            Sphere(translation(Vec( 0.0, 0.0, -0.5))*scale),
-                            Sphere(translation(Vec( 0.0, 0.5, 0.0))*scale)
-                        ]
 
-            world = World(sphere_list)
-
-            # On-Off Tracing
-            f = ray -> OnOff_Tracing(world, ray)
-
-            fire_all_rays!(tracer, f)
-
-            # PFM Image saving
-            write(name*".PFM", img)
-
-            # LDR Image saving (default png)
-            write_ldr_image(img, name*".png")
+        if mode == "Orthogonal"
+            cam = OrthogonalCamera(aspect_ratio,translation(Vec(-2.0, 0.0, 0.0)))
+            name = "demo_orthogonal"
+        else
+            cam = PerspectiveCamera(distance,aspect_ratio,translation(Vec(-2.0, 0.0, 0.0)))
+            name = "demo_perspective"
         end
+
+        # Image Generation
+
+        # ImageTracer
+        tracer = ImageTracer(img, cam)
+        
+        # World
+        scale = scaling(0.1, 0.1, 0.1)
+        sphere_list = [
+                        Sphere(translation(Vec(-0.5,-0.5,-0.5))*scale),
+                        Sphere(translation(Vec(-0.5,-0.5, 0.5))*scale),
+                        Sphere(translation(Vec(-0.5, 0.5,-0.5))*scale),
+                        Sphere(translation(Vec( 0.5,-0.5,-0.5))*scale),
+                        Sphere(translation(Vec(-0.5, 0.5, 0.5))*scale),
+                        Sphere(translation(Vec( 0.5, 0.5,-0.5))*scale),
+                        Sphere(translation(Vec( 0.5,-0.5, 0.5))*scale),
+                        Sphere(translation(Vec( 0.5, 0.5, 0.5))*scale),
+                        Sphere(translation(Vec( 0.0, 0.0, -0.5))*scale),
+                        Sphere(translation(Vec( 0.0, 0.5, 0.0))*scale)
+                    ]
+
+        world = World(sphere_list)
+
+        # On-Off Tracing
+        f = ray -> OnOff_Tracing(world, ray)
+
+        fire_all_rays!(tracer, f)
+
+        # PFM Image saving
+        write(name*".PFM", img)
+
+        # LDR Image saving (default png)
+        write_ldr_image(img, name*".png")
 
     catch e
         # Define colors for the error message
