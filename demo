@@ -53,6 +53,9 @@ function main()
 
             fire_all_rays!(tracer, f)
 
+            # PFM Image saving
+            write(name*".PFM", img)
+
             # LDR Image saving (default png)
             write_ldr_image(img, name*".png")
         end
