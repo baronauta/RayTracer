@@ -10,6 +10,7 @@ Manifest.toml
 *.bmp
 *.PFM
 *.pfm
+*.mp4
 # to make a local backup file
 *_backup* 
 # exceptions
