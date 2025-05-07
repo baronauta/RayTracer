@@ -12,9 +12,9 @@ include("helper.jl")
     @test c1 + c2 ≈ RGB(0.5, 0.7, 0.9)
     @test 2 * c1 ≈ RGB(0.2, 0.4, 0.6)
     @test c1 * c2 ≈ RGB(0.04, 0.1, 0.18)
-end
-
-@testset "HdrImage" begin
+ end
+ 
+ @testset "HdrImage" begin
     width = 9
     height = 6
     img = HdrImage(width, height)
@@ -26,9 +26,9 @@ end
     set_pixel!(img, x, y, c)
     @test img.pixels[y, x] ≈ c
     @test c ≈ get_pixel(img, x, y)
-end
-
-@testset "I/O-Read" begin
+ end
+ 
+ @testset "I/O-Read" begin
     # Unit tests
     width = 128
     height = 256
@@ -50,9 +50,9 @@ end
         @test get_pixel(img, 2, 2) ≈ (RGB(4.0e2, 5.0e2, 6.0e2))
         @test get_pixel(img, 3, 2) ≈ (RGB(7.0e2, 8.0e2, 9.0e2))
     end
-end
-
-@testset "I/O-Write" begin
+ end
+ 
+ @testset "I/O-Write" begin
     #! format: off
     # This is the content of "reference_le.pfm" (little-endian file)
     LE_REFERENCE_BYTES = UInt8[
@@ -87,9 +87,9 @@ end
     write(buf, img, endianness = 1.0)
     contents = take!(buf)
     @test contents == BE_REFERENCE_BYTES
-end
-
-@testset "ToneMapping" begin
+ end
+ 
+ @testset "ToneMapping" begin
     # Luminosity
     col1 = RGB(10.0, 3.0, 2.0)
     @test luminosity(col1, mean_type = :max_min) ≈ 6
@@ -131,10 +131,10 @@ end
         @test 0 <= pixel.b <= 1
     end
     # Write LDR image ?
-end
-
-@testset "Geometry" begin
-
+ end
+ 
+ @testset "Geometry" begin
+ 
     @testset "Point" begin
         p = Point(1.0, 2.0, 3.0)
         q = Point(4.0, 5.0, 6.0)
@@ -149,7 +149,7 @@ end
         # Conversion of a Point into a Vec
         @test point_to_vec(p) ≈ Vec(1.0, 2.0, 3.0)
     end
-
+ 
     @testset "Vectors" begin
         v = Vec(1.0, 2.0, 3.0)
         u = Vec(4.0, 5.0, 6.0)
@@ -170,7 +170,7 @@ end
         # Conversion Vec to Normal
         @test vec_to_normal(v) ≈ Normal(1.0, 2.0, 3.0)
     end
-
+ 
     @testset "Normal" begin
         n = Normal(0.1, 0.2, 0.3)
         m = Normal(0.4, 0.5, 0.6)
@@ -185,10 +185,10 @@ end
         v = Vec(0.4, 0.5, 0.6)
         @test cross(n, v) ≈ Vec(-0.03, 0.06, -0.03)
     end
-end
-#! format: off
-@testset "Transformation" begin
-
+ end
+ #! format: off
+ @testset "Transformation" begin
+ 
     @testset "Consistency" begin
         m = Matrix{Float32}([
             1.0 2.0 3.0 4.0
@@ -220,7 +220,7 @@ end
         @test !(T ≈ T3)
         @test !(_is_consistent(T3))
     end
-
+ 
     @testset "Multiplication" begin
         m1 = Matrix{Float32}([
             1.0 2.0 3.0 4.0
@@ -238,7 +238,7 @@ end
         )
         T1 = Transformation(HomMatrix(m1), HomMatrix(invm1))
         @test _is_consistent(T1)
-
+ 
         m2 = Matrix{Float32}([
             3.0 5.0 2.0 4.0
             4.0 1.0 0.0 5.0
@@ -255,7 +255,7 @@ end
         )
         T2 = Transformation(HomMatrix(m2), HomMatrix(invm2))
         @test _is_consistent(T2)
-
+ 
         expected_m = Matrix{Float32}(
             [
                  33.0  32.0 16.0 18.0
@@ -274,11 +274,11 @@ end
         )
         expected = Transformation(HomMatrix(expected_m), HomMatrix(expected_invm))
         @test _is_consistent(expected)
-
+ 
         prod = T1 * T2
         @test expected ≈ prod
     end
-
+ 
     @testset "× Vec/Point/Normal" begin
         m_mat = Matrix{Float32}([
             1.0 2.0 3.0 4.0
@@ -296,7 +296,7 @@ end
         )
         T = Transformation(HomMatrix(m_mat), HomMatrix(invm_mat))
         @test _is_consistent(T)
-
+ 
         expected_v = Vec(14.0, 38.0, 51.0)
         mul_vec = T * Vec(1.0, 2.0, 3.0)
         @test mul_vec ≈ expected_v
@@ -307,7 +307,7 @@ end
         mul_normal = T * Normal(3.0, 2.0, 4.0)
         @test mul_normal ≈ expected_n
     end
-
+ 
     @testset "Translation" begin
         tr1 = translation(Vec(1.0, 2.0, 3.0))
         @test _is_consistent(tr1)
@@ -318,7 +318,7 @@ end
         expected = translation(Vec(5.0, 8.0, 11.0))
         @test prod ≈ expected
     end
-
+ 
     @testset "Rotations" begin
         @test _is_consistent(rotation_x(0.1))
         @test _is_consistent(rotation_y(0.1))
@@ -327,7 +327,7 @@ end
         @test (rotation_y(90) * VEC_Z) ≈ VEC_X
         @test (rotation_z(90) * VEC_X) ≈ VEC_Y
     end
-
+ 
     @testset "Scaling" begin
         tr1 = scaling(2.0, 5.0, 10.0)
         @test _is_consistent(tr1)
@@ -338,10 +338,10 @@ end
         expected = scaling(6.0, 10.0, 40.0)
         @test prod ≈ expected
     end
-end
-#! format: on
-
-@testset "Ray" begin
+ end
+ #! format: on
+ 
+ @testset "Ray" begin
     # ≈
     ray1 = Ray(Point(1.0, 2.0, 3.0), Vec(5.0, 4.0, -1.0))
     ray2 = Ray(Point(1.0, 2.0, 3.0), Vec(5.0, 4.0, -1.0))
@@ -361,10 +361,10 @@ end
     newray = transform(ray, transformation)
     @test newray.origin ≈ Point(11.0, 8.0, 14.0)
     @test newray.dir ≈ Vec(6.0, -4.0, 5.0)
-end
-
-@testset "Camera" begin
-
+ end
+ 
+ @testset "Camera" begin
+ 
     @testset "OrthogonalCamera" begin
         aspect_ratio = 2.0
         cam = OrthogonalCamera(aspect_ratio)
@@ -388,21 +388,21 @@ end
         ray = fire_ray(cam, 0.5, 0.5)
         @test at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
     end
-
+ 
     @testset "PerspectiveCamera" begin
         aspect_ratio = 2.0
         cam = PerspectiveCamera(aspect_ratio)
-
+ 
         ray1 = fire_ray(cam, 0.0, 0.0)
         ray2 = fire_ray(cam, 1.0, 0.0)
         ray3 = fire_ray(cam, 0.0, 1.0)
         ray4 = fire_ray(cam, 1.0, 1.0)
-
+ 
         # Verify that all the rays depart from the same point
         @test ray1.origin ≈ ray2.origin
         @test ray2.origin ≈ ray3.origin
         @test ray3.origin ≈ ray4.origin
-
+ 
         # Verify that the ray hitting the corners have the right coordinates
         @test at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
         @test at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
@@ -416,7 +416,7 @@ end
         ray = fire_ray(cam, 0.5, 0.5)
         @test at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
     end
-
+ 
     @testset "ImageTracer" begin
         #Set up
         function setup()
@@ -428,14 +428,14 @@ end
             tracer = ImageTracer(img, cam)
             return tracer
         end
-
+ 
         # Test for pixel's coordinates (u,v)
         function test1(tracer)
             ray1 = fire_ray(tracer, 1, 1, u_pixel = 2.5, v_pixel = 1.5)
             ray2 = fire_ray(tracer, 3, 2, u_pixel = 0.5, v_pixel = 0.5)
             @test ray1 ≈ ray2
         end
-
+ 
         # Test for image coverage
         function test2(tracer)
             function lambda(ray::Ray)
@@ -448,7 +448,7 @@ end
                 end
             end
         end
-
+ 
         # Test for orientation
         function test3(tracer)
             top_left_ray = fire_ray(tracer, 1, 1, u_pixel = 0.0, v_pixel = 0.0)
@@ -456,16 +456,16 @@ end
             @test Point(0.0, 2.0, 1.0) ≈ at(top_left_ray, 1.0)
             @test Point(0.0, -2.0, -1.0) ≈ at(bottom_right_ray, 1.0)
         end
-
+ 
         # Do the tests
         for test in [test1, test2, test3]
             test(setup())
         end
-
+ 
     end
-end
-
-@testset "Shapes" begin
+ end
+ 
+ @testset "Shapes" begin
     @testset "Plane" begin
         # xy-plane and incoming orthogonal ray from above
         ray_above = Ray(Point(1.0, 2.0, 3.0), Vec(0.0, 0.0, -1.0))
@@ -518,7 +518,7 @@ end
         test_intersection(Plane(), ray_z, hr_z0)
         test_intersection(Plane(translation(Vec(0.0, 0.0, 3.0))), ray_z, hr_z3)
     end
-
+ 
     @testset "Sphere" begin
         # centered unit sphere
         ## ray from above
@@ -559,7 +559,7 @@ end
         ray = Ray(Point(-1.5, 0.0, 1.5), VEC_X)
         hr = nothing
         test_intersection(Sphere(), ray, hr)
-
+ 
         # translated unit sphere
         ## x_transltion, ray from above
         sphere = Sphere(translation(Vec(10.0, 0.0, 0.0)))
@@ -582,8 +582,8 @@ end
         ray = Ray(Point(1.0, 1.0, 1.0), Vec(-1.0, -1.0, -1.0))
         hr = nothing
         test_intersection(sphere, ray, hr)
-
-        #rotated unit sphere
+ 
+        #rotated unit sphere #tests for surface coordinates
         ## 45° z rotation, ray from x_pos
         sphere = Sphere(rotation_z(45))
         ray = Ray(Point(14.0, 0.0, 0.0), neg(VEC_X))
@@ -595,7 +595,7 @@ end
             ray,
         )
         test_intersection(sphere, ray, hr)
-
+ 
         # -45° z rotation, *2 uniform scaling
         ## ray from 45° angle from every axes
         sphere = Sphere(rotation_z(-45) * scaling(2.0, 2.0, 2.0))
@@ -611,4 +611,47 @@ end
         )
         test_intersection(sphere, ray, hr)
     end
+end
+
+@testset "World" begin
+    # one setup for all tests
+    # shapes
+    sphere1 = Sphere()
+    sphere2 = Sphere(translation(Vec(0.0, 0.0, 3.0)))
+    shapes = [sphere1, sphere2]
+    world = World(shapes)
+    # adding plane
+    plane = Plane()
+    add!(world, plane)
+    # rays
+    r = 1 / sqrt(3)
+    ray_z1 = Ray(Point(0.0, 0.0, 10.0), Vec(0.0, 0.0, -1.0))
+    ray_z2 = Ray(Point(1.0, 0.0, -10.0), Vec(0.0, 0.0, 1.0))
+    ray_3 = Ray(Point(4 * r, 4 * r, 4 * r), Vec(-1.0, -1.0, -1.0))
+    # HitRecords
+    hr1 = HitRecord(
+        Point(0.0, 0.0, 4.0),
+        Normal(0.0, 0.0, 1.0),
+        Vec2D(0.0, 0.0),
+        6.0,
+        ray_z1,
+    )
+    hr2 = HitRecord(
+        Point(1.0, 0.0, 0.0),
+        Normal(0.0, 0.0, -1.0),
+        Vec2D(0.0, 0.0),
+        10.0,
+        ray_z2,
+    )
+    hr3 = HitRecord(
+        Point(r, r, r),
+        Normal(r, r, r),
+        Vec2D(0.125, acos(r) / π),
+        3 * r,
+        ray_3,
+    )
+    # tests
+    test_intersection(world, ray_z1, hr1)
+    test_intersection(world, ray_z2, hr2)
+    test_intersection(world, ray_3, hr3)
 end

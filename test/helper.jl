@@ -50,8 +50,21 @@ import RayTracer:
     fire_all_rays!
 # from shapes.jl
 import RayTracer:
-    Shape, Plane, Sphere, _sphere_point_to_uv, _sphere_normal, HitRecord, ray_intersection
-function test_intersection(s::Shape, r::Ray, expected_hr::Union{HitRecord,Nothing})
-    hitrecord = ray_intersection(s, r)
-    @test hitrecord ≈ expected_hr
-end
+    Shape,
+    Plane,
+    Sphere,
+    HitRecord,
+    ray_intersection
+# from world.jl
+import RayTracer:
+    World,
+    add!,
+    ray_intersection
+function test_intersection(
+        s::Union{Shape,World},
+        r::Ray,
+        expected_hr::Union{HitRecord,Nothing},
+    )
+        hitrecord = ray_intersection(s, r)
+        @test hitrecord ≈ expected_hr
+    end

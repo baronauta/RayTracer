@@ -128,6 +128,12 @@ function Sphere()
     Sphere(transformation)
 end
 
+# function Sphere{T}() where T<:AbsrtactFloat
+#     transformation =
+#         Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+#     Sphere{T}(transformation)
+# end
+
 """
 Convert a 3D point on the surface of the unit sphere into a (u, v) 2D point
 """
