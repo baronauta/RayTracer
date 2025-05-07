@@ -8,7 +8,10 @@ Manifest.toml
 *.jpeg
 *.gif
 *.bmp
-memorial.pfm
+*.PFM
+*.pfm
 # to make a local backup file
 *_backup* 
+# exceptions
+!reference*
 #─────────────────────────────────────────────────────────────
