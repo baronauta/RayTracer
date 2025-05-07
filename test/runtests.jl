@@ -91,6 +91,7 @@ include("helper.jl")
     # writing PNG image on file
     write("test.PFM", img)
     @test read("test.PFM") == read("reference_le.pfm")
+    rm("test.PFM")
  end
  
  @testset "ToneMapping" begin
