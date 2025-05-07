@@ -13,18 +13,21 @@ end
 
 # parameters function
 function Params(A)
-    if (length(A) != 3)
+    if (length(A) != 3) && (length(A) != 4)
         throw(
             RuntimeError(
                 """\n
  ------------------------------------------------------------
  Correct command usage:
-      julia demo [ARGUMENTS]
+      julia demo [ARGUMENTS] [OPTIONS]
 
       Arguments:
       - width INTEGER   Image width in pixels
       - height INTEGER  Image height in pixels
       - camera STRING   Type of camera: Orthogonal or Perspective
+
+      Options:
+      - angle-deg FLOAT Angle of view from start position (around Z-axes, angle-deg ∈ [0; 360])
 
 Number of arguments received: $(length(A))
 ------------------------------------------------------------
@@ -45,12 +48,17 @@ function main()
         # Cameras
         aspect_ratio = width/height
         distance = 1.0
+        angle_deg = 0.0
+        if length(ARGS) == 4
+            angle_deg = parse(typeof(angle_deg), ARGS[4])
+        end
 
+        transformation = rotation_z(angle_deg)*translation(Vec(-2.0, 0.0, 0.0))
         if mode == "Orthogonal"
-            cam = OrthogonalCamera(aspect_ratio,translation(Vec(-2.0, 0.0, 0.0)))
+            cam = OrthogonalCamera(aspect_ratio,transformation)
             name = "demo_orthogonal"
         else
-            cam = PerspectiveCamera(distance,aspect_ratio,translation(Vec(-2.0, 0.0, 0.0)))
+            cam = PerspectiveCamera(distance,aspect_ratio,transformation)
             name = "demo_perspective"
         end
 

@@ -31,7 +31,7 @@ export +,
     GeometryError
 
 export HdrImage, OrthogonalCamera, PerspectiveCamera, translation, scaling,
-        Vec, ImageTracer, Sphere, World, fire_ray, RGB, ray_intersection, fire_all_rays!
+        Vec, ImageTracer, Sphere, World, fire_ray, RGB, ray_intersection, fire_all_rays!, rotation_z
 const little_endian = Base.ENDIAN_BOM == 0x04030201 # true if the host is little endian, false otherwise
 
 include("exceptions.jl")
