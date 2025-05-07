@@ -87,6 +87,11 @@ include("helper.jl")
     write(buf, img, endianness = 1.0)
     contents = take!(buf)
     @test contents == BE_REFERENCE_BYTES
+    
+    # writing PNG image on file
+    write("test.PFM", img)
+    @test img == read_pfm_image(open("test.PFM"), "r")
+    rm("test.PFM")
  end
  
  @testset "ToneMapping" begin
