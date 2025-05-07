@@ -112,7 +112,7 @@ Writes an HDR image to a file in the specified endianness.
 function Base.write(filename::String, image::HdrImage; endianness = my_endian)
     check_extension(filename)
     open(filename, "w") do io
-        write(io, image, endianness)
+        write(io, image; endianness)
     end
 end
 
