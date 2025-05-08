@@ -30,9 +30,9 @@ end
 function Ray(
     origin::Point{T},
     dir::Vec{T};
-    tmin::T=1e-5,
-    tmax::T=typemax(T),
-    depth::Integer=0,
+    tmin::T = 1e-5,
+    tmax::T = typemax(T),
+    depth::Integer = 0,
 ) where {T<:AbstractFloat}
     Ray{T}(origin, dir, tmin, tmax, depth)
 end
@@ -160,8 +160,8 @@ function fire_ray(
     tracer::ImageTracer{T},
     col::Integer,
     row::Integer;
-    u_pixel::T=0.5,
-    v_pixel::T=0.5
+    u_pixel::T = 0.5,
+    v_pixel::T = 0.5,
 ) where {T<:AbstractFloat}
 
     # all pixels have dimensions '(1,1)', so the pixel center is at the pixel coordinates '+ (0.5,0.5)'
@@ -179,7 +179,7 @@ function fire_ray(
     =#
 
     u = (col - 1 + u_pixel) / (tracer.image.width)
-    v = 1 - (row -1 + v_pixel) / (tracer.image.height)
+    v = 1 - (row - 1 + v_pixel) / (tracer.image.height)
     return fire_ray(tracer.camera, u, v)
 end
 

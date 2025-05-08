@@ -21,6 +21,15 @@ struct Vec{T<:AbstractFloat}
     z::T
 end
 
+"""
+A 2D vector with components `(u, v)` of type `T`. 
+Use it for describing surfaces, 2D objects, of 3D shapes.
+"""
+struct Vec2D{T<:AbstractFloat}
+    u::T
+    v::T
+end
+
 "A 3D vector, orthogonal to a surface, with components `(x, y, z)` of type `T`."
 struct Normal{T<:AbstractFloat}
     x::T
@@ -72,6 +81,12 @@ function ≈(v::Vec, u::Vec)
     return isapprox(v.x, u.x, rtol = 1e-5, atol = 1e-5) &&
            isapprox(v.y, u.y, rtol = 1e-5, atol = 1e-5) &&
            isapprox(v.z, u.z, rtol = 1e-5, atol = 1e-5)
+end
+
+"Compare two `Vec2D` types. Useful for tests."
+function ≈(a::Vec2D, b::Vec2D)
+    return isapprox(a.u, b.u, rtol = 1e-5, atol = 1e-5) &&
+           isapprox(a.v, b.v, rtol = 1e-5, atol = 1e-5)
 end
 
 "Compare two `Normal` types. Useful for tests."

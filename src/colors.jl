@@ -1,35 +1,36 @@
-import Base: +, *, ≈
+"Wrapper function to ColorTypes.RGB{Float32}."
+function RGB(r, g, b)
+    ColorTypes.RGB{Float32}(r, g, b)
+end
 
-# ─────────────────────────────────────────────────────────────
-# Color's Base operations and to_string conversion
-# ─────────────────────────────────────────────────────────────
+"Sum between RGB colors."
+function +(x::ColorTypes.RGB, y::ColorTypes.RGB)
+    RGB(x.r + y.r, x.g + y.g, x.b + y.b)
+end
 
-# Color-Color Sum
-Base.:+(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
-    ColorTypes.RGB{Float32}(c1.r + c2.r, c1.g + c2.g, c1.b + c2.b)
+"Product between a scalar and a RGB color."
+function *(s::Real, c::ColorTypes.RGB)
+    RGB(s * c.r, s * c.g, s * c.b)
+end
 
-# Color-Scalar Product
-Base.:*(scalar::Real, c::ColorTypes.RGB{Float32}) =
-    ColorTypes.RGB{Float32}(scalar * c.r, scalar * c.g, scalar * c.b)
-Base.:*(c::ColorTypes.RGB{Float32}, scalar::Real) = scalar * c # use the method defined previously
+"Component-wise product between two RGB colors."
+function *(x::ColorTypes.RGB, y::ColorTypes.RGB)
+    RGB(x.r * y.r, x.g * y.g, x.b * y.b)
+end
 
-# Color-Color Product
-Base.:*(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) =
-    ColorTypes.RGB{Float32}(c1.r * c2.r, c1.g * c2.g, c1.b * c2.b)
-
-# Color-Color ≈
-Base.:≈(c1::ColorTypes.RGB{Float32}, c2::ColorTypes.RGB{Float32}) = (
-    (isapprox(c1.r, c2.r, rtol = 1e-3, atol = 1e-3)) &&
-    (isapprox(c1.g, c2.g, rtol = 1e-3, atol = 1e-3)) &&
-    (isapprox(c1.b, c2.b, rtol = 1e-3, atol = 1e-3))
-)
+"Compare two `ColorTypes.RGB` types. Useful for tests."
+function ≈(x::ColorTypes.RGB, y::ColorTypes.RGB)
+    isapprox(x.r, y.r, rtol = 1e-3, atol = 1e-3) &&
+        isapprox(x.g, y.g, rtol = 1e-3, atol = 1e-3) &&
+        isapprox(x.b, y.b, rtol = 1e-3, atol = 1e-3)
+end
 
 """
     color_to_string(c::ColorTypes.RGB{Float32})
 
 Print RGB components of a color, e.g. `< r:0.1, g:0.2, b:0.3 >`
 """
-function color_to_string(c::ColorTypes.RGB{Float32})
+function color_to_string(c::ColorTypes.RGB)
     str = "< r:" * string(c.r) * ", g:" * string(c.g) * ", b:" * string(c.b) * " >"
     return str
 end

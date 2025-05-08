@@ -1,0 +1,109 @@
+#!/usr/bin/env julia
+
+using Pkg
+Pkg.activate(normpath(@__DIR__))
+
+using RayTracer
+import Crayons # enables colorful and expressive terminal output
+
+# On-Off Tracing Functions 
+function OnOff_Tracing(world::World, ray::Ray)
+    isnothing(ray_intersection(world, ray)) ? RGB(0.0, 0.0, 0.0) : RGB(1.0, 1.0, 1.0)
+end
+
+# parameters function
+function Params(A)
+    if (length(A) != 3) && (length(A) != 4)
+        throw(
+            RuntimeError(
+                """\n
+ ------------------------------------------------------------
+ Correct command usage:
+      julia demo [ARGUMENTS] [OPTIONS]
+
+      Arguments:
+      - width INTEGER   Image width in pixels
+      - height INTEGER  Image height in pixels
+      - camera STRING   Type of camera: Orthogonal or Perspective
+
+      Options:
+      - angle-deg FLOAT Angle of view from start position (around Z-axes, angle-deg ∈ [0; 360])
+
+Number of arguments received: $(length(A))
+------------------------------------------------------------
+""",
+            ),
+        )
+
+    end
+    return (parse(Int, A[1]),parse(Int, A[2]), A[3])
+end
+
+function main()
+    try
+        # HdrImage
+        (width,height,mode) = Params(ARGS)
+        img = HdrImage(width, height)
+        
+        # Cameras
+        aspect_ratio = width/height
+        distance = 1.0
+        angle_deg = 0.0
+        if length(ARGS) == 4
+            angle_deg = parse(typeof(angle_deg), ARGS[4])
+        end
+
+        transformation = rotation_z(angle_deg)*translation(Vec(-2.0, 0.0, 0.0))
+        if mode == "Orthogonal"
+            cam = OrthogonalCamera(aspect_ratio,transformation)
+            name = "demo_orthogonal"
+        else
+            cam = PerspectiveCamera(distance,aspect_ratio,transformation)
+            name = "demo_perspective"
+        end
+
+        # Image Generation
+
+        # ImageTracer
+        tracer = ImageTracer(img, cam)
+        
+        # World
+        scale = scaling(0.1, 0.1, 0.1)
+        sphere_list = [
+                        Sphere(translation(Vec(-0.5,-0.5,-0.5))*scale),
+                        Sphere(translation(Vec(-0.5,-0.5, 0.5))*scale),
+                        Sphere(translation(Vec(-0.5, 0.5,-0.5))*scale),
+                        Sphere(translation(Vec( 0.5,-0.5,-0.5))*scale),
+                        Sphere(translation(Vec(-0.5, 0.5, 0.5))*scale),
+                        Sphere(translation(Vec( 0.5, 0.5,-0.5))*scale),
+                        Sphere(translation(Vec( 0.5,-0.5, 0.5))*scale),
+                        Sphere(translation(Vec( 0.5, 0.5, 0.5))*scale),
+                        Sphere(translation(Vec( 0.0, 0.0, -0.5))*scale),
+                        Sphere(translation(Vec( 0.0, 0.5, 0.0))*scale)
+                    ]
+
+        world = World(sphere_list)
+
+        # On-Off Tracing
+        f = ray -> OnOff_Tracing(world, ray)
+
+        fire_all_rays!(tracer, f)
+
+        # PFM Image saving
+        write(name*".PFM", img)
+
+        # LDR Image saving (default png)
+        write_ldr_image(img, name*".png")
+
+    catch e
+        # Define colors for the error message
+        red_bold = Crayons.crayon"bold red"  # Bold red text
+        reset = Crayons.crayon"reset"        # Reset color to default
+        
+        # Print the formatted error message
+        println(string(red_bold) * "ERROR " * string(reset), "$(typeof(e)): $(e.msg)")
+
+    end
+end
+
+main()
