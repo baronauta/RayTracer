@@ -12,9 +12,9 @@ include("helper.jl")
     @test c1 + c2 ≈ RGB(0.5, 0.7, 0.9)
     @test 2 * c1 ≈ RGB(0.2, 0.4, 0.6)
     @test c1 * c2 ≈ RGB(0.04, 0.1, 0.18)
- end
- 
- @testset "HdrImage" begin
+end
+
+@testset "HdrImage" begin
     width = 9
     height = 6
     img = HdrImage(width, height)
@@ -26,9 +26,9 @@ include("helper.jl")
     set_pixel!(img, x, y, c)
     @test img.pixels[y, x] ≈ c
     @test c ≈ get_pixel(img, x, y)
- end
- 
- @testset "I/O-Read" begin
+end
+
+@testset "I/O-Read" begin
     # Unit tests
     width = 128
     height = 256
@@ -50,9 +50,9 @@ include("helper.jl")
         @test get_pixel(img, 2, 2) ≈ (RGB(4.0e2, 5.0e2, 6.0e2))
         @test get_pixel(img, 3, 2) ≈ (RGB(7.0e2, 8.0e2, 9.0e2))
     end
- end
- 
- @testset "I/O-Write" begin
+end
+
+@testset "I/O-Write" begin
     #! format: off
     # This is the content of "reference_le.pfm" (little-endian file)
     LE_REFERENCE_BYTES = UInt8[
@@ -87,14 +87,14 @@ include("helper.jl")
     write(buf, img, endianness = 1.0)
     contents = take!(buf)
     @test contents == BE_REFERENCE_BYTES
-    
+
     # writing PNG image on file
     write("test.PFM", img)
     @test read("test.PFM") == read("reference_le.pfm")
     rm("test.PFM")
- end
- 
- @testset "ToneMapping" begin
+end
+
+@testset "ToneMapping" begin
     # Luminosity
     col1 = RGB(10.0, 3.0, 2.0)
     @test luminosity(col1, mean_type = :max_min) ≈ 6
@@ -136,10 +136,10 @@ include("helper.jl")
         @test 0 <= pixel.b <= 1
     end
     # Write LDR image ?
- end
- 
- @testset "Geometry" begin
- 
+end
+
+@testset "Geometry" begin
+
     @testset "Point" begin
         p = Point(1.0, 2.0, 3.0)
         q = Point(4.0, 5.0, 6.0)
@@ -154,7 +154,7 @@ include("helper.jl")
         # Conversion of a Point into a Vec
         @test point_to_vec(p) ≈ Vec(1.0, 2.0, 3.0)
     end
- 
+
     @testset "Vectors" begin
         v = Vec(1.0, 2.0, 3.0)
         u = Vec(4.0, 5.0, 6.0)
@@ -175,7 +175,7 @@ include("helper.jl")
         # Conversion Vec to Normal
         @test vec_to_normal(v) ≈ Normal(1.0, 2.0, 3.0)
     end
- 
+
     @testset "Normal" begin
         n = Normal(0.1, 0.2, 0.3)
         m = Normal(0.4, 0.5, 0.6)
@@ -190,7 +190,7 @@ include("helper.jl")
         v = Vec(0.4, 0.5, 0.6)
         @test cross(n, v) ≈ Vec(-0.03, 0.06, -0.03)
     end
- end
+end
  #! format: off
  @testset "Transformation" begin
  
@@ -345,8 +345,8 @@ include("helper.jl")
     end
  end
  #! format: on
- 
- @testset "Ray" begin
+
+@testset "Ray" begin
     # ≈
     ray1 = Ray(Point(1.0, 2.0, 3.0), Vec(5.0, 4.0, -1.0))
     ray2 = Ray(Point(1.0, 2.0, 3.0), Vec(5.0, 4.0, -1.0))
@@ -366,10 +366,10 @@ include("helper.jl")
     newray = transform(ray, transformation)
     @test newray.origin ≈ Point(11.0, 8.0, 14.0)
     @test newray.dir ≈ Vec(6.0, -4.0, 5.0)
- end
- 
- @testset "Camera" begin
- 
+end
+
+@testset "Camera" begin
+
     @testset "OrthogonalCamera" begin
         aspect_ratio = 2.0
         cam = OrthogonalCamera(aspect_ratio)
@@ -393,21 +393,21 @@ include("helper.jl")
         ray = fire_ray(cam, 0.5, 0.5)
         @test at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
     end
- 
+
     @testset "PerspectiveCamera" begin
         aspect_ratio = 2.0
         cam = PerspectiveCamera(aspect_ratio)
- 
+
         ray1 = fire_ray(cam, 0.0, 0.0)
         ray2 = fire_ray(cam, 1.0, 0.0)
         ray3 = fire_ray(cam, 0.0, 1.0)
         ray4 = fire_ray(cam, 1.0, 1.0)
- 
+
         # Verify that all the rays depart from the same point
         @test ray1.origin ≈ ray2.origin
         @test ray2.origin ≈ ray3.origin
         @test ray3.origin ≈ ray4.origin
- 
+
         # Verify that the ray hitting the corners have the right coordinates
         @test at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
         @test at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
@@ -421,7 +421,7 @@ include("helper.jl")
         ray = fire_ray(cam, 0.5, 0.5)
         @test at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
     end
- 
+
     @testset "ImageTracer" begin
         #Set up
         function setup()
@@ -433,14 +433,14 @@ include("helper.jl")
             tracer = ImageTracer(img, cam)
             return tracer
         end
- 
+
         # Test for pixel's coordinates (u,v)
         function test1(tracer)
             ray1 = fire_ray(tracer, 1, 1, u_pixel = 2.5, v_pixel = 1.5)
             ray2 = fire_ray(tracer, 3, 2, u_pixel = 0.5, v_pixel = 0.5)
             @test ray1 ≈ ray2
         end
- 
+
         # Test for image coverage
         function test2(tracer)
             function lambda(ray::Ray)
@@ -453,7 +453,7 @@ include("helper.jl")
                 end
             end
         end
- 
+
         # Test for orientation
         function test3(tracer)
             top_left_ray = fire_ray(tracer, 1, 1, u_pixel = 0.0, v_pixel = 0.0)
@@ -461,16 +461,16 @@ include("helper.jl")
             @test Point(0.0, 2.0, 1.0) ≈ at(top_left_ray, 1.0)
             @test Point(0.0, -2.0, -1.0) ≈ at(bottom_right_ray, 1.0)
         end
- 
+
         # Do the tests
         for test in [test1, test2, test3]
             test(setup())
         end
- 
+
     end
- end
- 
- @testset "Shapes" begin
+end
+
+@testset "Shapes" begin
     @testset "Plane" begin
         # xy-plane and incoming orthogonal ray from above
         ray_above = Ray(Point(1.0, 2.0, 3.0), Vec(0.0, 0.0, -1.0))
@@ -523,7 +523,7 @@ include("helper.jl")
         test_intersection(Plane(), ray_z, hr_z0)
         test_intersection(Plane(translation(Vec(0.0, 0.0, 3.0))), ray_z, hr_z3)
     end
- 
+
     @testset "Sphere" begin
         # centered unit sphere
         ## ray from above
@@ -536,7 +536,7 @@ include("helper.jl")
             ray_above,
         )
         test_intersection(Sphere(), ray_above, hr_above)
-        
+
         ## ray from x
         ray_x = Ray(Point(3.0, 0.0, 0.0), neg(VEC_X))
         hr_x = HitRecord(
@@ -568,7 +568,7 @@ include("helper.jl")
         ray = Ray(Point(1.0, 0.0, -1.0), VEC_Z)
         hr = nothing
         test_intersection(Sphere(), ray, hr)
- 
+
         # translated unit sphere
         ## x_transltion, ray from above
         sphere = Sphere(translation(Vec(10.0, 0.0, 0.0)))
@@ -588,7 +588,7 @@ include("helper.jl")
         ray = Ray(Point(0.0, 0.0, 3.0), neg(VEC_Z))
         hr = nothing
         test_intersection(sphere, ray, hr)
- 
+
         #rotated unit sphere 
         ## (tests for surface coordinates transformation)
         ### +45° z rotation, ray from x_pos (test u)
