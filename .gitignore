@@ -1,5 +1,5 @@
 #─FOLDERS─────────────────────────────────────────────────────
-example_pfm
+media/
 
 #─FILES───────────────────────────────────────────────────────
 Manifest.toml
@@ -12,7 +12,7 @@ Manifest.toml
 *.pfm
 *.mp4
 # to make a local backup file
-*_backup* 
+*backup* 
 # exceptions
 !reference*
 #─────────────────────────────────────────────────────────────
