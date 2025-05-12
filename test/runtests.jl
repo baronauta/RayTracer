@@ -79,7 +79,7 @@ end
     buf = IOBuffer()
     write(buf, img)
     contents = take!(buf)
-    if little_endian
+    if IS_LITTLE_ENDIAN
         @test contents == LE_REFERENCE_BYTES
     else
         @test contents == BE_REFERENCE_BYTES

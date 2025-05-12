@@ -1,5 +1,7 @@
 # add methods to this function of Base
 import RayTracer: +, -, *, ≈, write, show
+# constant
+import RayTracer: IS_LITTLE_ENDIAN, HOST_ENDIANNESS
 # from colors.jl
 import RayTracer:
     RGB,
