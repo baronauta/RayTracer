@@ -1,3 +1,8 @@
+# ─────────────────────────────────────────────────────────────
+# About HDR and LDR images:
+# - write and read methods.
+# ─────────────────────────────────────────────────────────────
+
 "Check that given endianness is valid: it must be a non zero number."
 function check_endianness(value)
     # Check if the value is a number (either integer or float) and non-zero
@@ -6,11 +11,7 @@ function check_endianness(value)
     end
 end
 
-# ─────────────────────────────────────────────────────────────
-# Methods for writing Color and images to stream or file
-# ─────────────────────────────────────────────────────────────
-
-"Check if the PFM file format is valid"
+"Check if the PFM file format is valid."
 function check_pfm_extension(s)
     # Check if the file extension is .pfm (case-insensitive)
     if !endswith(lowercase(s), ".pfm")
@@ -23,12 +24,15 @@ end
 """
     write_color(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_ENDIANNESS)
 
-Writes an RGB Color to a stream in the specified endianness.
+Write an RGB color (`Float32` precision) to the given output stream in binary format, using the specified byte order.
 
-# Arguments:
-- `io::IO`: The output stream to write to;
-- `color::ColorTypes.RGB{Float32}`: The color to write;
-- `endianness`: The byte order for writing (default: `HOST_ENDIANNESS`).
+# Arguments
+- `io::IO`: The output stream to write binary color data to.
+- `color::ColorTypes.RGB{Float32}`: The color values to be written.
+- `endianness`: A non-zero number indicating the byte order:
+    - `> 0`: Big endian
+    - `< 0`: Little endian  
+    (Defaults to `HOST_ENDIANNESS`, which matches the host machine's byte order.)
 """
 function write_color(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_ENDIANNESS)
     check_endianness(endianness)
@@ -49,17 +53,22 @@ end
 """
     write(io::IO, image::HdrImage; endianness = HOST_ENDIANNESS)
 
-Writes a PFM image to a stream in the specified endianness.
+Write an `HdrImage` to the given output stream in PFM format. 
 
-# Arguments:
-- `io::IO`: The output stream to write to;
-- `image::HdrImage`: The HDR image to write;
-- `endianness`: The byte order for writing (default: `HOST_ENDIANNESS`).
+# Arguments
+- `io::IO`: The output stream to write binary color data to.
+- `image::HdrImage`: The HDR image to be written.
+- `endianness`: A non-zero number indicating the byte order:
+    - `> 0`: Big endian
+    - `< 0`: Little endian  
+    (Defaults to `HOST_ENDIANNESS`, which matches the host machine's byte order.)
 """
 function write(io::IO, image::HdrImage; endianness = HOST_ENDIANNESS)
     check_endianness(endianness)
     bytebuf = transcode(UInt8, "PF\n$(image.width) $(image.height)\n$endianness\n")
     write(io, bytebuf)
+    # Scanline order:
+    # from left to right and from bottom to top (note reversed order for `y`)
     for y = image.height:-1:1
         for x = 1:image.width
             write_color(io, get_pixel(image, x, y); endianness)
@@ -70,12 +79,15 @@ end
 """
     write(filename::String, image::HdrImage; endianness = HOST_ENDIANNESS)
 
-Writes an HDR image to a file in the specified endianness.
+Write an `HdrImage` to the given filename in PFM format. 
 
 # Arguments:
-- `filename::String`: The name of the file to write to;
-- `image::HdrImage`: The HDR image to write;
-- `endianness`: The byte order for writing (default: `HOST_ENDIANNESS`).
+- `filename::String`: The name of the file to write to.
+- `image::HdrImage`: The HDR image to be written.
+- `endianness`: A non-zero number indicating the byte order:
+    - `> 0`: Big endian
+    - `< 0`: Little endian  
+    (Defaults to `HOST_ENDIANNESS`, which matches the host machine's byte order.)
 """
 function write(filename::String, image::HdrImage; endianness = HOST_ENDIANNESS)
     check_pfm_extension(filename)
@@ -85,18 +97,16 @@ function write(filename::String, image::HdrImage; endianness = HOST_ENDIANNESS)
 end
 
 """
-    write_ldr_image(image::HdrImage, filename::String; gamma=1.0)
+    write_ldr_image(filename::String, image::HdrImage; gamma=1.0)
 
-Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image with gamma correction and save it to a file.
+Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma correction, and save it to a file.
 
 # Arguments
-- `image::HdrImage`: The HDR image to be converted.
-- `filename::String`: The output file path.
-- `gamma`: The gamma correction factor (default: `1.0`).
-
-The function applies gamma correction before saving.
+- `filename::String`: The path where the LDR image will be saved (e.g., `"output.png"`).
+- `image::HdrImage`: The input HDR image to convert.
+- `gamma`: Gamma correction factor (default: `1.0`).
 """
-function write_ldr_image(image::HdrImage, filename::String; gamma = 1.0)
+function write_ldr_image(filename::String, image::HdrImage; gamma = 1.0)
     for h = 1:image.height
         for w = 1:image.width
             pix = get_pixel(image, w, h)
@@ -112,34 +122,53 @@ function write_ldr_image(image::HdrImage, filename::String; gamma = 1.0)
     Images.save(filename, image.pixels)
 end
 
-# ─────────────────────────────────────────────────────────────
-# Reading PFM Images functions
-# ─────────────────────────────────────────────────────────────
-
-"""
-    read_pfm_image(filename::String)
-Read a PFM Image from a file
-# Returns
-- The corresponding HdrImage.
-"""
-function read_pfm_image(filename::String)
-    open(filename, "r") do io
-        return read_pfm_image(io)
+"Parse image dimension from a PFM file."
+function _parse_img_size(str::String)
+    parts = split(str, " ")
+    if length(parts) != 2
+        throw(WrongPFMformat("invalid size of the image in PFM file."))
     end
+    width, height = parse.(Int, parts)
+    if width <= 0 || height <= 0
+        throw(WrongPFMformat("size of the image must be positive."))
+    end
+    return width, height
+end
+
+"Parse endianness from a PFM file."
+function _parse_endianness(str::String)
+    value = parse(Float32, str)
+    if value > 0
+        return Float32(1.0)
+    elseif value < 0
+        return Float32(-1.0)
+    else
+        throw(WrongPFMformat("invalid endianness specification."))
+    end
+end
+
+"Read 32-bit floating point number, i.e. read 4 bytes"
+function _read_float(stream::IO, endianness::Float32)
+    x = read(stream, UInt32)
+    is_big_endian = endianness == 1.0
+    # n: big-endian
+    # l: little-endian
+    # h: host endianness
+    x = (is_big_endian == true) ? ntoh(x) : ltoh(x)
+    reinterpret(Float32, x)
 end
 
 """
     read_pfm_image(stream::IO)
-Read a PFM Image from a stream
-# Returns
-- The corresponding HdrImage.
+
+Read a PFM Image from a stream and returns the corresponding HdrImage.
 """
 function read_pfm_image(stream::IO)
     try
         # Read the magic, expected "PF"
         magic = readline(stream)
         if magic != "PF"
-            throw(WrongPFMformat("invalid magic in PFM file"))
+            throw(WrongPFMformat("invalid magic in PFM file."))
         end
         # Read the image size, expected "<width> <height>"
         width, height = _parse_img_size(readline(stream))
@@ -181,38 +210,13 @@ function read_pfm_image(stream::IO)
     end
 end
 
-# Read image dimension
-function _parse_img_size(str::String)
-    parts = split(str, " ")
-    if length(parts) != 2
-        throw(WrongPFMformat("invalid size of the image in PFM file"))
-    end
-    width, height = parse.(Int, parts)
-    if width <= 0 || height <= 0
-        throw(WrongPFMformat("size of the image must be positive"))
-    end
-    return width, height
-end
+"""
+    read_pfm_image(filename::String)
 
-# Parse endianness
-function _parse_endianness(str::String)
-    value = parse(Float32, str)
-    if value > 0
-        return Float32(1.0)
-    elseif value < 0
-        return Float32(-1.0)
-    else
-        throw(WrongPFMformat("invalid endianness specification"))
+Read a PFM Image from a file and returns the corresponding HdrImage.
+"""
+function read_pfm_image(filename::String)
+    open(filename, "r") do io
+        return read_pfm_image(io)
     end
-end
-
-# Read 32-bit floating point number, that is read 4 bytes
-# n: big-endian
-# l: little-endian
-# h: host endianness
-function _read_float(stream::IO, endianness::Float32)
-    x = read(stream, UInt32)
-    is_big_endian = endianness == 1.0
-    x = (is_big_endian == true) ? ntoh(x) : ltoh(x)
-    reinterpret(Float32, x)
 end
