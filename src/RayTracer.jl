@@ -44,7 +44,12 @@ export HdrImage,
     ray_intersection,
     fire_all_rays!,
     rotation_z
-const little_endian = Base.ENDIAN_BOM == 0x04030201 # true if the host is little endian, false otherwise
+
+# Determine if the host system uses little endian byte order
+const IS_LITTLE_ENDIAN = Base.ENDIAN_BOM == 0x04030201
+
+# Set endianness flag: -1.0 for little endian, 1.0 for big endian
+const HOST_ENDIANNESS = IS_LITTLE_ENDIAN ? -1.0 : 1.0
 
 include("exceptions.jl")
 include("colors.jl")

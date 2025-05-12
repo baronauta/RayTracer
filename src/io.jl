@@ -1,15 +1,6 @@
 # ─────────────────────────────────────────────────────────────
 # Endianness functions
 # ─────────────────────────────────────────────────────────────
-
-# setting my_endian = to host endian
-my_endian = 0.0
-if little_endian
-    my_endian = -1.0
-else
-    my_endian = 1.0
-end
-
 "Check if the endianness format is valid and not zero"
 function check_endianness(value)
     if typeof(value) <: Real
@@ -40,16 +31,16 @@ function check_extension(s)
 end
 
 """
-    write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endian)
+    write(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_ENDIANNESS)
 
 Writes an RGB Color to a stream in the specified endianness.
 
 # Arguments:
 - `io::IO`: The output stream to write to;
 - `color::ColorTypes.RGB{Float32}`: The color to write;
-- `endianness`: The byte order for writing (default: `my_endian`).
+- `endianness`: The byte order for writing (default: `HOST_ENDIANNESS`).
 """
-function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endian)
+function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_ENDIANNESS)
 
     check_endianness(endianness)
 
@@ -58,7 +49,7 @@ function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endi
     g = reinterpret(UInt32, color.g)
     b = reinterpret(UInt32, color.b)
 
-    # change endianness according to choosen one
+    # change endianness according to chosen one
     if endianness > 0
         r = hton(r)
         g = hton(g)
@@ -75,16 +66,16 @@ function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = my_endi
 end
 
 """
-    write(io::IO, image::HdrImage; endianness = my_endian)
+    write(io::IO, image::HdrImage; endianness = HOST_ENDIANNESS)
 
 Writes a PFM image to a stream in the specified endianness.
 
 # Arguments:
 - `io::IO`: The output stream to write to;
 - `image::HdrImage`: The HDR image to write;
-- `endianness`: The byte order for writing (default: `my_endian`).
+- `endianness`: The byte order for writing (default: `HOST_ENDIANNESS`).
 """
-function write(io::IO, image::HdrImage; endianness = my_endian)
+function write(io::IO, image::HdrImage; endianness = HOST_ENDIANNESS)
     check_endianness(endianness)
     bytebuf = transcode(UInt8, "PF\n$(image.width) $(image.height)\n$endianness\n")
     write(io, bytebuf)
@@ -96,16 +87,16 @@ function write(io::IO, image::HdrImage; endianness = my_endian)
 end
 
 """
-    write(filename::String, image::HdrImage; endianness = my_endian)
+    write(filename::String, image::HdrImage; endianness = HOST_ENDIANNESS)
 
 Writes an HDR image to a file in the specified endianness.
 
 # Arguments:
 - `filename::String`: The name of the file to write to;
 - `image::HdrImage`: The HDR image to write;
-- `endianness`: The byte order for writing (default: `my_endian`).
+- `endianness`: The byte order for writing (default: `HOST_ENDIANNESS`).
 """
-function write(filename::String, image::HdrImage; endianness = my_endian)
+function write(filename::String, image::HdrImage; endianness = HOST_ENDIANNESS)
     check_extension(filename)
     open(filename, "w") do io
         write(io, image; endianness)
