@@ -1,7 +1,3 @@
-# Input/Output utilities
-
-import Base: write
-
 # ─────────────────────────────────────────────────────────────
 # Endianness functions
 # ─────────────────────────────────────────────────────────────
@@ -36,7 +32,7 @@ end
 
 "Check if the PFM file format is valid"
 function check_extension(s)
-    if !endswith(s, ".PFM")
+    if !endswith(lowercase(s), ".pfm") # case-insensitive: accept .pfm, .PFM, .PfM,...
         throw(
             WrongPFMformat("the file must be a PFM file. Please insert a valid file name"),
         )
@@ -88,7 +84,7 @@ Writes a PFM image to a stream in the specified endianness.
 - `image::HdrImage`: The HDR image to write;
 - `endianness`: The byte order for writing (default: `my_endian`).
 """
-function Base.write(io::IO, image::HdrImage; endianness = my_endian)
+function write(io::IO, image::HdrImage; endianness = my_endian)
     check_endianness(endianness)
     bytebuf = transcode(UInt8, "PF\n$(image.width) $(image.height)\n$endianness\n")
     write(io, bytebuf)
@@ -109,7 +105,7 @@ Writes an HDR image to a file in the specified endianness.
 - `image::HdrImage`: The HDR image to write;
 - `endianness`: The byte order for writing (default: `my_endian`).
 """
-function Base.write(filename::String, image::HdrImage; endianness = my_endian)
+function write(filename::String, image::HdrImage; endianness = my_endian)
     check_extension(filename)
     open(filename, "w") do io
         write(io, image; endianness)
