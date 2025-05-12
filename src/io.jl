@@ -1,37 +1,27 @@
-# ─────────────────────────────────────────────────────────────
-# Endianness functions
-# ─────────────────────────────────────────────────────────────
-"Check if the endianness format is valid and not zero"
+"Check that given endianness is valid: it must be a non zero number."
 function check_endianness(value)
-    if typeof(value) <: Real
-        if value == 0
-            throw(
-                WrongPFMformat(
-                    "endianness can't be 0, choose a number >0 for big endian or <0 for little endian",
-                ),
-            )
-        end
-    else
-        throw(WrongPFMformat("endianness must be an Integer or Float"))
+    # Check if the value is a number (either integer or float) and non-zero
+    if !(typeof(value) <: Real) || value == 0
+        throw(WrongPFMformat("endianness must be a non-zero number."))
     end
 end
-
 
 # ─────────────────────────────────────────────────────────────
 # Methods for writing Color and images to stream or file
 # ─────────────────────────────────────────────────────────────
 
 "Check if the PFM file format is valid"
-function check_extension(s)
-    if !endswith(lowercase(s), ".pfm") # case-insensitive: accept .pfm, .PFM, .PfM,...
+function check_pfm_extension(s)
+    # Check if the file extension is .pfm (case-insensitive)
+    if !endswith(lowercase(s), ".pfm")
         throw(
-            WrongPFMformat("the file must be a PFM file. Please insert a valid file name"),
+            WrongPFMformat("the file must be a PFM file. Please provide a valid file name."),
         )
     end
 end
 
 """
-    write(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_ENDIANNESS)
+    write_color(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_ENDIANNESS)
 
 Writes an RGB Color to a stream in the specified endianness.
 
@@ -40,29 +30,20 @@ Writes an RGB Color to a stream in the specified endianness.
 - `color::ColorTypes.RGB{Float32}`: The color to write;
 - `endianness`: The byte order for writing (default: `HOST_ENDIANNESS`).
 """
-function Base.write(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_ENDIANNESS)
-
+function write_color(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_ENDIANNESS)
     check_endianness(endianness)
-
     # Convert a floating-point number to 32-bit (4 bytes) integer for binary writing
     r = reinterpret(UInt32, color.r)
     g = reinterpret(UInt32, color.g)
     b = reinterpret(UInt32, color.b)
-
-    # change endianness according to chosen one
+    # Change endianness according to th chosen one, default `HOST_ENDIANNESS`
     if endianness > 0
-        r = hton(r)
-        g = hton(g)
-        b = hton(b)
+        r = hton(r); g = hton(g); b = hton(b)
     elseif endianness < 0
-        r = htol(r)
-        g = htol(g)
-        b = htol(b)
+        r = htol(r); g = htol(g); b = htol(b)
     end
-    # writing colors to stream
-    write(io, r)
-    write(io, g)
-    write(io, b)
+
+    write(io, r); write(io, g); write(io, b)
 end
 
 """
@@ -81,7 +62,7 @@ function write(io::IO, image::HdrImage; endianness = HOST_ENDIANNESS)
     write(io, bytebuf)
     for y = image.height:-1:1
         for x = 1:image.width
-            write(io, get_pixel(image, x, y); endianness)
+            write_color(io, get_pixel(image, x, y); endianness)
         end
     end
 end
@@ -97,7 +78,7 @@ Writes an HDR image to a file in the specified endianness.
 - `endianness`: The byte order for writing (default: `HOST_ENDIANNESS`).
 """
 function write(filename::String, image::HdrImage; endianness = HOST_ENDIANNESS)
-    check_extension(filename)
+    check_pfm_extension(filename)
     open(filename, "w") do io
         write(io, image; endianness)
     end
