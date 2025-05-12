@@ -13,7 +13,7 @@ import RayTracer:
     clamp_image!,
     log_average
 # from io.jl
-import RayTracer: read_pfm_image, _parse_endianness, _parse_img_size, little_endian
+import RayTracer: write_color, read_pfm_image, _parse_endianness, _parse_img_size
 # from geometry.jl
 import RayTracer:
     Point,
