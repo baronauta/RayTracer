@@ -4,7 +4,6 @@ import Base: +, -, *, ≈
 import Base: write, show
 import ColorTypes
 import Images
-import LinearAlgebra
 
 export Point, Vec, Normal, VEC_X, VEC_Y, VEC_Z, Ray
 export +,
@@ -31,7 +30,27 @@ export +,
     write_ldr_image,
     GeometryError
 
-const little_endian = Base.ENDIAN_BOM == 0x04030201 # true if the host is little endian, false otherwise
+export HdrImage,
+    OrthogonalCamera,
+    PerspectiveCamera,
+    translation,
+    scaling,
+    Vec,
+    ImageTracer,
+    Sphere,
+    World,
+    fire_ray,
+    RGB,
+    ray_intersection,
+    fire_all_rays!,
+    rotation_z,
+    demo
+
+# Determine if the host system uses little endian byte order
+const IS_LITTLE_ENDIAN = Base.ENDIAN_BOM == 0x04030201
+
+# Set endianness flag: -1.0 for little endian, 1.0 for big endian
+const HOST_ENDIANNESS = IS_LITTLE_ENDIAN ? -1.0 : 1.0
 
 include("exceptions.jl")
 include("colors.jl")
@@ -39,6 +58,9 @@ include("io.jl")
 include("geometry.jl")
 include("transformation.jl")
 include("cameras.jl")
+include("shapes.jl")
+include("world.jl")
+include("demo.jl")
 
 # ─────────────────────────────────────────────────────────────
 # Parameters for PFM file conversion

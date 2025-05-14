@@ -1,25 +1,17 @@
-using RayTracer
 using Test
-
-import ColorTypes
-
-import RayTracer: Point, Vec, Normal, dot, cross, norm, squared_norm
-import RayTracer: HomMatrix, Transformation
-import RayTracer: translation, rotation_x, rotation_y, rotation_z, scaling
-import RayTracer: Ray, transform, OrthogonalCamera, PerspectiveCamera, fire_ray, ImageTracer, fire_all_rays!
+include("helper.jl")
 
 @testset "Colors" begin
-    c1 = ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
-    c2 = ColorTypes.RGB{Float32}(0.4, 0.5, 0.6)
-    c3 = ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
-    @test c1 ≈ ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
-    @test c3 ≈ ColorTypes.RGB{Float32}(0.0001, 0.7001, 0.8)
+    c1 = RGB(0.1, 0.2, 0.3)
+    c2 = RGB(0.4, 0.5, 0.6)
+    c3 = RGB(0.0, 0.7, 0.8)
+    @test c1 ≈ RGB(0.1, 0.2, 0.3)
+    @test c3 ≈ RGB(0.0001, 0.7001, 0.8)
     @test !(c1 ≈ c2)
-    @test !(c3 ≈ ColorTypes.RGB{Float32}(0.001, 0.7001, 0.8))
-    @test c1 + c2 ≈ ColorTypes.RGB{Float32}(0.5, 0.7, 0.9)
-    @test 2 * c1 ≈ ColorTypes.RGB{Float32}(0.2, 0.4, 0.6)
-    @test c1 * c2 ≈ ColorTypes.RGB{Float32}(0.04, 0.1, 0.18)
-    @test RayTracer.color_to_string(c1) == "< r:0.1, g:0.2, b:0.3 >"
+    @test !(c3 ≈ RGB(0.001, 0.7001, 0.8))
+    @test c1 + c2 ≈ RGB(0.5, 0.7, 0.9)
+    @test 2 * c1 ≈ RGB(0.2, 0.4, 0.6)
+    @test c1 * c2 ≈ RGB(0.04, 0.1, 0.18)
 end
 
 @testset "HdrImage" begin
@@ -30,10 +22,10 @@ end
     @test img.width == width
     x = 7
     y = 5
-    c = ColorTypes.RGB{Float32}(0.1, 0.2, 0.3)
-    RayTracer.set_pixel!(img, x, y, c)
+    c = RGB(0.1, 0.2, 0.3)
+    set_pixel!(img, x, y, c)
     @test img.pixels[y, x] ≈ c
-    @test c ≈ RayTracer.get_pixel(img, x, y)
+    @test c ≈ get_pixel(img, x, y)
 end
 
 @testset "I/O-Read" begin
@@ -41,22 +33,22 @@ end
     width = 128
     height = 256
     s1 = "$width $height"
-    @test (width, height) == RayTracer._parse_img_size(s1)
+    @test (width, height) == _parse_img_size(s1)
     be = "+1.0"
     le = "-1.0"
-    @test RayTracer._parse_endianness(be) == 1.0
-    @test RayTracer._parse_endianness(le) == -1.0
+    @test _parse_endianness(be) == 1.0
+    @test _parse_endianness(le) == -1.0
     # Integration test
     for filename in ["reference_be.pfm", "reference_le.pfm"]
         file_data = read(filename)
         stream = IOBuffer(file_data)
-        img = RayTracer.read_pfm_image(stream)
-        @test get_pixel(img, 1, 1) ≈ (ColorTypes.RGB{Float32}(1.0e1, 2.0e1, 3.0e1))
-        @test get_pixel(img, 2, 1) ≈ (ColorTypes.RGB{Float32}(4.0e1, 5.0e1, 6.0e1))
-        @test get_pixel(img, 3, 1) ≈ (ColorTypes.RGB{Float32}(7.0e1, 8.0e1, 9.0e1))
-        @test get_pixel(img, 1, 2) ≈ (ColorTypes.RGB{Float32}(1.0e2, 2.0e2, 3.0e2))
-        @test get_pixel(img, 2, 2) ≈ (ColorTypes.RGB{Float32}(4.0e2, 5.0e2, 6.0e2))
-        @test get_pixel(img, 3, 2) ≈ (ColorTypes.RGB{Float32}(7.0e2, 8.0e2, 9.0e2))
+        img = read_pfm_image(stream)
+        @test get_pixel(img, 1, 1) ≈ (RGB(1.0e1, 2.0e1, 3.0e1))
+        @test get_pixel(img, 2, 1) ≈ (RGB(4.0e1, 5.0e1, 6.0e1))
+        @test get_pixel(img, 3, 1) ≈ (RGB(7.0e1, 8.0e1, 9.0e1))
+        @test get_pixel(img, 1, 2) ≈ (RGB(1.0e2, 2.0e2, 3.0e2))
+        @test get_pixel(img, 2, 2) ≈ (RGB(4.0e2, 5.0e2, 6.0e2))
+        @test get_pixel(img, 3, 2) ≈ (RGB(7.0e2, 8.0e2, 9.0e2))
     end
 end
 
@@ -83,60 +75,61 @@ end
     0x8c, 0x00, 0x00, 0x42, 0xa0, 0x00, 0x00, 0x42, 0xb4, 0x00, 0x00
     ]
     #! format: on
-    img = RayTracer.read_pfm_image(open("reference_le.pfm", "r"))
+    img = read_pfm_image(open("reference_le.pfm", "r"))
     buf = IOBuffer()
     write(buf, img)
     contents = take!(buf)
-    if little_endian
+    if IS_LITTLE_ENDIAN
         @test contents == LE_REFERENCE_BYTES
     else
         @test contents == BE_REFERENCE_BYTES
     end
-    write(buf, img, endianness=1.0)
+    write(buf, img, endianness = 1.0)
     contents = take!(buf)
     @test contents == BE_REFERENCE_BYTES
+
+    # writing PNG image on file
+    write("test.PFM", img)
+    @test read("test.PFM") == read("reference_le.pfm")
+    rm("test.PFM")
 end
 
 @testset "ToneMapping" begin
     # Luminosity
-    col1 = ColorTypes.RGB{Float32}(10.0, 3.0, 2.0)
-    @test RayTracer.luminosity(col1, mean_type=:max_min) ≈ 6
-    @test RayTracer.luminosity(col1, mean_type=:arithmetic) ≈ 5
-    @test RayTracer.luminosity(col1, mean_type=:weighted) ≈ 5
-    @test RayTracer.luminosity(col1, mean_type=:weighted, weights=[1, 2, 5]) ≈ 3.25
-    @test isapprox(
-        RayTracer.luminosity(col1, mean_type=:distance),
-        10.6301;
-        atol=0.0001,
-    )
+    col1 = RGB(10.0, 3.0, 2.0)
+    @test luminosity(col1, mean_type = :max_min) ≈ 6
+    @test luminosity(col1, mean_type = :arithmetic) ≈ 5
+    @test luminosity(col1, mean_type = :weighted) ≈ 5
+    @test luminosity(col1, mean_type = :weighted, weights = [1, 2, 5]) ≈ 3.25
+    @test isapprox(luminosity(col1, mean_type = :distance), 10.6301; atol = 0.0001)
     # Logarithmic average
     # Image for test
     img = HdrImage(2, 1)
-    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0)) # Luminosity (min-max): 10.0
-    RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0)) # Luminosity (min-max): 1000.0
-    @test RayTracer.log_average(img, mean_type=:max_min, delta=0.0) ≈ 100.0
+    set_pixel!(img, 1, 1, RGB(5.0, 10.0, 15.0)) # Luminosity (min-max): 10.0
+    set_pixel!(img, 2, 1, RGB(500.0, 1000.0, 1500.0)) # Luminosity (min-max): 1000.0
+    @test log_average(img, mean_type = :max_min, delta = 0.0) ≈ 100.0
     # Test that delta helps in avoiding log singularity when a pixel is black
     img = HdrImage(2, 1)
-    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(50.0, 100.0, 150.0)) # Luminosity (min-max): 100.0
-    @test RayTracer.log_average(img, mean_type=:max_min) ≈ 1e-4
+    set_pixel!(img, 1, 1, RGB(50.0, 100.0, 150.0)) # Luminosity (min-max): 100.0
+    @test log_average(img, mean_type = :max_min) ≈ 1e-4
     # Normalization
     # Image for test
     img = HdrImage(2, 1)
-    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0))
-    RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0))
-    RayTracer.normalize_image!(img, factor=1000.0, lumi=100.0)
-    @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
-    @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
-    RayTracer.normalize_image!(img, factor=1000.0)
-    @test RayTracer.get_pixel(img, 1, 1) ≈ ColorTypes.RGB{Float32}(0.5e2, 1.0e2, 1.5e2)
-    @test RayTracer.get_pixel(img, 2, 1) ≈ ColorTypes.RGB{Float32}(0.5e4, 1.0e4, 1.5e4)
+    set_pixel!(img, 1, 1, RGB(5.0, 10.0, 15.0))
+    set_pixel!(img, 2, 1, RGB(500.0, 1000.0, 1500.0))
+    normalize_image!(img, factor = 1000.0, lumi = 100.0)
+    @test get_pixel(img, 1, 1) ≈ RGB(0.5e2, 1.0e2, 1.5e2)
+    @test get_pixel(img, 2, 1) ≈ RGB(0.5e4, 1.0e4, 1.5e4)
+    normalize_image!(img, factor = 1000.0)
+    @test get_pixel(img, 1, 1) ≈ RGB(0.5e2, 1.0e2, 1.5e2)
+    @test get_pixel(img, 2, 1) ≈ RGB(0.5e4, 1.0e4, 1.5e4)
     # Clamp image
     # Image for test
     img = HdrImage(2, 1)
-    RayTracer.set_pixel!(img, 1, 1, ColorTypes.RGB{Float32}(5.0, 10.0, 15.0))
-    RayTracer.set_pixel!(img, 2, 1, ColorTypes.RGB{Float32}(500.0, 1000.0, 1500.0))
+    set_pixel!(img, 1, 1, RGB(5.0, 10.0, 15.0))
+    set_pixel!(img, 2, 1, RGB(500.0, 1000.0, 1500.0))
     # Just check that the R/G/B values are within the expected boundaries
-    RayTracer.clamp_image!(img)
+    clamp_image!(img)
     for pixel in img.pixels
         @test 0 <= pixel.r <= 1
         @test 0 <= pixel.g <= 1
@@ -159,7 +152,7 @@ end
         @test (p + v) ≈ Point(8.0, 10.0, 12.0)
         @test (p - v) ≈ Point(-6.0, -6.0, -6.0)
         # Conversion of a Point into a Vec
-        @test RayTracer.point_to_vec(p) ≈ Vec(1.0, 2.0, 3.0)
+        @test point_to_vec(p) ≈ Vec(1.0, 2.0, 3.0)
     end
 
     @testset "Vectors" begin
@@ -173,14 +166,14 @@ end
         # Vec * scalar
         @test (v * 2) ≈ Vec(2.0, 4.0, 6.0)
         @test (2 * v) ≈ Vec(2.0, 4.0, 6.0)
-        @test RayTracer.neg(v) ≈ Vec(-1.0, -2.0, -3.0)
+        @test neg(v) ≈ Vec(-1.0, -2.0, -3.0)
         # Vec dot product, cross product and norm
-        @test RayTracer.dot(v, u) ≈ 32.0
-        @test RayTracer.cross(v, u) ≈ Vec(-3.0, 6.0, -3.0)
-        @test RayTracer.squared_norm(v) ≈ 14.0
-        @test RayTracer.norm(v)^2 ≈ 14.0
+        @test dot(v, u) ≈ 32.0
+        @test cross(v, u) ≈ Vec(-3.0, 6.0, -3.0)
+        @test squared_norm(v) ≈ 14.0
+        @test norm(v)^2 ≈ 14.0
         # Conversion Vec to Normal
-        @test RayTracer.vec_to_normal(v) ≈ Normal(1.0, 2.0, 3.0)
+        @test vec_to_normal(v) ≈ Normal(1.0, 2.0, 3.0)
     end
 
     @testset "Normal" begin
@@ -192,15 +185,15 @@ end
         @test (m * 0.5) ≈ Normal(0.2, 0.25, 0.3)
         @test (0.5 * m) ≈ Normal(0.2, 0.25, 0.3)
         # Normal dot product, cross product
-        @test RayTracer.dot(n, m) ≈ 0.32
-        @test RayTracer.cross(n, m) ≈ Normal(-0.03, 0.06, -0.03)
+        @test dot(n, m) ≈ 0.32
+        @test cross(n, m) ≈ Normal(-0.03, 0.06, -0.03)
         v = Vec(0.4, 0.5, 0.6)
-        @test RayTracer.cross(n, v) ≈ Vec(-0.03, 0.06, -0.03)
+        @test cross(n, v) ≈ Vec(-0.03, 0.06, -0.03)
     end
 end
-#! format: off
-@testset "Transformation" begin
-
+ #! format: off
+ @testset "Transformation" begin
+ 
     @testset "Consistency" begin
         m = Matrix{Float32}([
             1.0 2.0 3.0 4.0
@@ -217,7 +210,7 @@ end
             ],
         )
         T = Transformation(HomMatrix(m), HomMatrix(invm))
-        @test RayTracer._is_consistent(T)
+        @test _is_consistent(T)
         # Create a copy of the matrices so that each Transformation has its own copy of the data
         T1 = Transformation(HomMatrix(copy(m)), HomMatrix(copy(invm)))
         T2 = Transformation(HomMatrix(copy(m)), HomMatrix(copy(invm)))
@@ -226,13 +219,13 @@ end
         # Change one element of T.M: this makes T not consistent
         T2.M.matrix[1, 1] += 1
         @test !(T ≈ T2)
-        @test !(RayTracer._is_consistent(T2))
+        @test !(_is_consistent(T2))
         # Change one element of T.invM: this makes T not consistent
         T3.invM.matrix[1, 3] += 1
         @test !(T ≈ T3)
-        @test !(RayTracer._is_consistent(T3))
+        @test !(_is_consistent(T3))
     end
-
+ 
     @testset "Multiplication" begin
         m1 = Matrix{Float32}([
             1.0 2.0 3.0 4.0
@@ -249,8 +242,8 @@ end
             ],
         )
         T1 = Transformation(HomMatrix(m1), HomMatrix(invm1))
-        @test RayTracer._is_consistent(T1)
-
+        @test _is_consistent(T1)
+ 
         m2 = Matrix{Float32}([
             3.0 5.0 2.0 4.0
             4.0 1.0 0.0 5.0
@@ -266,8 +259,8 @@ end
             ],
         )
         T2 = Transformation(HomMatrix(m2), HomMatrix(invm2))
-        @test RayTracer._is_consistent(T2)
-
+        @test _is_consistent(T2)
+ 
         expected_m = Matrix{Float32}(
             [
                  33.0  32.0 16.0 18.0
@@ -285,12 +278,12 @@ end
             ],
         )
         expected = Transformation(HomMatrix(expected_m), HomMatrix(expected_invm))
-        @test RayTracer._is_consistent(expected)
-
+        @test _is_consistent(expected)
+ 
         prod = T1 * T2
         @test expected ≈ prod
     end
-
+ 
     @testset "× Vec/Point/Normal" begin
         m_mat = Matrix{Float32}([
             1.0 2.0 3.0 4.0
@@ -307,8 +300,8 @@ end
             ],
         )
         T = Transformation(HomMatrix(m_mat), HomMatrix(invm_mat))
-        @test RayTracer._is_consistent(T)
-
+        @test _is_consistent(T)
+ 
         expected_v = Vec(14.0, 38.0, 51.0)
         mul_vec = T * Vec(1.0, 2.0, 3.0)
         @test mul_vec ≈ expected_v
@@ -319,39 +312,39 @@ end
         mul_normal = T * Normal(3.0, 2.0, 4.0)
         @test mul_normal ≈ expected_n
     end
-
+ 
     @testset "Translation" begin
         tr1 = translation(Vec(1.0, 2.0, 3.0))
-        @test RayTracer._is_consistent(tr1)
+        @test _is_consistent(tr1)
         tr2 = translation(Vec(4.0, 6.0, 8.0))
-        @test RayTracer._is_consistent(tr2)
+        @test _is_consistent(tr2)
         prod = tr1 * tr2
-        @test RayTracer._is_consistent(prod)
+        @test _is_consistent(prod)
         expected = translation(Vec(5.0, 8.0, 11.0))
         @test prod ≈ expected
     end
-
+ 
     @testset "Rotations" begin
-        @test RayTracer._is_consistent(rotation_x(0.1))
-        @test RayTracer._is_consistent(rotation_y(0.1))
-        @test RayTracer._is_consistent(rotation_z(0.1))
+        @test _is_consistent(rotation_x(0.1))
+        @test _is_consistent(rotation_y(0.1))
+        @test _is_consistent(rotation_z(0.1))
         @test (rotation_x(90) * VEC_Y) ≈ VEC_Z
         @test (rotation_y(90) * VEC_Z) ≈ VEC_X
         @test (rotation_z(90) * VEC_X) ≈ VEC_Y
     end
-
+ 
     @testset "Scaling" begin
         tr1 = scaling(2.0, 5.0, 10.0)
-        @test RayTracer._is_consistent(tr1)
+        @test _is_consistent(tr1)
         tr2 = scaling(3.0, 2.0, 4.0)
-        @test RayTracer._is_consistent(tr2)
+        @test _is_consistent(tr2)
         prod = tr1 * tr2
-        @test RayTracer._is_consistent(prod)
+        @test _is_consistent(prod)
         expected = scaling(6.0, 10.0, 40.0)
         @test prod ≈ expected
     end
-end
-#! format: on
+ end
+ #! format: on
 
 @testset "Ray" begin
     # ≈
@@ -364,9 +357,9 @@ end
     @test !(ray1 ≈ ray4)
     # at method
     ray = Ray(Point(1.0, 2.0, 4.0), Vec(4.0, 2.0, 1.0))
-    RayTracer.at(ray, 0.0) ≈ ray.origin
-    RayTracer.at(ray, 1.0) ≈ Point(5.0, 4.0, 5.0)
-    RayTracer.at(ray, 2.0) ≈ Point(9.0, 6.0, 6.0)
+    at(ray, 0.0) ≈ ray.origin
+    at(ray, 1.0) ≈ Point(5.0, 4.0, 5.0)
+    at(ray, 2.0) ≈ Point(9.0, 6.0, 6.0)
     # Ray transformation
     ray = Ray(Point(1.0, 2.0, 3.0), Vec(6.0, 5.0, 4.0))
     transformation = translation(Vec(10.0, 11.0, 12.0)) * rotation_x(90.0)
@@ -389,16 +382,16 @@ end
         @test squared_norm(cross(ray1.dir, ray3.dir)) ≈ 0.0
         @test squared_norm(cross(ray1.dir, ray4.dir)) ≈ 0.0
         # Verify that the ray hitting the corners have the right coordinates
-        @test RayTracer.at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
-        @test RayTracer.at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
-        @test RayTracer.at(ray3, 1.0) ≈ Point(0.0, 2.0, 1.0)
-        @test RayTracer.at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
+        @test at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
+        @test at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
+        @test at(ray3, 1.0) ≈ Point(0.0, 2.0, 1.0)
+        @test at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
         # Verify correctness of the transformation applied to Camera
         aspect_ratio = 2.0
-        transformation = translation(RayTracer.neg(VEC_Y) * 2.0) * rotation_z(90)
+        transformation = translation(neg(VEC_Y) * 2.0) * rotation_z(90)
         cam = OrthogonalCamera(aspect_ratio, transformation)
         ray = fire_ray(cam, 0.5, 0.5)
-        @test RayTracer.at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
+        @test at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
     end
 
     @testset "PerspectiveCamera" begin
@@ -416,17 +409,17 @@ end
         @test ray3.origin ≈ ray4.origin
 
         # Verify that the ray hitting the corners have the right coordinates
-        @test RayTracer.at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
-        @test RayTracer.at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
-        @test RayTracer.at(ray3, 1.0) ≈ Point(0.0, 2.0, 1.0)
-        @test RayTracer.at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
+        @test at(ray1, 1.0) ≈ Point(0.0, 2.0, -1.0)
+        @test at(ray2, 1.0) ≈ Point(0.0, -2.0, -1.0)
+        @test at(ray3, 1.0) ≈ Point(0.0, 2.0, 1.0)
+        @test at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
         # Verify correctness of the transformation applied to Camera
         aspect_ratio = 2.0
         screen_distance = 1.0
-        transformation = translation(RayTracer.neg(VEC_Y) * 2.0) * rotation_z(90)
+        transformation = translation(neg(VEC_Y) * 2.0) * rotation_z(90)
         cam = PerspectiveCamera(screen_distance, aspect_ratio, transformation)
         ray = fire_ray(cam, 0.5, 0.5)
-        @test RayTracer.at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
+        @test at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
     end
 
     @testset "ImageTracer" begin
@@ -451,13 +444,12 @@ end
         # Test for image coverage
         function test2(tracer)
             function lambda(ray::Ray)
-                return ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+                return RGB(0.0, 0.7, 0.8)
             end
             fire_all_rays!(tracer, lambda)
             for row = 1:tracer.image.height
                 for col = 1:tracer.image.width
-                    @test RayTracer.get_pixel(tracer.image, col, row) ≈
-                          ColorTypes.RGB{Float32}(0.0, 0.7, 0.8)
+                    @test get_pixel(tracer.image, col, row) ≈ RGB(0.0, 0.7, 0.8)
                 end
             end
         end
@@ -466,8 +458,8 @@ end
         function test3(tracer)
             top_left_ray = fire_ray(tracer, 1, 1, u_pixel = 0.0, v_pixel = 0.0)
             bottom_right_ray = fire_ray(tracer, 4, 2, u_pixel = 1.0, v_pixel = 1.0)
-            @test Point(0.0, 2.0, 1.0) ≈ RayTracer.at(top_left_ray, 1.0)
-            @test Point(0.0, -2.0, -1.0) ≈ RayTracer.at(bottom_right_ray, 1.0)
+            @test Point(0.0, 2.0, 1.0) ≈ at(top_left_ray, 1.0)
+            @test Point(0.0, -2.0, -1.0) ≈ at(bottom_right_ray, 1.0)
         end
 
         # Do the tests
@@ -476,4 +468,196 @@ end
         end
 
     end
+end
+
+@testset "Shapes" begin
+    @testset "Plane" begin
+        # xy-plane and incoming orthogonal ray from above
+        ray_above = Ray(Point(1.0, 2.0, 3.0), Vec(0.0, 0.0, -1.0))
+        hr_above = HitRecord(
+            Point(1.0, 2.0, 0.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            3.0,
+            ray_above,
+        )
+        test_intersection(Plane(), ray_above, hr_above)
+        # xy-plane and incoming 45° ray from below
+        ray_diag = Ray(Point(1.0, 1.0, -1.0), Vec(-1.0, -1.0, 1.0))
+        hr_diag = HitRecord(
+            Point(0.0, 0.0, 0.0),
+            Normal(0.0, 0.0, -1.0),
+            Vec2D(0.0, 0.0),
+            1.0,
+            ray_diag,
+        )
+        test_intersection(Plane(), ray_diag, hr_diag)
+        # xy-plane and ray in x-direction: no intersection
+        ray_x = Ray(Point(1.0, 2.0, 3.0), Vec(1.0, 0.0, 0.0))
+        hr_x = nothing
+        test_intersection(Plane(), ray_x, hr_x)
+        # xz-plane (y=0) and ray in y-direction: intersection;
+        # test also 2D coordinates.
+        ray_y = Ray(Point(0.1, -1.0, 0.0), Vec(0.0, 1.0, 0.0))
+        plane_rotated = Plane(rotation_x(90))
+        hr_rotated = HitRecord(
+            Point(0.1, 0.0, 0.0),
+            Normal(0.0, -1.0, 0.0),
+            Vec2D(0.1, 0.0),
+            1.0,
+            ray_y,
+        )
+        test_intersection(Plane(rotation_x(90)), ray_y, hr_rotated)
+        # Ray with origin (0,0,2) and direction (0,0,1):
+        # xy-plane (z=0): no intersection
+        # translated xy-plane (e.g. z=3): intersection
+        ray_z = Ray(Point(0.0, 0.0, 2.0), Vec(0.0, 0.0, 1.0))
+        hr_z0 = nothing
+        hr_z3 = HitRecord(
+            Point(0.0, 0.0, 3.0),
+            Normal(0.0, 0.0, -1.0),
+            Vec2D(0.0, 0.0),
+            1.0,
+            ray_z,
+        )
+        test_intersection(Plane(), ray_z, hr_z0)
+        test_intersection(Plane(translation(Vec(0.0, 0.0, 3.0))), ray_z, hr_z3)
+    end
+
+    @testset "Sphere" begin
+        # centered unit sphere
+        ## ray from above
+        ray_above = Ray(Point(0.0, 0.0, 2.0), neg(VEC_Z))
+        hr_above = HitRecord(
+            Point(0.0, 0.0, 1.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            1.0,
+            ray_above,
+        )
+        test_intersection(Sphere(), ray_above, hr_above)
+
+        ## ray from x
+        ray_x = Ray(Point(3.0, 0.0, 0.0), neg(VEC_X))
+        hr_x = HitRecord(
+            Point(1.0, 0.0, 0.0),
+            Normal(1.0, 0.0, 0.0),
+            Vec2D(0.0, 0.5),
+            2.0,
+            ray_x,
+        )
+        test_intersection(Sphere(), ray_x, hr_x)
+
+        ## ray from Origin towards x
+        ray_x = Ray(Point(0.0, 0.0, 0.0), VEC_X)
+        hr_x = HitRecord(
+            Point(1.0, 0.0, 0.0),
+            Normal(-1.0, 0.0, 0.0),
+            Vec2D(0.0, 0.5),
+            1.0,
+            ray_x,
+        )
+        test_intersection(Sphere(), ray_x, hr_x)
+
+        ## ray from x in opposite direction, no intersection
+        ray = Ray(Point(1.5, 0.0, 0.0), VEC_X)
+        hr = nothing
+        test_intersection(Sphere(), ray, hr)
+
+        ## tangent ray, no tangent intersection
+        ray = Ray(Point(1.0, 0.0, -1.0), VEC_Z)
+        hr = nothing
+        test_intersection(Sphere(), ray, hr)
+
+        # translated unit sphere
+        ## x_transltion, ray from above
+        sphere = Sphere(translation(Vec(10.0, 0.0, 0.0)))
+        ray = Ray(Point(10.0, 0.0, 3.0), neg(VEC_Z))
+        hr = HitRecord(
+            Point(10.0, 0.0, 1.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            2.0,
+            ray,
+        )
+        test_intersection(sphere, ray, hr)
+
+        ## x_transltion, ray from above, no intersections
+        ## (want to test possible false intersection with untransformed sphere)
+        sphere = Sphere(translation(Vec(10.0, 0.0, 0.0)))
+        ray = Ray(Point(0.0, 0.0, 3.0), neg(VEC_Z))
+        hr = nothing
+        test_intersection(sphere, ray, hr)
+
+        #rotated unit sphere 
+        ## (tests for surface coordinates transformation)
+        ### +45° z rotation, ray from x_pos (test u)
+        sphere = Sphere(rotation_z(45))
+        ray = Ray(Point(14.0, 0.0, 0.0), neg(VEC_X))
+        hr = HitRecord(
+            Point(1.0, 0.0, 0.0),
+            Normal(1.0, 0.0, 0.0),
+            Vec2D(0.875, 0.5), # wrong untransformed (u,v) = (0.0,0.5)
+            13.0,
+            ray,
+        )
+        test_intersection(sphere, ray, hr)
+        ### +45° y rotation, ray from x_pos (test v)
+        sphere = Sphere(rotation_y(45))
+        ray = Ray(Point(14.0, 0.0, 0.0), neg(VEC_X))
+        hr = HitRecord(
+            Point(1.0, 0.0, 0.0),
+            Normal(1.0, 0.0, 0.0),
+            Vec2D(0.0, 0.25), # wrong untransformed (u,v) = (0.0,0.5)
+            13.0,
+            ray,
+        )
+        test_intersection(sphere, ray, hr)
+
+        # *2 uniform scaling
+        ## ray from y
+        sphere = Sphere(scaling(2.0, 2.0, 2.0))
+        ray = Ray(Point(0.0, 12.0, 0.0), Vec(0.0, -1.0, 0.0))
+        hr = HitRecord(
+            Point(0.0, 2.0, 0.0),
+            Normal(0.0, 0.5, 0.0),
+            Vec2D(0.25, 0.5),
+            10.0,
+            ray,
+        )
+        test_intersection(sphere, ray, hr)
+    end
+end
+
+@testset "World" begin
+    # one setup for all tests
+    # Shapes
+    sphere1 = Sphere(translation(Vec(0.0, 0.0, 5.0)))
+    sphere2 = Sphere(translation(Vec(0.0, 0.0, 1.5)))
+    shapes = [sphere1, sphere2]
+    world = World(shapes)
+    # adding plane
+    plane = Plane()
+    add!(world, plane)
+    # rays
+    ray_z1 = Ray(Point(0.0, 0.0, 10.0), Vec(0.0, 0.0, -1.0))
+    ray_z2 = Ray(Point(0.0, 0.0, -10.0), Vec(0.0, 0.0, 1.0))
+    # HitRecords
+    hr1 = HitRecord( # hit only sphere 1 into north pole
+        Point(0.0, 0.0, 6.0),
+        Normal(0.0, 0.0, 1.0),
+        Vec2D(0.0, 0.0),
+        4.0,
+        ray_z1,
+    )
+    hr2 = HitRecord( # hit only the plane into the origin
+        Point(0.0, 0.0, 0.0),
+        Normal(0.0, 0.0, -1.0),
+        Vec2D(0.0, 0.0),
+        10.0,
+        ray_z2,
+    )
+    # tests
+    test_intersection(world, ray_z1, hr1)
+    test_intersection(world, ray_z2, hr2)
 end

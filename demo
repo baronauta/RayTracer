@@ -1,0 +1,97 @@
+#!/usr/bin/env julia
+
+using Pkg
+Pkg.activate(normpath(@__DIR__))
+
+using RayTracer
+import Crayons # enables colorful and expressive terminal output
+
+# function to make video
+function make_video(width, height, camera)
+    cmd = `ffmpeg -y -r 25 -f image2 -s $(width)x$(height) -i demo_output/all_video_frames/img%03d.png -vcodec libx264 -pix_fmt yuv420p demo_output/spheres-$(camera).mp4`
+    run(cmd)
+end
+
+# parameters function
+message_error = """\n
+ ------------------------------------------------------------
+ Correct command usage:
+      julia demo [ARGUMENTS] [OPTIONS]
+
+      Arguments:
+      - width INTEGER      Image width in pixels
+      - height INTEGER     Image height in pixels
+      - camera STRING      Type of camera: Orthogonal or Perspective
+
+      Options:
+      - angle-deg FLOAT    Angle of view from start position (around Z-axes, angle-deg ∈ [0; 360])
+      - video STRING       Create a rotating 360 view with the specified arguments (no angle option)
+------------------------------------------------------------
+"""
+
+function Params(A)
+    try
+        width, height = parse.(Int, A[1:2])
+        camera = A[3]
+        if length(A) == 3
+            return width, height, camera
+        elseif length(A) == 4
+            return A[4] == "video" ?
+                (width, height, camera, "video") :
+                (width, height, camera, parse(Int, A[4]))
+        else
+            throw(RuntimeError(message_error))
+        end
+    catch
+        throw(RuntimeError(message_error))
+    end
+end
+
+# make a video or a single picture:
+function generate_single_image(width, height, camera, angle_deg)
+    dir_name = "demo_output/"
+    mkpath(dir_name)
+    demo(width, height, camera, angle_deg, dir_name)
+    println("✅ Successfully generated demo pfm and png images.")
+end
+
+function generate_video_frames(width, height, camera)
+    dir_name = "demo_output/all_video_frames/"
+    mkpath(dir_name)
+    
+    for angle in 0:359
+        demo(width, height, camera, angle, dir_name; pfm=false)
+        angle_str = lpad(string(angle), 3, '0')
+        mv("$(dir_name)demo_$(camera).png", "$(dir_name)img$(angle_str).png"; force=true)
+        println("at frame: $angle_str")
+    end
+
+    make_video(width, height, camera)
+    println("✅ Successfully generated the demo video.")
+end
+
+function main()
+    try
+        args = Params(ARGS)
+
+        if length(args) == 3
+            angle = 0.0
+            generate_single_image(args..., angle)
+        elseif length(args) == 4
+            (width, height, camera, option) = args
+            option == "video" ?
+                generate_video_frames(width, height, camera) :
+                generate_single_image(width, height, camera, option)
+        end
+    catch e
+        # Define colors for the error message
+        red_bold = Crayons.crayon"bold red"  # Bold red text
+        reset = Crayons.crayon"reset"        # Reset color to default
+        
+        # Print the formatted error message
+        println(string(red_bold) * "ERROR " * string(reset), "$(typeof(e)): $(e.msg)")
+
+    end
+end
+
+main()

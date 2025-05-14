@@ -1,5 +1,4 @@
 import Base: *
-import LinearAlgebra: I
 
 # ─────────────────────────────────────────────────────────────
 # Defining new types:
@@ -16,7 +15,8 @@ struct Transformation{T<:AbstractFloat}
     invM::HomMatrix{T}
 end
 
-const IDENTITY_MATR4x4 = Matrix{Float32}(I, 4, 4)
+const IDENTITY_MATR4x4 =
+    [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.0; 0.0 0.0 0.0 1.0]
 
 "Product between two `HomMatrix` types. Returns a `HomMatrix` type."
 function *(A::HomMatrix, B::HomMatrix)
