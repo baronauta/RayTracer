@@ -43,7 +43,8 @@ export HdrImage,
     RGB,
     ray_intersection,
     fire_all_rays!,
-    rotation_z
+    rotation_z,
+    demo
 
 # Determine if the host system uses little endian byte order
 const IS_LITTLE_ENDIAN = Base.ENDIAN_BOM == 0x04030201
@@ -59,6 +60,7 @@ include("transformation.jl")
 include("cameras.jl")
 include("shapes.jl")
 include("world.jl")
+include("demo.jl")
 
 # ─────────────────────────────────────────────────────────────
 # Parameters for PFM file conversion

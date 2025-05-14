@@ -6,95 +6,83 @@ Pkg.activate(normpath(@__DIR__))
 using RayTracer
 import Crayons # enables colorful and expressive terminal output
 
-# On-Off Tracing Functions 
-function OnOff_Tracing(world::World, ray::Ray)
-    isnothing(ray_intersection(world, ray)) ? RGB(0.0, 0.0, 0.0) : RGB(1.0, 1.0, 1.0)
+# function to make video
+function make_video(width, height, camera)
+    cmd = `ffmpeg -y -r 25 -f image2 -s $(width)x$(height) -i demo_output/all_video_frames/img%03d.png -vcodec libx264 -pix_fmt yuv420p demo_output/spheres-$(camera).mp4`
+    run(cmd)
 end
 
 # parameters function
-function Params(A)
-    if (length(A) != 3) && (length(A) != 4)
-        throw(
-            RuntimeError(
-                """\n
+message_error = """\n
  ------------------------------------------------------------
  Correct command usage:
       julia demo [ARGUMENTS] [OPTIONS]
 
       Arguments:
-      - width INTEGER   Image width in pixels
-      - height INTEGER  Image height in pixels
-      - camera STRING   Type of camera: Orthogonal or Perspective
+      - width INTEGER      Image width in pixels
+      - height INTEGER     Image height in pixels
+      - camera STRING      Type of camera: Orthogonal or Perspective
 
       Options:
-      - angle-deg FLOAT Angle of view from start position (around Z-axes, angle-deg ∈ [0; 360])
-
-Number of arguments received: $(length(A))
+      - angle-deg FLOAT    Angle of view from start position (around Z-axes, angle-deg ∈ [0; 360])
+      - video STRING       Create a rotating 360 view with the specified arguments (no angle option)
 ------------------------------------------------------------
-""",
-            ),
-        )
+"""
 
+function Params(A)
+    try
+        width, height = parse.(Int, A[1:2])
+        camera = A[3]
+        if length(A) == 3
+            return width, height, camera
+        elseif length(A) == 4
+            return A[4] == "video" ?
+                (width, height, camera, "video") :
+                (width, height, camera, parse(Int, A[4]))
+        else
+            throw(RuntimeError(message_error))
+        end
+    catch
+        throw(RuntimeError(message_error))
     end
-    return (parse(Int, A[1]),parse(Int, A[2]), A[3])
+end
+
+# make a video or a single picture:
+function generate_single_image(width, height, camera, angle_deg)
+    dir_name = "demo_output/"
+    mkpath(dir_name)
+    demo(width, height, camera, angle_deg, dir_name)
+    println("✅ Successfully generated demo pfm and png images.")
+end
+
+function generate_video_frames(width, height, camera)
+    dir_name = "demo_output/all_video_frames/"
+    mkpath(dir_name)
+    
+    for angle in 0:359
+        demo(width, height, camera, angle, dir_name; pfm=false)
+        angle_str = lpad(string(angle), 3, '0')
+        mv("$(dir_name)demo_$(camera).png", "$(dir_name)img$(angle_str).png"; force=true)
+        println("at frame: $angle_str")
+    end
+
+    make_video(width, height, camera)
+    println("✅ Successfully generated the demo video.")
 end
 
 function main()
     try
-        # HdrImage
-        (width,height,mode) = Params(ARGS)
-        img = HdrImage(width, height)
-        
-        # Cameras
-        aspect_ratio = width/height
-        distance = 1.0
-        angle_deg = 0.0
-        if length(ARGS) == 4
-            angle_deg = parse(typeof(angle_deg), ARGS[4])
+        args = Params(ARGS)
+
+        if length(args) == 3
+            angle = 0.0
+            generate_single_image(args..., angle)
+        elseif length(args) == 4
+            (width, height, camera, option) = args
+            option == "video" ?
+                generate_video_frames(width, height, camera) :
+                generate_single_image(width, height, camera, option)
         end
-
-        transformation = rotation_z(angle_deg)*translation(Vec(-2.0, 0.0, 0.0))
-        if mode == "Orthogonal"
-            cam = OrthogonalCamera(aspect_ratio,transformation)
-            name = "demo_orthogonal"
-        else
-            cam = PerspectiveCamera(distance,aspect_ratio,transformation)
-            name = "demo_perspective"
-        end
-
-        # Image Generation
-
-        # ImageTracer
-        tracer = ImageTracer(img, cam)
-        
-        # World
-        scale = scaling(0.1, 0.1, 0.1)
-        sphere_list = [
-                        Sphere(translation(Vec(-0.5,-0.5,-0.5))*scale),
-                        Sphere(translation(Vec(-0.5,-0.5, 0.5))*scale),
-                        Sphere(translation(Vec(-0.5, 0.5,-0.5))*scale),
-                        Sphere(translation(Vec( 0.5,-0.5,-0.5))*scale),
-                        Sphere(translation(Vec(-0.5, 0.5, 0.5))*scale),
-                        Sphere(translation(Vec( 0.5, 0.5,-0.5))*scale),
-                        Sphere(translation(Vec( 0.5,-0.5, 0.5))*scale),
-                        Sphere(translation(Vec( 0.5, 0.5, 0.5))*scale),
-                        Sphere(translation(Vec( 0.0, 0.0, -0.5))*scale),
-                        Sphere(translation(Vec( 0.0, 0.5, 0.0))*scale)
-                    ]
-
-        world = World(sphere_list)
-
-        # On-Off Tracing
-        f = ray -> OnOff_Tracing(world, ray)
-
-        fire_all_rays!(tracer, f)
-
-        # PFM Image saving
-        write(name*".PFM", img)
-
-        # LDR Image saving (default png)
-        write_ldr_image(img, name*".png")
-
     catch e
         # Define colors for the error message
         red_bold = Crayons.crayon"bold red"  # Bold red text
