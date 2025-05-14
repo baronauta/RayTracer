@@ -28,7 +28,7 @@ function main()
         #    println(pixel)
         #end
         # saving the LDR image on disk
-        write_ldr_image(img, params.output_png_file_name; gamma = 1.0)
+        write_ldr_image(params.output_png_file_name, img; gamma = 1.0)
         println("$(params.output_png_file_name) has been written to disk.")
     
         # =#
