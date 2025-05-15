@@ -61,6 +61,7 @@ include("cameras.jl")
 include("shapes.jl")
 include("world.jl")
 include("demo.jl")
+include("brdf.jl")
 
 # ─────────────────────────────────────────────────────────────
 # Parameters for PFM file conversion
