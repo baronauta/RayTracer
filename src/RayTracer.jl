@@ -62,6 +62,7 @@ include("shapes.jl")
 include("world.jl")
 include("demo.jl")
 include("brdf.jl")
+include("pcg.jl")
 
 # ─────────────────────────────────────────────────────────────
 # Parameters for PFM file conversion

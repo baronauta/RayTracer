@@ -56,7 +56,8 @@ import RayTracer: Shape, Plane, Sphere, HitRecord, ray_intersection
 import RayTracer: World, add!, ray_intersection
 # from brdf.jl
 import RayTracer: UniformPigment, get_color
-
+# from pcg.jl
+import RayTracer: PCG, random!
 function test_intersection(
     s::Union{Shape,World},
     r::Ray,
