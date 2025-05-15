@@ -661,3 +661,16 @@ end
     test_intersection(world, ray_z1, hr1)
     test_intersection(world, ray_z2, hr2)
 end
+
+@testset "Pigments" begin
+
+    @testset "UniformPigment" begin
+        color = RGB(1.0, 2.0, 3.0)
+        pigment = UniformPigment(color)
+
+        @test get_color(pigment, Vec2D(0.0, 0.0)) ≈ color
+        @test get_color(pigment, Vec2D(1.0, 0.0)) ≈ color
+        @test get_color(pigment, Vec2D(0.0, 1.0)) ≈ color
+        @test get_color(pigment, Vec2D(1.0, 1.0)) ≈ color
+    end
+end
