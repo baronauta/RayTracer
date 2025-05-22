@@ -6,6 +6,7 @@ import ColorTypes
 import Images
 
 export Point, Vec, Normal, VEC_X, VEC_Y, VEC_Z, Ray
+export PCG, onb_from_z, random_float!, normalize
 export +,
     *,
     ≈,
@@ -61,6 +62,8 @@ include("cameras.jl")
 include("shapes.jl")
 include("world.jl")
 include("demo.jl")
+include("material.jl")
+include("pcg.jl")
 
 # ─────────────────────────────────────────────────────────────
 # Parameters for PFM file conversion
