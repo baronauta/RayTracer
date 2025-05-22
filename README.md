@@ -85,18 +85,21 @@ To generate an `.mp4` animation (a 360° camera orbit around the scene):
   julia demo 512 512 Perspective video
   ```
   Note: Saves individual animation frames in `/demo_output/all_video_frames/` and the final video or single image in `/demo_output/`.
-<p align="center">
-  <span style="display:inline-block; text-align:center; width:45%; margin:1%">
-    <img src="./examples/reference_demo.png" width="100%" />
-    <br/>
-    <em>Fig. 1: Static render with 20° field of view</em>
-  </span>
-  <span style="display:inline-block; text-align:center; width:45%; margin:1%">
-    <img src="./examples/reference_demo_video.gif" width="100%" />
-    <br/>
-    <em>Fig. 2: 360° orbit animation</em>
-  </span>
-</p>
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="./examples/reference_demo.png" width="50%"/>
+      <br/>
+      <em>Fig. 1: Static render with 20° field of view</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="./examples/reference_demo_video.gif" width="50%"/>
+      <br/>
+      <em>Fig. 2: 360° orbit animation</em>
+    </td>
+  </tr>
+</table>
+
 
 
 ## History
