@@ -1,4 +1,5 @@
 using Test
+using RayTracer
 include("helper.jl")
 
 @testset "Colors" begin
@@ -166,7 +167,7 @@ end
         # Vec * scalar
         @test (v * 2) ≈ Vec(2.0, 4.0, 6.0)
         @test (2 * v) ≈ Vec(2.0, 4.0, 6.0)
-        @test neg(v) ≈ Vec(-1.0, -2.0, -3.0)
+        @test -(v) ≈ Vec(-1.0, -2.0, -3.0)
         # Vec dot product, cross product and norm
         @test dot(v, u) ≈ 32.0
         @test cross(v, u) ≈ Vec(-3.0, 6.0, -3.0)
@@ -388,7 +389,7 @@ end
         @test at(ray4, 1.0) ≈ Point(0.0, -2.0, 1.0)
         # Verify correctness of the transformation applied to Camera
         aspect_ratio = 2.0
-        transformation = translation(neg(VEC_Y) * 2.0) * rotation_z(90)
+        transformation = translation(-(VEC_Y) * 2.0) * rotation_z(90)
         cam = OrthogonalCamera(aspect_ratio, transformation)
         ray = fire_ray(cam, 0.5, 0.5)
         @test at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
@@ -416,7 +417,7 @@ end
         # Verify correctness of the transformation applied to Camera
         aspect_ratio = 2.0
         screen_distance = 1.0
-        transformation = translation(neg(VEC_Y) * 2.0) * rotation_z(90)
+        transformation = translation(-(VEC_Y) * 2.0) * rotation_z(90)
         cam = PerspectiveCamera(screen_distance, aspect_ratio, transformation)
         ray = fire_ray(cam, 0.5, 0.5)
         @test at(ray, 1.0) ≈ Point(0.0, -2.0, 0.0)
@@ -527,7 +528,7 @@ end
     @testset "Sphere" begin
         # centered unit sphere
         ## ray from above
-        ray_above = Ray(Point(0.0, 0.0, 2.0), neg(VEC_Z))
+        ray_above = Ray(Point(0.0, 0.0, 2.0), -(VEC_Z))
         hr_above = HitRecord(
             Point(0.0, 0.0, 1.0),
             Normal(0.0, 0.0, 1.0),
@@ -538,7 +539,7 @@ end
         test_intersection(Sphere(), ray_above, hr_above)
 
         ## ray from x
-        ray_x = Ray(Point(3.0, 0.0, 0.0), neg(VEC_X))
+        ray_x = Ray(Point(3.0, 0.0, 0.0), -(VEC_X))
         hr_x = HitRecord(
             Point(1.0, 0.0, 0.0),
             Normal(1.0, 0.0, 0.0),
@@ -572,7 +573,7 @@ end
         # translated unit sphere
         ## x_transltion, ray from above
         sphere = Sphere(translation(Vec(10.0, 0.0, 0.0)))
-        ray = Ray(Point(10.0, 0.0, 3.0), neg(VEC_Z))
+        ray = Ray(Point(10.0, 0.0, 3.0), -(VEC_Z))
         hr = HitRecord(
             Point(10.0, 0.0, 1.0),
             Normal(0.0, 0.0, 1.0),
@@ -585,7 +586,7 @@ end
         ## x_transltion, ray from above, no intersections
         ## (want to test possible false intersection with untransformed sphere)
         sphere = Sphere(translation(Vec(10.0, 0.0, 0.0)))
-        ray = Ray(Point(0.0, 0.0, 3.0), neg(VEC_Z))
+        ray = Ray(Point(0.0, 0.0, 3.0), -(VEC_Z))
         hr = nothing
         test_intersection(sphere, ray, hr)
 
@@ -593,7 +594,7 @@ end
         ## (tests for surface coordinates transformation)
         ### +45° z rotation, ray from x_pos (test u)
         sphere = Sphere(rotation_z(45))
-        ray = Ray(Point(14.0, 0.0, 0.0), neg(VEC_X))
+        ray = Ray(Point(14.0, 0.0, 0.0), -(VEC_X))
         hr = HitRecord(
             Point(1.0, 0.0, 0.0),
             Normal(1.0, 0.0, 0.0),
@@ -604,7 +605,7 @@ end
         test_intersection(sphere, ray, hr)
         ### +45° y rotation, ray from x_pos (test v)
         sphere = Sphere(rotation_y(45))
-        ray = Ray(Point(14.0, 0.0, 0.0), neg(VEC_X))
+        ray = Ray(Point(14.0, 0.0, 0.0), -(VEC_X))
         hr = HitRecord(
             Point(1.0, 0.0, 0.0),
             Normal(1.0, 0.0, 0.0),
@@ -685,5 +686,38 @@ end
                      3122475824, 2211639955,
                      3215226955, 3421331566]
         @test UInt32(expected) == random!(pcg)
+    end
+end
+
+@testset "ONB" begin
+    # Random testing
+    # 1. Define a vector with random components;
+    # 2. Compute the ONB from the normalized vector;
+    # 3. Check that that the returned vectors are normalized and orthogonal.
+    # ... repeat with different random initialization.
+    pcg = PCG()
+
+    for i in 1:100
+        v = Vec(random_float!(pcg), random_float!(pcg), random_float!(pcg)) 
+        normal = normalize(v)
+        e1, e2, e3 = onb_from_z(normal)
+
+        # onb_from_z should return the input normalized vector as e3
+        @test e3 ≈ normal
+        
+        # Orthogonality, i.e. eᵢ ⋅ eⱼ = δᵢⱼ
+        @test isapprox(dot(e1, e2), 0, rtol=1e-5, atol=1e-5)
+        @test isapprox(dot(e1, e3), 0, rtol=1e-5, atol=1e-5)
+        @test isapprox(dot(e2, e3), 0, rtol=1e-5, atol=1e-5)
+
+        # Normalization, i.e. ||eᵢ||² = 1
+        @test squared_norm(e1) ≈ 1
+        @test squared_norm(e2) ≈ 1
+        @test squared_norm(e2) ≈ 1
+
+        # Right-hand triad
+        @test cross(e1, e2) ≈ e3
+        @test cross(e2, e3) ≈ e1
+        @test cross(e3, e1) ≈ e2
     end
 end
