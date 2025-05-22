@@ -31,23 +31,21 @@ import Crayons # enables colorful and expressive terminal output
 
 function main()
     try
-        println(
-                """\n
-                ------------------------------------------------------------
-                Raytracer v0.2.0 - Photorealistic Image Generator
+        # reading parameters from ARGS
+        params = Conversion_Params(ARGS)
 
-                ⚠️  The main ray tracing generator is still under development.
+        # reading image from input file
+        img = read_pfm_image(params.input_pfm_file_name)
+        println("$(params.input_pfm_file_name) has been read from disk.")
+        
+        # preparing the image to LDR conversion 
+        normalize_image!(img; factor = params.factor, delta = params.delta, mean_type = params.mean_type, weights =params.weights)
+        clamp_image!(img)
 
-                Currently available usage:
-                - julia demo       runs a simple demo render
-                - julia pfm2image  converts .pfm files to standard image formats (e.g. PNG, JPEG)
-
-                Stay tuned for future releases!
-
-                GitHub: https://github.com/baronauta/RayTracer.git
-                ------------------------------------------------------------
-                """
-            )
+        # converting the image to LDR format and saving the LDR image on disk
+        write_ldr_image(params.output_png_file_name, img; gamma = 1.0)
+        println("$(params.output_png_file_name) has been written to disk.")
+    
     catch e
         # Define colors for the error message
         red_bold = Crayons.crayon"bold red"  # Bold red text
