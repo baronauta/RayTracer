@@ -35,6 +35,15 @@ function color_to_string(c::ColorTypes.RGB)
     return str
 end
 
+# useful colors
+
+WHITE = RGB(1.0, 1.0, 1.0)
+BLACK = RGB(0.0, 0.0, 0.0)
+GRAY = RGB(0.5, 0.5, 0.5)
+RED = RGB(1.0, 0.0, 0.0)
+GREEN = RGB(0.0, 1.0, 0.0)
+BLUE = RGB(0.0, 0.0, 1.0)
+
 
 # ─────────────────────────────────────────────────────────────
 # Defining HdrImage and their functions

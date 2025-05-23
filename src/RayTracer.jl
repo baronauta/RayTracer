@@ -10,7 +10,7 @@ import Images
 import Base: +, -, *, ≈
 import Base: write, show
 
-export RGB, HdrImage
+export RGB, HdrImage, WHITE, BLACK, GRAY, RED, GREEN, BLUE
 export read_pfm_image
 export Point, Vec, Vec2D, Normal, VEC_X, VEC_Y, VEC_Z
 export dot, cross
