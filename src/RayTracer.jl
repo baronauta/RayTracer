@@ -22,6 +22,8 @@ export Shape, HitRecord, Plane, Sphere
 export World, add!
 export UniformPigment
 
+export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError 
+
 export IS_LITTLE_ENDIAN, HOST_ENDIANNESS
 
 # Determine if the host system uses little endian byte order
