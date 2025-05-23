@@ -20,7 +20,7 @@ export OrthogonalCamera, PerspectiveCamera
 export ImageTracer
 export Shape, HitRecord, Plane, Sphere
 export World, add!
-export UniformPigment, CheckeredPigment
+export UniformPigment, CheckeredPigment, Material
 
 export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError 
 
@@ -38,10 +38,10 @@ include("io.jl")
 include("geometry.jl")
 include("transformation.jl")
 include("cameras.jl")
+include("material.jl")
 include("shapes.jl")
 include("world.jl")
 include("demo.jl")
-include("material.jl")
 include("pcg.jl")
 
 # ─────────────────────────────────────────────────────────────

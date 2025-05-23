@@ -22,9 +22,21 @@ struct DiffuseBRDF <: BRDF
     reflectance::AbstractFloat
 end
 
+function DiffuseBRDF()
+    pigm = UniformPigment(WHITE)
+    reflectance = 1.0
+    DiffuseBRDF(pigm, reflectance)
+end
+
 struct Material
     brdf::BRDF
     emitted_radiance::Pigment
+end
+
+function Material()
+    brdf = DiffuseBRDF()
+    emitted_radiance = UniformPigment(GRAY)
+    Material(brdf, emitted_radiance)
 end
 
 function get_color(pigm::UniformPigment, uv::Vec2D)
