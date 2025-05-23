@@ -1,51 +1,28 @@
 module RayTracer
 
-import Base: +, -, *, ≈
-import Base: write, show
 import ColorTypes
 import Images
 
-export Point, Vec, Normal, VEC_X, VEC_Y, VEC_Z, Ray
-export PCG, onb_from_z, random_float!, normalize
-export +,
-    *,
-    ≈,
-    color_to_string,
-    HdrImage,
-    valid_coordinates,
-    get_pixel,
-    set_pixel!,
-    write,
-    little_endian,
-    my_endian,
-    check_endianness,
-    WrongPFMformat,
-    normalize_image!,
-    luminosity,
-    log_average,
-    Parameters,
-    ToneMappingError,
-    RuntimeError,
-    read_pfm_image,
-    clamp_image!,
-    write_ldr_image,
-    GeometryError
+# Import the Base functions to extend them with new methods.
+# Since these functions are part of Base (which is always loaded),
+# there is no need to export them from this package.
+# All extended methods will be available automatically when using the package.
+import Base: +, -, *, ≈
+import Base: write, show
 
-export HdrImage,
-    OrthogonalCamera,
-    PerspectiveCamera,
-    translation,
-    scaling,
-    Vec,
-    ImageTracer,
-    Sphere,
-    World,
-    fire_ray,
-    RGB,
-    ray_intersection,
-    fire_all_rays!,
-    rotation_z,
-    demo
+export RGB, HdrImage
+export read_pfm_image
+export Point, Vec, Vec2D, Normal, VEC_X, VEC_Y, VEC_Z
+export dot, cross
+export Transformation, HomMatrix, translation, rotation_x, rotation_y, rotation_z, scaling
+export Ray
+export OrthogonalCamera, PerspectiveCamera
+export ImageTracer
+export Shape, HitRecord, Plane, Sphere
+export World, add!
+export UniformPigment
+
+export IS_LITTLE_ENDIAN, HOST_ENDIANNESS
 
 # Determine if the host system uses little endian byte order
 const IS_LITTLE_ENDIAN = Base.ENDIAN_BOM == 0x04030201
