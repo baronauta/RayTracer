@@ -17,6 +17,7 @@ Stores information about a ray's intersection with a shape.
 - `surface_point::Vec2D`: (u,v) coordinates of the intersection;
 - `t`: ray parameter associated with the intersection;
 - `ray::Ray`: the light ray that caused the intersection.
+- `shape::Shape`: the object intersected by the ray
 """
 struct HitRecord{T<:AbstractFloat}
     world_point::Point{T}
@@ -24,9 +25,10 @@ struct HitRecord{T<:AbstractFloat}
     surface_point::Vec2D{T}
     t::T
     ray::Ray{T}
+    shape::Shape{T}
 end
 
-"Compare two `HitRecord` types. Useful for tests."
+"Compare two `HitRecord` types. Useful for tests." # ⚠️ how to compare shapes??
 function ≈(hr1::Union{HitRecord,Nothing}, hr2::Union{HitRecord,Nothing})
     if isnothing(hr1) || isnothing(hr2)
         return hr1 == hr2
@@ -51,17 +53,19 @@ end
 # ─────────────────────────────────────────────────────────────
 
 """
-Define a xy-plane (z=0) and associate a transformation to it.
+Define a xy-plane (z=0) with an associated transformation and material.
 """
 struct Plane{T<:AbstractFloat} <: Shape{T}
     transformation::Transformation{T}
+    material::Material
 end
 
-"Define a xy-plane (z=0). Associated transformation is identity."
+"Define a xy-plane (z=0). Associated transformation is identity, material is default material."
 function Plane()
     transformation =
         Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
-    Plane(transformation)
+    material = Material()
+    Plane(transformation, material)
 end
 
 """
@@ -102,7 +106,7 @@ function ray_intersection(plane::Plane, ray::Ray)
     surface_point =
         Vec2D(hit_point.x - floor(hit_point.x), hit_point.y - floor(hit_point.y))
 
-    return HitRecord(world_point, normal, surface_point, t, ray)
+    return HitRecord(world_point, normal, surface_point, t, ray, plane)
 end
 
 
@@ -112,20 +116,23 @@ end
 
 """
 Define a 3D unit sphere centered on the origin of the axes
-and associate a transformation to it.
+with an associated transformation and material.
 """
 struct Sphere{T<:AbstractFloat} <: Shape{T}
     transformation::Transformation{T}
+    material::Material
 end
 
 """
 Define a 3D unit sphere centered on the origin of the axes.
 Associated transformation is identity.
+Associated material is a default material
 """
 function Sphere()
     transformation =
         Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
-    Sphere(transformation)
+    material = Material()
+    Sphere(transformation, material)
 end
 
 """
@@ -193,5 +200,5 @@ function ray_intersection(sphere::Sphere, ray::Ray)
     normal = sphere.transformation * _sphere_normal(hit_point, inv_ray)
     surface_point = _sphere_point_to_uv(hit_point)
 
-    return HitRecord(world_point, normal, surface_point, t, ray)
+    return HitRecord(world_point, normal, surface_point, t, ray, sphere)
 end
