@@ -9,18 +9,18 @@ import Crayons # enables colorful and expressive terminal output
 function main()
     try
         # reading parameters from ARGS
-        params = Parameters(ARGS)
+        params = RayTracer.Parameters(ARGS)
         #println(params)
 
         # #=
 
         # reading image from input file
-        img = read_pfm_image(params.input_pfm_file_name)
+        img = RayTracer.read_pfm_image(params.input_pfm_file_name)
         println("$(params.input_pfm_file_name) has been read from disk.")
         
         # preparing the image to LDR conversion 
-        normalize_image!(img; factor = params.factor, delta = params.delta, mean_type = params.mean_type, weights =params.weights)
-        clamp_image!(img)
+        RayTracer.normalize_image!(img; factor = params.factor, delta = params.delta, mean_type = params.mean_type, weights =params.weights)
+        RayTracer.clamp_image!(img)
 
         # converting the image to LDR format
         # ...
@@ -28,7 +28,7 @@ function main()
         #    println(pixel)
         #end
         # saving the LDR image on disk
-        write_ldr_image(params.output_png_file_name, img; gamma = 1.0)
+        RayTracer.write_ldr_image(params.output_png_file_name, img; gamma = 1.0)
         println("$(params.output_png_file_name) has been written to disk.")
     
         # =#

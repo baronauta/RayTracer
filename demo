@@ -51,7 +51,7 @@ end
 function generate_single_image(width, height, camera, angle_deg)
     dir_name = "demo_output/"
     mkpath(dir_name)
-    demo(width, height, camera, angle_deg, dir_name)
+    RayTracer.demo(width, height, camera, angle_deg, dir_name)
     println("✅ Successfully generated demo pfm and png images.")
 end
 
@@ -60,7 +60,7 @@ function generate_video_frames(width, height, camera)
     mkpath(dir_name)
     
     for angle in 0:359
-        demo(width, height, camera, angle, dir_name; pfm=false)
+        RayTracer.demo(width, height, camera, angle, dir_name; pfm=false)
         angle_str = lpad(string(angle), 3, '0')
         mv("$(dir_name)demo_$(camera).png", "$(dir_name)img$(angle_str).png"; force=true)
         println("at frame: $angle_str")
