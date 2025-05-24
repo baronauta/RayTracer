@@ -56,12 +56,14 @@ function demo(width, height, camera, angle_deg, dir_name; pfm=true)
     aspect_ratio = width/height
     distance = 1.0
     transformation = rotation_z(angle_deg)*translation(Vec(-2.0, 0.0, 0.0))
-    if camera == "Orthogonal"
+    if lowercase(camera) == "orthogonal"
         cam = OrthogonalCamera(aspect_ratio,transformation)
         name = dir_name*"demo_orthogonal"
-    else
+    elseif lowercase(camera) == "perspective"
         cam = PerspectiveCamera(distance,aspect_ratio,transformation)
         name = dir_name*"demo_perspective"
+    else
+        throw(RuntimeError("Invalid camera name. Use 'Perspective' or 'Orthogonal'."))
     end
 
     # Image Generation
@@ -200,7 +202,8 @@ function generate_video(width, height, camera)
     for angle in 0:359
         demo(width, height, camera, angle, dir_name; pfm=false) # not necessary to write pfm for all frames, much faster
         angle_str = lpad(string(angle), 3, '0')
-        mv("$(dir_name)demo_$(camera).png", "$(dir_name)img$(angle_str).png"; force=true)
+        cam = lowercase(camera)
+        mv("$(dir_name)demo_$(cam).png", "$(dir_name)img$(angle_str).png"; force=true)
         println("at frame: $angle_str")
     end
 
