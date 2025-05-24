@@ -1,4 +1,5 @@
 # HEAD
+-   Fixed issue with case sensitivity in camera names in `demo`[#13](https://github.com/baronauta/RayTracer/pull/13).
 # Version 0.2.0
 
 -   **Breaking change:** move the image PFM-to-LDR conversion from `RayTracer` to the new file `pfm2image` for better code organization.
