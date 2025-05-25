@@ -42,7 +42,7 @@ end
 """
     random_float!(pcg::PCG) -> Float64
 
-Generate a random floating-point number in [0, 1) using PCG.
+Generate a random floating-point number in [0, 1] using PCG.
 """
 function random_float!(pcg::PCG)::Float64
     return Float64(random!(pcg)) / (UInt32(typemax(UInt32)) + 1)
