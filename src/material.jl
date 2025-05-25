@@ -1,37 +1,33 @@
-# ─────────────────────────────────────────────────────────────
-# Pigment struct and functions
-# ─────────────────────────────────────────────────────────────
+# === Abstract Types ===
 abstract type Pigment end
+abstract type BRDF end
 
-# UniformPigment
+# === Pigments ===
+"A pigment with a uniform RGB color."
 struct UniformPigment <: Pigment
     color::ColorTypes.RGB{Float32}
 end
 
+"Returns the uniform color of the pigment."
 function get_color(pigm::UniformPigment, uv::Vec2D)
     return pigm.color
 end
 
-# CheckeredPigment
+"A pigment with a checkerboard pattern alternating between two colors."
 struct CheckeredPigment <: Pigment
     color1::ColorTypes.RGB{Float32}
     color2::ColorTypes.RGB{Float32}
     squares_per_unit::Integer
 end
 
+"Returns the color at UV coordinate based on the checkered pattern."
 function get_color(pigm::CheckeredPigment, uv::Vec2D)
     x = floor(Int, uv.u * pigm.squares_per_unit)
     y = floor(Int, uv.v * pigm.squares_per_unit)
-
-    if iseven(x) == iseven(y)
-        return pigm.color1
-    else
-        return pigm.color2
-    end
+    return iseven(x) == iseven(y) ? pigm.color1 : pigm.color2
 end
 
 # ImagePigment
-
 struct ImagePigment <: Pigment
     img::HdrImage
 end
@@ -46,23 +42,71 @@ function get_color(pigm::ImagePigment, uv::Vec2D)
     get_pixel(pigm.img, col, row)
 end
 
-# ─────────────────────────────────────────────────────────────
-# BRDF struct and functions
-# ─────────────────────────────────────────────────────────────
-
-abstract type BRDF end
-
+# === BRDFs ===
+"An ideal diffuse BRDF with a given pigment and reflectance factor."
 struct DiffuseBRDF <: BRDF
     pigm::Pigment
     reflectance::AbstractFloat
 end
 
+"Constructs a default `DiffuseBRDF` using a white uniform pigment and full reflectance."
 function DiffuseBRDF()
     pigm = UniformPigment(WHITE)
     reflectance = 1.0
     DiffuseBRDF(pigm, reflectance)
 end
 
+function eval(brdf::DiffuseBRDF, n::Normal, in_dir::Vec, out_dir::Vec, uv::Vec2D)
+    return brdf.pigment.get_color(uv) * (brdf.reflectance / π)
+end
+
+"""
+    scatter_ray(brdf::DiffuseBRDF, pcg::PCG, incoming_dir::Vec, interaction_point::Point, normal::Normal, depth::Integer) -> Ray
+
+Generates a secondary ray by sampling a random outgoing direction from a diffuse surface.
+Given an incoming ray that hits a surface at a specific point with a given normal, this function 
+samples a direction in the hemisphere around the normal and returns the corresponding scattered ray.
+"""
+function scatter_ray(
+    brdf::DiffuseBRDF,
+    pcg::PCG,
+    incoming_dir::Vec,
+    interaction_point::Point,
+    normal::Normal,
+    depth::Integer,
+)
+    # Construct an orthonormal basis (e1, e2, e3)
+    # with e3 aligned to the surface normal.
+    e1, e2, e3 = onb_from_z(normal)
+    # Draw a random direction ω = (θ, ϕ) on hemisphere,
+    # that is θ ∈ [0,π/2] and ϕ ∈ [0,2π], from the Phong distribution,
+    # i.e. P(ω) = k cosθ where k is the normalization constant.
+    # Sampling from P(θ, ϕ) = P(θ) P(ϕ|θ) is obtained by drawing a
+    # a random value θ from the marginal PDF P(θ), then compute the
+    # conditional PDF P(ϕ|θ) and draw a random value ϕ.
+    # With X1 and X2 random number drawn from a uniform PDF in [0,1],
+    # we match ther desired PDF by considering θ = arccos[√X1] and 
+    # ϕ = 2πX2.
+    cosθ_sq = random_float!(pcg) # cosθ = cos[arccos(√X1)] = √X1
+    cosθ, sinθ = sqrt(cosθ_sq), sqrt(1.0 - cosθ_sq)
+    ϕ = 2.0 * π * random_float!(pcg)
+    # Return a ray with origin in the interaction point and direction ω.
+    # The direction is computed in local space using spherical coordinates, 
+    # then transformed into world space using the ONB.
+    # Recall: in local spherical coordinates,
+    #   x = sinθ * cosϕ   (aligned with e1)
+    #   y = sinθ * sinϕ   (aligned with e2)
+    #   z = cosθ          (aligned with e3, the surface normal)
+    return Ray(
+        interaction_point,
+        e1 * sinθ * cos(ϕ)  + e2 * sinθ * sin(ϕ) + e3 * cosθ,
+        1.0e-3,
+        typemax(typeof(interaction_point.x)),
+        depth,
+    )
+end
+
+# === Material ===
 struct Material
     brdf::BRDF
     emitted_radiance::Pigment
@@ -72,8 +116,4 @@ function Material()
     brdf = DiffuseBRDF()
     emitted_radiance = UniformPigment(GRAY)
     Material(brdf, emitted_radiance)
-end
-
-function eval(brdf::DiffuseBRDF, n::Normal, in_dir::Vec, out_dir::Vec, uv::Vec2D)
-    return brdf.pigment.get_color(uv) * (brdf.reflectance / π)
 end
