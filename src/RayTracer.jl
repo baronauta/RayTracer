@@ -40,11 +40,11 @@ include("io.jl")
 include("geometry.jl")
 include("transformation.jl")
 include("cameras.jl")
+include("pcg.jl")
 include("material.jl")
 include("shapes.jl")
 include("world.jl")
 include("demo.jl")
-include("pcg.jl")
 include("render.jl")
 
 # ─────────────────────────────────────────────────────────────
