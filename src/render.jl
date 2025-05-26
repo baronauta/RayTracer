@@ -1,14 +1,37 @@
-# ─────────────────────────────────────────────────────────────
-# ON-OFF RENDERER
-# ─────────────────────────────────────────────────────────────
-function OnOff_Tracer(world::World, ray::Ray, pcg::PCG; bkg_color = BLACK)
+"""
+    onoff_tracer(world::World, ray::Ray; bkg_color=BLACK) -> RGB
+
+A binary ray tracer that returns `WHITE` if the given `ray` intersects
+any object in the `world`, and `bkg_color` otherwise.
+
+This is a basic tracer useful for debugging or silhouette rendering.
+
+# Arguments
+- `world::World`: The scene containing objects to test against.
+- `ray::Ray`: The ray to be traced through the scene.
+- `bkg_color`: The background color to return if the ray hits nothing (default: `BLACK`).
+"""
+function onoff_tracer(world::World, ray::Ray; bkg_color = BLACK)
     isnothing(ray_intersection(world, ray)) ? bkg_color : WHITE
 end
 
-# ─────────────────────────────────────────────────────────────
-# FLAT RENDERER
-# ─────────────────────────────────────────────────────────────
-function Flat_Tracer(world::World, ray::Ray, pcg::PCG; bkg_color = BLACK)
+"""
+    flat_tracer(world::World, ray::Ray; bkg_color=BLACK) -> RGB
+
+A minimal ray tracer that if the given `ray` intersects
+any object in the `world` returns the sum of the surface color and
+emitted radiance at the intersection point.
+If the ray does not intersect any object, the function returns `bkg_color`.
+
+This tracer ignores lighting, shadows, and reflections, and is typically used
+for quick previews, debugging geometry, or visualizing base materials and emissive surfaces.
+
+# Arguments
+- `world::World`: The 3D scene containing objects with material properties.
+- `ray::Ray`: The ray to be traced through the scene.
+- `bkg_color`: The background color to return if the ray hits nothing (default: `BLACK`).
+"""
+function flat_tracer(world::World, ray::Ray; bkg_color = BLACK)
     hit_record = ray_intersection(world, ray)
     isnothing(hit_record) ? bkg_color :
     (
@@ -17,57 +40,95 @@ function Flat_Tracer(world::World, ray::Ray, pcg::PCG; bkg_color = BLACK)
     )
 end
 
-# ─────────────────────────────────────────────────────────────
-# FLAT RENDERER
-# ─────────────────────────────────────────────────────────────
-function Path_Tracer(world::World, ray::Ray, pcg::PCG; bkg_color = BLACK, n_rays=10, max_depth = 10, russian_roulette_limit = 3)
-    # truncate if the ray has propagated enaught
+"""
+    path_tracer(world::World, ray::Ray, pcg::PCG; 
+                bkg_color=BLACK, 
+                n_rays=10, 
+                max_depth=10, 
+                russian_roulette_limit=3) -> RGB
+
+Path tracer that estimates a solution of the rendering equation via Monte Carlo integration.
+
+# Arguments
+- `world::World`: The 3D scene containing objects with material properties.
+- `ray::Ray`: The ray to be traced through the scene.
+- `pcg::PCG`: A random number generator for stochastic sampling.
+- `bkg_color`: The background color to return if the ray hits nothing (default: `BLACK`).
+- `n_rays`: Number of secondary rays for Monte Carlo sampling (default: 10).
+- `max_depth`: Maximum recursion depth (default: 10).
+- `russian_roulette_limit`: Depth at which Russian Roulette begins (default: 3).
+"""
+function path_tracer(
+    world::World,
+    ray::Ray,
+    pcg::PCG;
+    bkg_color = BLACK,
+    n_rays = 10,
+    max_depth = 10,
+    russian_roulette_limit = 3,
+)
+    # Truncate the recursion
     if ray.depth > max_depth
         return BLACK
     end
 
-    # compute the intersection with a world's object
+    # Find the intersection of the ray with any object in the world
     hit_record = ray_intersection(world, ray)
-
     if isnothing(hit_record)
         return bkg_color
     end
+    hit_material = hit_record.shape.material    # material of the hit object
+    # Each material is defined by a BRDF (Bidirectional Reflectance Distribution Function),
+    # which describes how the surface reflects incoming light, 
+    # and by emitted radiance, which indicates if the material emits light.
+    hit_color = get_color(hit_material.brdf.pigm, hit_record.surface_point)                   # reflected radiance
+    emitted_radiance = get_color(hit_material.emitted_radiance, hit_record.surface_point)     # emitted radiance
 
-    # intersection point' surface coordinates
-    surface_uv = hit_record.surface_point
+    hit_color_lum = max(hit_color.r, hit_color.g, hit_color.b)
 
-    # the hit object material
-    hit_material = hit_record.shape.material
-    # the color of the object 
-    hit_color = get_color(hit_material.brdf.pigm, surface_uv)
-    # the color of the emitted radiance by the object
-    emitted_radiance = get_color(hit_material.emitted_radiance, surface_uv)
-    
-    lumi = max(hit_color.r, hit_color.g, hit_color.b)
     # Russian Roulette
+    # This helps in removing the bias of understimating the radiance due to
+    # the truncation of the recursion.
+    # Let q ∈ [0,1] be a threshold, draw a random number x:
+    # - x ≥ q, compute the radiance L and return L/(1-q);
+    # - otherwise, stop the recursion and return 0 (i.e. BLACK).    
     if ray.depth >= russian_roulette_limit
-        # if the obj is very bright is enought to consider few iterations
-        # so i want a big probability to return 0
-        # if the obj is not so bright i want to go further with the iterations
-        # the 0.95 is for give a possibility to procede with the iteration even if is enought bright
-        # the probability to iterate is x > q
-        q = min(0.95, lumi)
-        if random_float!(pcg) > q 
-            hit_color = hit_color/(1-q)
+        # Makes q smaller when the surface is bright, 
+        # and larger when it’s dark.
+        q = max(0.05, 1 - hit_color_lum)
+        if random_float!(pcg) > q
+            # Continue the recursion
+            hit_color = hit_color / (1 - q)
         else
-            emitted_radiance
+            # Kill the recursion
+            return emitted_radiance
         end
     end
 
     # MonteCarlo Integration
     cum_radiance = BLACK
-    if lumi > 0.0
-        for i in 1:n_rays
-            new_ray = scatter_ray(hit_material.brdf, pcg, hit_record.ray.dir, hit_record.world_point, hit_record.normal, hit_record.ray.depth + 1)
-            new_radiance = Path_Tracer(world, new_ray, pcg)
-            cum_radiance = hit_color * new_radiance
+    if hit_color_lum > 0.0
+        for i = 1:n_rays
+            new_ray = scatter_ray(
+                hit_material.brdf,
+                pcg,
+                hit_record.ray.dir,
+                hit_record.world_point,
+                hit_record.normal,
+                hit_record.ray.depth + 1,   # secondary ray: increase depth by 1
+            )
+            # Recursive call! Pass the same default arguments
+            new_radiance = path_tracer(
+                world,
+                new_ray,
+                pcg;
+                bkg_color = bkg_color,
+                n_rays = n_rays,
+                max_depth = max_depth,
+                russian_roulette_limit = russian_roulette_limit,
+            )
+            cum_radiance += hit_color * new_radiance
         end
     end
-    # imagine to obtain WHITE 10 times, i.e. cum_radiance = RGB(10,10,10) but it needs to be normalized: RGB(1,1,1)
-    return emitted_radiance + cum_radiance/(n_rays)
+    return emitted_radiance + cum_radiance / n_rays
 end
