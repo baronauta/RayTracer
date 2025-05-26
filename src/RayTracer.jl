@@ -22,7 +22,8 @@ export Shape, HitRecord, Plane, Sphere
 export World, add!
 export UniformPigment, CheckeredPigment, ImagePigment
 export Material
-export OnOff_Tracer, Flat_Tracer, Path_Tracer
+export DiffuseBRDF
+export onoff_tracer, flat_tracer, path_tracer
 
 export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError 
 
