@@ -22,6 +22,7 @@ export Shape, HitRecord, Plane, Sphere
 export World, add!
 export UniformPigment, CheckeredPigment, ImagePigment
 export Material
+export OnOff_Tracer, Flat_Tracer, Path_Tracer
 
 export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError 
 
@@ -44,6 +45,7 @@ include("shapes.jl")
 include("world.jl")
 include("demo.jl")
 include("pcg.jl")
+include("render.jl")
 
 # ─────────────────────────────────────────────────────────────
 # Parameters for PFM file conversion
