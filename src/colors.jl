@@ -3,47 +3,39 @@ function RGB(r, g, b)
     ColorTypes.RGB{Float32}(r, g, b)
 end
 
-"Sum between RGB colors."
+"Display a RGB color."
+function Base.show(io::IO, ::MIME"text/plain", c::ColorTypes.RGB)
+    print(io, "ColorTypes.RGB(r=$(c.r), g=$(c.g), b=$(c.b))")
+end
+
+const WHITE = RGB(1.0, 1.0, 1.0)
+const BLACK = RGB(0.0, 0.0, 0.0)
+const GRAY = RGB(0.5, 0.5, 0.5)
+const RED = RGB(1.0, 0.0, 0.0)
+const GREEN = RGB(0.0, 1.0, 0.0)
+const BLUE = RGB(0.0, 0.0, 1.0)
+
+"Add two RGB colors, returning a new RGB color."
 function +(x::ColorTypes.RGB, y::ColorTypes.RGB)
     RGB(x.r + y.r, x.g + y.g, x.b + y.b)
 end
 
-"Product between a scalar and a RGB color."
+"Multiply a RGB color by a scalar, returning a new RGB color."
 function *(s::Real, c::ColorTypes.RGB)
     RGB(s * c.r, s * c.g, s * c.b)
 end
 
-"Component-wise product between two RGB colors."
+"Component-wise product between two RGB colors, returning a new RGB color."
 function *(x::ColorTypes.RGB, y::ColorTypes.RGB)
     RGB(x.r * y.r, x.g * y.g, x.b * y.b)
 end
 
-"Compare two `ColorTypes.RGB` types. Useful for tests."
+"Check if two RGB colors are approximately equal."
 function ≈(x::ColorTypes.RGB, y::ColorTypes.RGB)
     isapprox(x.r, y.r, rtol = 1e-3, atol = 1e-3) &&
         isapprox(x.g, y.g, rtol = 1e-3, atol = 1e-3) &&
         isapprox(x.b, y.b, rtol = 1e-3, atol = 1e-3)
 end
-
-"""
-    color_to_string(c::ColorTypes.RGB{Float32})
-
-Print RGB components of a color, e.g. `< r:0.1, g:0.2, b:0.3 >`
-"""
-function color_to_string(c::ColorTypes.RGB)
-    str = "< r:" * string(c.r) * ", g:" * string(c.g) * ", b:" * string(c.b) * " >"
-    return str
-end
-
-# useful colors
-
-WHITE = RGB(1.0, 1.0, 1.0)
-BLACK = RGB(0.0, 0.0, 0.0)
-GRAY = RGB(0.5, 0.5, 0.5)
-RED = RGB(1.0, 0.0, 0.0)
-GREEN = RGB(0.0, 1.0, 0.0)
-BLUE = RGB(0.0, 0.0, 1.0)
-
 
 # ─────────────────────────────────────────────────────────────
 # Defining HdrImage and their functions

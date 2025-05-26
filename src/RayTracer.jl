@@ -20,7 +20,8 @@ export OrthogonalCamera, PerspectiveCamera
 export ImageTracer
 export Shape, HitRecord, Plane, Sphere
 export World, add!
-export UniformPigment, CheckeredPigment, ImagePigment, Material
+export UniformPigment, CheckeredPigment, ImagePigment
+export Material
 export OnOff_Tracer, Flat_Tracer, Path_Tracer
 
 export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError 

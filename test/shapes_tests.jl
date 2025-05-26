@@ -1,4 +1,4 @@
-# --- Helper functions ---
+# === Helper functions ===
 function test_intersection(
     s::Union{Shape,World},
     r::Ray,
@@ -8,7 +8,7 @@ function test_intersection(
     @test hitrecord ≈ expected_hr
 end
 
-# --- Tests ---
+# === Tests ===
 @testset "Shapes" begin
 
     @testset "Plane" begin
