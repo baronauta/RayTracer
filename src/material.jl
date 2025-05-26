@@ -43,21 +43,18 @@ function get_color(pigm::ImagePigment, uv::Vec2D)
 end
 
 # === BRDFs ===
-"An ideal diffuse BRDF with a given pigment and reflectance factor."
+"An ideal diffuse BRDF with a given pigment."
 struct DiffuseBRDF <: BRDF
     pigm::Pigment
-    reflectance::AbstractFloat
 end
 
-"Constructs a default `DiffuseBRDF` using a white uniform pigment and full reflectance."
+"Constructs a default `DiffuseBRDF` using a white uniform pigment."
 function DiffuseBRDF()
-    pigm = UniformPigment(WHITE)
-    reflectance = 1.0
-    DiffuseBRDF(pigm, reflectance)
+    DiffuseBRDF(UniformPigment(WHITE))
 end
 
 function eval(brdf::DiffuseBRDF, n::Normal, in_dir::Vec, out_dir::Vec, uv::Vec2D)
-    return brdf.pigment.get_color(uv) * (brdf.reflectance / π)
+    return brdf.pigment.get_color(uv) / π
 end
 
 """

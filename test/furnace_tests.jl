@@ -8,7 +8,7 @@
         # Material of diffuse BRDF with constant luminosity
         # and radiance.
         material = Material(
-            DiffuseBRDF(UniformPigment(WHITE), reflectance),
+            DiffuseBRDF(UniformPigment(WHITE * reflectance), 0.),
             UniformPigment(WHITE * emitted_radiance)
         )
         sphere = Sphere(material)
