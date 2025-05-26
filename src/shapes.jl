@@ -1,13 +1,3 @@
-# ─────────────────────────────────────────────────────────────
-# Shape type and functions
-# ─────────────────────────────────────────────────────────────
-""" 
-Abstract base type for geometric shapes.
-
-Subtypes:
-- `Plane`
-- `Sphere`
-"""
 abstract type Shape{T<:AbstractFloat} end
 
 """
@@ -136,6 +126,16 @@ function Sphere()
 end
 
 """
+Define a 3D unit sphere centered on the origin of the axes.
+Associated transformation is identity.
+"""
+function Sphere(material)
+    transformation =
+        Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+    Sphere(transformation, material)
+end
+
+"""
 Convert a 3D point on the surface of the unit sphere into a (u, v) 2D point
 """
 function _sphere_point_to_uv(point::Point)
@@ -169,7 +169,7 @@ function ray_intersection(sphere::Sphere, ray::Ray)
     # intersections only if Δ > 0.
 
     # defining reduced Δ:
-    # delta ≡ Δ/4 = (O ⋅ d)^2 − ||d||^2 ⋅ (||O||^2 − 1) = b^2 -a*c
+    # delta ≡ Δ/4 = (O ⋅ d)² − ||d||² ⋅ (||O||² − 1) = b² -a*c
     origin_vec = point_to_vec(inv_ray.origin)
     a = squared_norm(inv_ray.dir)
     b = dot(origin_vec, inv_ray.dir)
