@@ -114,6 +114,6 @@ end
 
 function Material()
     brdf = DiffuseBRDF()
-    emitted_radiance = UniformPigment(GRAY)
+    emitted_radiance = UniformPigment(BLACK)
     Material(brdf, emitted_radiance)
 end
