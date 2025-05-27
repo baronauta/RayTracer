@@ -134,3 +134,23 @@ function path_tracer(
     end
     return emitted_radiance + cum_radiance / n_rays
 end
+
+# generic closure function for renderer
+"""
+    my_renderer(renderer, world; pcg=nothing, kwargs...) -> Function
+
+Creates a closure using the specified renderer.
+
+# Arguments
+- `renderer`: the rendering function to use (e.g., `onoff_tracer`, `flat_tracer`, `path_tracer`).
+- `world::World`: the scene to be traced.
+- `pcg`: (optional) needed for `path_tracer`.
+- `kwargs...`: additional keyword arguments to pass to the renderer.
+
+# Returns
+- A function `ray -> RGB` that takes a ray and returns the color computed by the renderer.
+"""
+function my_renderer(renderer, world; pcg = nothing, kwargs...)
+    pcg === nothing ? (ray -> renderer(world, ray; kwargs...)) :
+    (ray -> renderer(world, ray, pcg; kwargs...))
+end

@@ -9,8 +9,9 @@
         cam = OrthogonalCamera(1.0)
         tracer = ImageTracer(img, cam)
         world = World([sphere])
-        f = ray -> onoff_tracer(world, ray)
-        RayTracer.fire_all_rays!(tracer, f)
+        # f = ray -> onoff_tracer(world, ray)
+        # RayTracer.fire_all_rays!(tracer, f)
+        RayTracer.fire_all_rays!(tracer, my_renderer(onoff_tracer, world))
 
         @test RayTracer.get_pixel(img, 1, 1) ≈ BLACK
         @test RayTracer.get_pixel(img, 2, 1) ≈ BLACK
@@ -36,8 +37,9 @@
         cam = OrthogonalCamera(1.0)
         tracer = ImageTracer(img, cam)
         world = World([sphere])
-        f = ray -> flat_tracer(world, ray)
-        RayTracer.fire_all_rays!(tracer, f)
+        # f = ray -> flat_tracer(world, ray)
+        # RayTracer.fire_all_rays!(tracer, f)
+        RayTracer.fire_all_rays!(tracer, my_renderer(flat_tracer, world))
 
         @test RayTracer.get_pixel(img, 1, 1) ≈ BLACK
         @test RayTracer.get_pixel(img, 2, 1) ≈ BLACK
