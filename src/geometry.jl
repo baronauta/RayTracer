@@ -49,30 +49,30 @@ function Base.show(io::IO, ::MIME"text/plain", n::Normal)
 end
 
 "Check if two `Point`s are approximately equal."
-function ≈(p::Point, q::Point; rtol=1e-5, atol=1e-5)
-    return isapprox(p.x, q.x, rtol=rtol, atol=atol) &&
-           isapprox(p.y, q.y, rtol=rtol, atol=atol) &&
-           isapprox(p.z, q.z, rtol=rtol, atol=atol)
+function ≈(p::Point, q::Point; rtol = 1e-5, atol = 1e-5)
+    return isapprox(p.x, q.x, rtol = rtol, atol = atol) &&
+           isapprox(p.y, q.y, rtol = rtol, atol = atol) &&
+           isapprox(p.z, q.z, rtol = rtol, atol = atol)
 end
 
 "Check if two `Vec`s are approximately equal."
-function ≈(v::Vec, u::Vec; rtol=1e-5, atol=1e-5)
-    return isapprox(v.x, u.x, rtol=rtol, atol=atol) &&
-           isapprox(v.y, u.y, rtol=rtol, atol=atol) &&
-           isapprox(v.z, u.z, rtol=rtol, atol=atol)
+function ≈(v::Vec, u::Vec; rtol = 1e-5, atol = 1e-5)
+    return isapprox(v.x, u.x, rtol = rtol, atol = atol) &&
+           isapprox(v.y, u.y, rtol = rtol, atol = atol) &&
+           isapprox(v.z, u.z, rtol = rtol, atol = atol)
 end
 
 "Check if two `Vec2D`s are approximately equal."
-function ≈(a::Vec2D, b::Vec2D; rtol=1e-5, atol=1e-5)
-    return isapprox(a.u, b.u, rtol=rtol, atol=atol) &&
-           isapprox(a.v, b.v, rtol=rtol, atol=atol)
+function ≈(a::Vec2D, b::Vec2D; rtol = 1e-5, atol = 1e-5)
+    return isapprox(a.u, b.u, rtol = rtol, atol = atol) &&
+           isapprox(a.v, b.v, rtol = rtol, atol = atol)
 end
 
 "Check if two `Normal`s are approximately equal."
-function ≈(n::Normal, m::Normal; rtol=1e-5, atol=1e-5)
-    return isapprox(n.x, m.x, rtol=rtol, atol=atol) &&
-           isapprox(n.y, m.y, rtol=rtol, atol=atol) &&
-           isapprox(n.z, m.z, rtol=rtol, atol=atol)
+function ≈(n::Normal, m::Normal; rtol = 1e-5, atol = 1e-5)
+    return isapprox(n.x, m.x, rtol = rtol, atol = atol) &&
+           isapprox(n.y, m.y, rtol = rtol, atol = atol) &&
+           isapprox(n.z, m.z, rtol = rtol, atol = atol)
 end
 
 "Add two `Vec` instances, returning a new `Vec`."
@@ -121,7 +121,7 @@ function *(scalar::Real, n::Normal)
 end
 
 "Negate a `Vec` or `Normal`, returning the vector multiplied by -1."
-function -(v::Union{Vec, Normal})
+function -(v::Union{Vec,Normal})
     return (-1) * v
 end
 
@@ -171,7 +171,7 @@ end
 Normalize a vector (`Vec` or `Normal`), returning a unit vector in the same direction,
 i.e., v → v / ||v||.
 """
-function normalize(v::Union{Vec, Normal})
+function normalize(v::Union{Vec,Normal})
     n = norm(v)
     return typeof(v)(v.x / n, v.y / n, v.z / n)
 end
@@ -193,7 +193,7 @@ Compute an orthonormal basis given a normalized vector `n`.
 Returns three perpendicular unit vectors `(e1, e2, n)`.
 Uses the algorithm by Duff et al. (2017).
 """
-function onb_from_z(n::Union{Vec, Normal})
+function onb_from_z(n::Union{Vec,Normal})
     # The algorithm here used was proposed by Duff et al. in 2017.
     sign = copysign(1.0, n.z)
     a = -1.0 / (sign + n.z)

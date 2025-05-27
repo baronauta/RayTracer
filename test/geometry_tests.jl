@@ -32,7 +32,7 @@
         @test cross(v, u) ≈ Vec(-3.0, 6.0, -3.0)
         @test RayTracer.squared_norm(v) ≈ 14.0
         @test RayTracer.norm(v)^2 ≈ 14.0
-        @test RayTracer.normalize(v) ≈ Vec(v.x/sqrt(14), v.y/sqrt(14), v.z/sqrt(14))
+        @test RayTracer.normalize(v) ≈ Vec(v.x / sqrt(14), v.y / sqrt(14), v.z / sqrt(14))
         # Conversion Vec to Normal
         @test RayTracer.vec_to_normal(v) ≈ Normal(1.0, 2.0, 3.0)
     end
@@ -144,17 +144,19 @@ end
     @testset "× Vec/Point/Normal" begin
         #! format: off
         m_mat = Matrix{Float32}([
-            1.0  2.0  3.0  4.0
-            5.0  6.0  7.0  8.0
-            9.0  9.0  8.0  7.0
-            0.0  0.0  0.0  1.0
+            1.0 2.0 3.0 4.0
+            5.0 6.0 7.0 8.0
+            9.0 9.0 8.0 7.0
+            0.0 0.0 0.0 1.0
         ])
-        invm_mat = Matrix{Float32}([
-        -3.75   2.75  -1.0   0.0
-            5.75  -4.75   2.0   1.0
-        -2.25   2.25  -1.0  -2.0
-            0.0    0.0    0.0   1.0
-        ])
+        invm_mat = Matrix{Float32}(
+            [
+                -3.75 2.75 -1.0 0.0
+                5.75 -4.75 2.0 1.0
+                -2.25 2.25 -1.0 -2.0
+                0.0 0.0 0.0 1.0
+            ],
+        )
         #! format: off
         T = Transformation(HomMatrix(m_mat), HomMatrix(invm_mat))
         @test RayTracer._is_consistent(T)
@@ -210,18 +212,22 @@ end
     # ... repeat with different random initialization.
     pcg = RayTracer.PCG()
 
-    for i in 1:100
-        v = Vec(RayTracer.random_float!(pcg), RayTracer.random_float!(pcg), RayTracer.random_float!(pcg)) 
+    for i = 1:100
+        v = Vec(
+            RayTracer.random_float!(pcg),
+            RayTracer.random_float!(pcg),
+            RayTracer.random_float!(pcg),
+        )
         normal = RayTracer.normalize(v)
         e1, e2, e3 = RayTracer.onb_from_z(normal)
 
         # onb_from_z should return the input normalized vector as e3
         @test e3 ≈ normal
-        
+
         # Orthogonality, i.e. eᵢ ⋅ eⱼ = δᵢⱼ
-        @test isapprox(dot(e1, e2), 0, rtol=1e-5, atol=1e-5)
-        @test isapprox(dot(e1, e3), 0, rtol=1e-5, atol=1e-5)
-        @test isapprox(dot(e2, e3), 0, rtol=1e-5, atol=1e-5)
+        @test isapprox(dot(e1, e2), 0, rtol = 1e-5, atol = 1e-5)
+        @test isapprox(dot(e1, e3), 0, rtol = 1e-5, atol = 1e-5)
+        @test isapprox(dot(e2, e3), 0, rtol = 1e-5, atol = 1e-5)
 
         # Normalization, i.e. ||eᵢ||² = 1
         @test RayTracer.squared_norm(e1) ≈ 1

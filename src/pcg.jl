@@ -9,7 +9,7 @@ end
 Create and initialize a PCG (Permuted Congruential Generator) random number generator.
 `init_state` and `init_seq` are optional seeds.
 """
-function PCG(;init_state=42, init_seq=54)
+function PCG(; init_state = 42, init_seq = 54)
     # Throw a random number and discard it
     state = 0
     inc = (init_seq << 1) | 1

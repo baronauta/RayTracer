@@ -29,9 +29,9 @@
         RayTracer.set_pixel!(img, 2, 2, RGB(3.0, 2.0, 1.0))
 
         pigment = ImagePigment(img)
-        @test RayTracer.get_color(pigment, Vec2D(0.0, 0.0))≈(RGB(1.0, 2.0, 3.0))
-        @test RayTracer.get_color(pigment, Vec2D(1.0, 0.0))≈(RGB(2.0, 3.0, 1.0))
-        @test RayTracer.get_color(pigment, Vec2D(0.0, 1.0))≈(RGB(2.0, 1.0, 3.0))
-        @test RayTracer.get_color(pigment, Vec2D(1.0, 1.0))≈(RGB(3.0, 2.0, 1.0))
+        @test RayTracer.get_color(pigment, Vec2D(0.0, 0.0)) ≈ (RGB(1.0, 2.0, 3.0))
+        @test RayTracer.get_color(pigment, Vec2D(1.0, 0.0)) ≈ (RGB(2.0, 3.0, 1.0))
+        @test RayTracer.get_color(pigment, Vec2D(0.0, 1.0)) ≈ (RGB(2.0, 1.0, 3.0))
+        @test RayTracer.get_color(pigment, Vec2D(1.0, 1.0)) ≈ (RGB(3.0, 2.0, 1.0))
     end
 end

@@ -5,7 +5,11 @@
     @test RayTracer.luminosity(col1, mean_type = :arithmetic) ≈ 5
     @test RayTracer.luminosity(col1, mean_type = :weighted) ≈ 5
     @test RayTracer.luminosity(col1, mean_type = :weighted, weights = [1, 2, 5]) ≈ 3.25
-    @test isapprox(RayTracer.luminosity(col1, mean_type = :distance), 10.6301; atol = 0.0001)
+    @test isapprox(
+        RayTracer.luminosity(col1, mean_type = :distance),
+        10.6301;
+        atol = 0.0001,
+    )
     # Logarithmic average
     # Image for test
     img = HdrImage(2, 1)

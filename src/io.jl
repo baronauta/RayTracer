@@ -16,7 +16,9 @@ function check_pfm_extension(s)
     # Check if the file extension is .pfm (case-insensitive)
     if !endswith(lowercase(s), ".pfm")
         throw(
-            WrongPFMformat("the file must be a PFM file. Please provide a valid file name."),
+            WrongPFMformat(
+                "the file must be a PFM file. Please provide a valid file name.",
+            ),
         )
     end
 end
@@ -42,12 +44,18 @@ function write_color(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_E
     b = reinterpret(UInt32, color.b)
     # Change endianness according to th chosen one, default `HOST_ENDIANNESS`
     if endianness > 0
-        r = hton(r); g = hton(g); b = hton(b)
+        r = hton(r)
+        g = hton(g)
+        b = hton(b)
     elseif endianness < 0
-        r = htol(r); g = htol(g); b = htol(b)
+        r = htol(r)
+        g = htol(g)
+        b = htol(b)
     end
 
-    write(io, r); write(io, g); write(io, b)
+    write(io, r)
+    write(io, g)
+    write(io, b)
 end
 
 """

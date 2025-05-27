@@ -25,7 +25,7 @@ export Material
 export DiffuseBRDF
 export onoff_tracer, flat_tracer, path_tracer
 
-export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError 
+export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError
 
 export IS_LITTLE_ENDIAN, HOST_ENDIANNESS
 

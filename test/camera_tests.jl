@@ -87,7 +87,8 @@
         # Test for orientation
         function test3(tracer)
             top_left_ray = RayTracer.fire_ray(tracer, 1, 1, u_pixel = 0.0, v_pixel = 0.0)
-            bottom_right_ray = RayTracer.fire_ray(tracer, 4, 2, u_pixel = 1.0, v_pixel = 1.0)
+            bottom_right_ray =
+                RayTracer.fire_ray(tracer, 4, 2, u_pixel = 1.0, v_pixel = 1.0)
             @test Point(0.0, 2.0, 1.0) ≈ RayTracer.at(top_left_ray, 1.0)
             @test Point(0.0, -2.0, -1.0) ≈ RayTracer.at(bottom_right_ray, 1.0)
         end
