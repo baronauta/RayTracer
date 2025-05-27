@@ -163,13 +163,27 @@ end
 
 
 # === Material ===
+"Material with surface caracteristics (BRDF) and emitted light (radiance)."
 struct Material
     brdf::BRDF
     emitted_radiance::Pigment
 end
 
+"Construct a default Material with diffuse BRDF and no emission."
 function Material()
     brdf = DiffuseBRDF()
     emitted_radiance = UniformPigment(BLACK)
+    Material(brdf, emitted_radiance)
+end
+
+"Construct a Material with given BRDF and no emission."
+function Material(brdf::BRDF)
+    emitted_radiance = UniformPigment(BLACK)
+    Material(brdf, emitted_radiance)
+end
+
+"Construct a Material with given emitted radiance and diffuse BRDF (uniform black pigment)."
+function Material(emitted_radiance::Pigment)
+    brdf = DiffuseBRDF(UniformPigment(BLACK))
     Material(brdf, emitted_radiance)
 end

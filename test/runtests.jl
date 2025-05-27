@@ -11,5 +11,5 @@ include("setup.jl")
     include("shapes_tests.jl")
     include("pcg_tests.jl")
     include("material_tests.jl")
-    include("furnace_tests.jl")
+    include("render_tests.jl")
 end
