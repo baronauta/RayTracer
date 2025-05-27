@@ -87,11 +87,13 @@ function path_tracer(
     hit_color_lum = max(hit_color.r, hit_color.g, hit_color.b)
 
     # Russian Roulette
-    # This helps in removing the bias of understimating the radiance due to
-    # the truncation of the recursion.
+    # This remove the bias (radiance understimation) caused by truncating the recursion.
     # Let q ∈ [0,1] be a threshold, draw a random number x:
-    # - x ≥ q, compute the radiance L and return L/(1-q);
-    # - otherwise, stop the recursion and return 0 (i.e. BLACK).    
+    # - if x ≥ q, compute the radiance L and return L / (1 - q);
+    # - otherwise, terminate recursion and return 0 (BLACK).
+    # Note: The threshold 0.05 is chosen to reduce variance. 
+    # When the luminance is very low, the probability to stop the recursion and return 0 is close to 1, 
+    # but the points where L is returned tend to be very bright, which can cause high variance.
     if ray.depth >= russian_roulette_limit
         # Makes q smaller when the surface is bright, 
         # and larger when it’s dark.
