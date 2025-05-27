@@ -53,7 +53,9 @@ function DiffuseBRDF()
     DiffuseBRDF(UniformPigment(WHITE))
 end
 
+"Calculate the value of the BRDF in a certain point."
 function eval(brdf::DiffuseBRDF, n::Normal, in_dir::Vec, out_dir::Vec, uv::Vec2D)
+    # an ideal diffuse BRDF, so the value is constant everyware
     return brdf.pigment.get_color(uv) / π
 end
 
@@ -96,12 +98,69 @@ function scatter_ray(
     #   z = cosθ          (aligned with e3, the surface normal)
     return Ray(
         interaction_point,
-        e1 * sinθ * cos(ϕ)  + e2 * sinθ * sin(ϕ) + e3 * cosθ,
+        e1 * sinθ * cos(ϕ) + e2 * sinθ * sin(ϕ) + e3 * cosθ,
         1.0e-3,
         typemax(typeof(interaction_point.x)),
         depth,
     )
 end
+
+"An ideal reflective BRDF with a given pigment and angle tolerance."
+struct SpecularBRDF <: BRDF
+    pigm::Pigment
+    angle_tolerance::AbstractFloat
+end
+
+"Constructs a default `SpecularBRDF` using a white uniform pigment and default angle tolerance."
+function SpecularBRDF()
+    pigm = UniformPigment(WHITE)
+    angle_tolerance = pi / 1800.0
+    SpecularBRDF(pigm, angle_tolerance)
+end
+
+"Calculate the value of the BRDF in a certain point."
+function eval(brdf::SpecularBRDF, n::Normal, in_dir::Vec, out_dir::Vec, uv::Vec2D)
+    # an ideal Reflective BRDF, so the value is ≠ 0 only for the specular reflected angle θᵣ
+    θᵢ = acos(dot(n, in_dir))
+    θᵣ = acos(dot(n, out_dir))
+    if abs(θᵢ - θᵣ) < brdf.angle_tolerance
+        return get_color(brdf.pigment, uv)
+    else
+        return BLACK
+    end
+end
+
+"""
+    scatter_ray(brdf::SpecularBRDF, pcg::PCG, incoming_dir::Vec, interaction_point::Point, normal::Normal, depth::Integer) -> Ray
+
+Generates a secondary ray by finding the only right reflected direction.
+"""
+function scatter_ray(
+    brdf::SpecularBRDF,
+    pcg::PCG,
+    incoming_dir::Vec,
+    interaction_point::Point,
+    normal::Normal,
+    depth::Integer,
+)
+    # no need to create random emisphere direction;
+    # only one direction that obey the reflectance law is needed.
+    #
+    #                               ↑ n (2 times Ψ, inverted sign respect to Ψ)
+    #    Ψ(original incident ray)   |
+    #                             \ | / Ψ + n (reflected ray)
+    #                              \|/
+    #   ___(surface)________________o (interacion point)___________(surface)____
+
+    Ψ = normalize(Vec(incoming_dir.x, incoming_dir.y, incoming_dir.z))
+    _n = normalize(normal)
+    dot_prod = dot(Ψ, _n)
+    n = (-1) * _n * dot_prod
+    Ψᵣ = Ψ + n
+
+    return Ray(interaction_point, Ψᵣ, 1.0e-3, typemax(typeof(interaction_point.x)), depth)
+end
+
 
 # === Material ===
 struct Material
