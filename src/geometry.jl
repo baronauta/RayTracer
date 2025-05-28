@@ -186,6 +186,11 @@ function point_to_vec(p::Point)
     return Vec(p.x, p.y, p.z)
 end
 
+"Convert a `Normal` into a `Vec`."
+function normal_to_vec(n::Normal)
+    Vec(n.x, n.y, n.z)
+end
+
 """
     onb_from_z(n::Union{Vec, Normal})
 

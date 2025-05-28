@@ -118,6 +118,12 @@ function SpecularBRDF()
     SpecularBRDF(pigm, angle_tolerance)
 end
 
+"Constructs a default `SpecularBRDF` using a angle tolerance."
+function SpecularBRDF(pigm::Pigment)
+    angle_tolerance = pi / 1800.0
+    SpecularBRDF(pigm, angle_tolerance)
+end
+
 "Calculate the value of the BRDF in a certain point."
 function eval(brdf::SpecularBRDF, n::Normal, in_dir::Vec, out_dir::Vec, uv::Vec2D)
     # an ideal Reflective BRDF, so the value is ≠ 0 only for the specular reflected angle θᵣ
@@ -155,7 +161,7 @@ function scatter_ray(
     Ψ = normalize(Vec(incoming_dir.x, incoming_dir.y, incoming_dir.z))
     _n = normalize(normal)
     dot_prod = dot(Ψ, _n)
-    n = (-1) * _n * dot_prod
+    n = RayTracer.normal_to_vec((-1) * _n * dot_prod)
     Ψᵣ = Ψ + n
 
     return Ray(interaction_point, Ψᵣ, 1.0e-3, typemax(typeof(interaction_point.x)), depth)
