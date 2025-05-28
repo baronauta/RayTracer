@@ -151,6 +151,6 @@ Creates a closure using the specified renderer.
 - A function `ray -> RGB` that takes a ray and returns the color computed by the renderer.
 """
 function my_renderer(renderer, world; pcg = nothing, kwargs...)
-    pcg === nothing ? (ray -> renderer(world, ray; kwargs...)) :
+    isnothing(pcg) ? (ray -> renderer(world, ray; kwargs...)) :
     (ray -> renderer(world, ray, pcg; kwargs...))
 end

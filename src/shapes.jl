@@ -58,6 +58,14 @@ function Plane()
     Plane(transformation, material)
 end
 
+function Plane(material::Material)
+    transformation =
+        Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+    Plane(transformation, material)
+end
+
+
+
 """
 Checks if a ray intersects the plane.
 Return a `HitRecord`, or `nothing` if no intersection was found.
