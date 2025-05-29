@@ -1,3 +1,26 @@
+#_______________________________________________________________________________________
+#     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
+#     __________________________________________________________
+#
+#   This file is licensed under the European Union Public Licence (EUPL), version 1.2.
+#
+#   You are free to use, modify, and distribute this software under the conditions
+#   of the EUPL v.1.2, as published by the European Commission.
+#
+#   Obligations include:
+#     - Retaining this notice and the licence terms
+#     - Providing access to the source code
+#     - Distributing derivative works under the same or a compatible licence
+#
+#   Full licence text: see the LICENSE file or visit https://eupl.eu
+#
+#   Disclaimer:
+#     Unless required by applicable law or agreed to in writing,
+#     this software is provided "AS IS", without warranties or conditions
+#     of any kind, either express or implied.
+#
+#_______________________________________________________________________________________
+
 # This file contains:
 # - Scene creation and object/material setup
 # - Functions for generating demo images and videos
@@ -19,7 +42,6 @@ function demo_image(width, height, camera, angle_deg, renderer_name; dir_name = 
     aspect_ratio = width / height
     distance = 1.0
     transformation = rotation_z(angle_deg) * translation(Vec(-3.0, 0.0, 1.0))
-    
     if lowercase(camera) == "orthogonal"
         cam = OrthogonalCamera(aspect_ratio,transformation)
         name = dir_name*"demo_orthogonal"

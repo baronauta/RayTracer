@@ -31,14 +31,21 @@ import Crayons # enables colorful and expressive terminal output
 
 function main()
     try
-        params = RayTracer.demo_Params(ARGS)
-        if params.mode == "image"
-            RayTracer.demo_image(params.width, params.height, params.camera, params.angle_deg, params.renderer; n_rays=params.n_rays, max_depth=params.max_depth)
-        elseif params.mode == "video"
-            RayTracer.demo_video(params.width, params.height, params.camera, params.renderer; n_rays=params.n_rays, max_depth=params.max_depth)
-        else
-            throw(RuntimeError(demo_error))
-        end
+        # reading parameters from ARGS
+        params = Conversion_Params(ARGS)
+
+        # reading image from input file
+        img = read_pfm_image(params.input_pfm_file_name)
+        println("$(params.input_pfm_file_name) has been read from disk.")
+        
+        # preparing the image to LDR conversion 
+        normalize_image!(img; factor = params.factor, delta = params.delta, mean_type = params.mean_type, weights =params.weights)
+        clamp_image!(img)
+
+        # converting the image to LDR format and saving the LDR image on disk
+        write_ldr_image(params.output_png_file_name, img; gamma = 1.0)
+        println("$(params.output_png_file_name) has been written to disk.")
+    
     catch e
         # Define colors for the error message
         red_bold = Crayons.crayon"bold red"  # Bold red text
@@ -47,7 +54,7 @@ function main()
         # Print the formatted error message
         println(string(red_bold) * "ERROR " * string(reset), "$(typeof(e)): $(e.msg)")
     end
+    
 end
 
-# execution
 main()

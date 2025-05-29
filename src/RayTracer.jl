@@ -1,3 +1,27 @@
+
+#_______________________________________________________________________________________
+#     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
+#     __________________________________________________________
+#
+#   This file is licensed under the European Union Public Licence (EUPL), version 1.2.
+#
+#   You are free to use, modify, and distribute this software under the conditions
+#   of the EUPL v.1.2, as published by the European Commission.
+#
+#   Obligations include:
+#     - Retaining this notice and the licence terms
+#     - Providing access to the source code
+#     - Distributing derivative works under the same or a compatible licence
+#
+#   Full licence text: see the LICENSE file or visit https://eupl.eu
+#
+#   Disclaimer:
+#     Unless required by applicable law or agreed to in writing,
+#     this software is provided "AS IS", without warranties or conditions
+#     of any kind, either express or implied.
+#
+#_______________________________________________________________________________________
+
 module RayTracer
 
 import ColorTypes
@@ -47,130 +71,5 @@ include("shapes.jl")
 include("world.jl")
 include("demo.jl")
 include("render.jl")
-
-# ─────────────────────────────────────────────────────────────
-# Parameters for PFM file conversion
-# ─────────────────────────────────────────────────────────────
-mutable struct Parameters
-    input_pfm_file_name::String
-    factor::Real
-    gamma::Real
-    output_png_file_name::String
-    mean_type::Symbol
-    weights::Array{Real,1}
-    delta::Real
-end
-
-"""
-    function Parameters(A)
-
-Parses and validates command-line arguments in basic or advanced mode.
-
-### Arguments:
-- `A`: Array of strings representing the command-line arguments.
-  - `factor`: multiplied factor in `log_avarage`
-  - `gamma`: monitor correction
-  - `mean_type`: type of mean used in `luminosity`
-  - `weights`: used in weighted `luminosity`
-  - `delta`: usefull to make - `log_avarage` near 0 values
-### Returns:
-- A `Parameters` struct with the parsed values:
-  - `input_pfm_file_name`, `factor`, `gamma`, `output_png_file_name`, `mean_type`, `weights`, `delta`.
-
-### Errors:
-- Throws errors for invalid types or incorrect argument count.
-"""
-function Parameters(A)
-    if (length(A) != 4) && (length(A) != 7)
-        throw(
-            RuntimeError(
-                """\n
- ------------------------------------------------------------
- Correct command usage:
-    - Basic mode:
-      julia RayTracer INPUT_PFM_FILE FACTOR GAMMA OUTPUT_PNG_FILE
-
-    - Advanced mode:
-      julia RayTracer INPUT_PFM_FILE FACTOR GAMMA OUTPUT_PNG_FILE MEAN_TYPE WEIGHTS DELTA
-
- Advanced notes:
-    - MEAN_TYPE will be converted to a Symbol (default = max_min)
-    - WEIGHTS must be a vector of numbers enclosed in quotes:
-      Correct example: "[1.0, 2.0, 3.0]"
-
- Number of arguments received: $(length(A))
-------------------------------------------------------------
-""",
-            ),
-        )
-
-    end
-    factor = 0.0
-    gamma = 0.0
-    input_pfm_file_name = A[1]
-    output_png_file_name = A[4]
-    try
-        factor = parse(Float32, A[2])
-    catch e
-        if isa(e, ArgumentError)
-            throw(
-                RuntimeError(
-                    "Invalid factor ($(A[2])), it must be a floating-point number.",
-                ),
-            )
-        end
-    end
-    try
-        gamma = parse(Float32, A[3])
-    catch e
-        if isa(e, ArgumentError)
-            throw(
-                RuntimeError(
-                    "Invalid gamma ($(A[3])), it must be a floating-point number.",
-                ),
-            )
-        end
-    end
-    if length(A) == 4
-        mean_type = :max_min
-        weights = [1.0, 1.0, 1.0]
-        delta = 1e-10
-
-    else
-        mean_type = Symbol(A[5])
-        try
-            weights = parse.(Float32, split(strip(A[6], ['[', ']']), ","))
-        catch
-            throw(
-                RuntimeError(
-                    "Invalid weights ($(A[6])), it must be a floating-point numbers array, correct example: \"[1.0, 2.0, 3.0]\".",
-                ),
-            )
-        end
-        try
-            delta = parse(Float32, A[7])
-        catch
-            throw(
-                RuntimeError(
-                    "Invalid delta ($(A[7])), it must be a floating-point number.",
-                ),
-            )
-
-        end
-
-
-    end
-
-    return Parameters(
-        input_pfm_file_name,
-        factor,
-        gamma,
-        output_png_file_name,
-        mean_type,
-        weights,
-        delta,
-    )
-
-end
-
+include("pfm2image.jl")
 end
