@@ -36,14 +36,29 @@ function demo_image(width, height, camera, angle_deg, renderer_name; dir_name = 
     tracer = ImageTracer(img, cam)
 
     # World
-    # spheres aspect
-    brdf = DiffuseBRDF(CheckeredPigment(RGB(0.78, 0.902, 0.471), RGB(0.953, 0.718, 1), 6))
-    material = Material(brdf, UniformPigment(BLACK))
 
-    # source of light
+    # Plane
+    plane_brdf = DiffuseBRDF(CheckeredPigment(RGB(0.78, 0.902, 0.471), RGB(0.953, 0.718, 1), 6))
+    plane_material = Material(plane_brdf, UniformPigment(BLACK))
+
+    # Spheres aspect
+        # earth
+    earth_pfm = RayTracer.read_pfm_image("./earth.pfm") # ./examples/earth.pfm
+    earth_brdf = DiffuseBRDF(ImagePigment(earth_pfm))
+    earth_material = Material(earth_brdf, UniformPigment(BLACK))
+    earth = Sphere(translation(Vec(1., 1., 2.)) , earth_material)
+
+        # diffuse sphere
+    sphere_brdf = DiffuseBRDF(UniformPigment(RGB(1, 0.314, 0.314)))
+    sphere_material = Material(sphere_brdf, UniformPigment(BLACK))
+    sphere = Sphere(translation(Vec(-1., -1., 0.2)) * scaling(0.2,0.2,0.2) , sphere_material)
+    
+        # mirror sphere
+    mirror_material = Material(SpecularBRDF(UniformPigment(RGB(0.9,0.9,0.9))), UniformPigment(BLACK))
+
+    # Source of light
     lumi_brdf = DiffuseBRDF(UniformPigment(BLACK))
     lumi_material = Material(lumi_brdf, UniformPigment(RGB(0.7, 0.8, 1)))
-    mirror_material = Material(SpecularBRDF(UniformPigment(RGB(0.9,0.9,0.9))), UniformPigment(BLACK))
 
     # shapes for normal and basic demo
     # demo
@@ -51,23 +66,24 @@ function demo_image(width, height, camera, angle_deg, renderer_name; dir_name = 
         sky = Sphere(scaling(50.0,50.0,50.0), lumi_material)
         shape_list = [
             sky,
-            Plane(material),
-            Sphere(translation(Vec(1., 1., 2.)) , Material(DiffuseBRDF(UniformPigment(RGB(1, 0.314, 0.314))),UniformPigment(BLACK))),
+            earth,
+            Plane(plane_material),
+            sphere,
             Sphere(mirror_material),
         ]
     else # onoff demo
         scale = scaling(0.1, 0.1, 0.1)
         shape_list = [
-                    Sphere(translation(Vec(-0.5,-0.5,-0.5))*scale,material),
-                    Sphere(translation(Vec(-0.5,-0.5, 0.5))*scale,material),
-                    Sphere(translation(Vec(-0.5, 0.5,-0.5))*scale,material),
-                    Sphere(translation(Vec( 0.5,-0.5,-0.5))*scale,material),
-                    Sphere(translation(Vec(-0.5, 0.5, 0.5))*scale,material),
-                    Sphere(translation(Vec( 0.5, 0.5,-0.5))*scale,material),
-                    Sphere(translation(Vec( 0.5,-0.5, 0.5))*scale,material),
-                    Sphere(translation(Vec( 0.5, 0.5, 0.5))*scale,material),
-                    Sphere(translation(Vec( 0.0, 0.0, -0.5))*scale,material),
-                    Sphere(translation(Vec( 0.0, 0.5, 0.0))*scale,material)
+                    Sphere(translation(Vec(-0.5,-0.5,-0.5))*scale,sphere_material),
+                    Sphere(translation(Vec(-0.5,-0.5, 0.5))*scale,sphere_material),
+                    Sphere(translation(Vec(-0.5, 0.5,-0.5))*scale,sphere_material),
+                    Sphere(translation(Vec( 0.5,-0.5,-0.5))*scale,sphere_material),
+                    Sphere(translation(Vec(-0.5, 0.5, 0.5))*scale,sphere_material),
+                    Sphere(translation(Vec( 0.5, 0.5,-0.5))*scale,sphere_material),
+                    Sphere(translation(Vec( 0.5,-0.5, 0.5))*scale,sphere_material),
+                    Sphere(translation(Vec( 0.5, 0.5, 0.5))*scale,sphere_material),
+                    Sphere(translation(Vec( 0.0, 0.0, -0.5))*scale,sphere_material),
+                    Sphere(translation(Vec( 0.0, 0.5, 0.0))*scale,sphere_material)
                 ]
     end
     world = World(shape_list)
@@ -141,13 +157,12 @@ demo_error = """\n
       - height INTEGER     Image height in pixels
       - camera STRING      Type of camera: Orthogonal or Perspective
       - renderer STRING    Type of renderer: onoff_tracer* , flat_tracer, path_tracer
-                           
 
       ADVANCED USAGE
       Additional Arguments (after basic usage Args)**:
       - angle-deg FLOAT    Angle of view from start position (around Z-axes, angle-deg ∈ [0; 360])
-      - n_rays INTEGER     number of rays generated for surface reflection, used in <path_tracer> (default)***
-      - max_depth INTEGER  maximum number of reflection for a ray, used in <path_tracer> (default)***
+      - n_rays INTEGER     number of rays generated for surface reflection, used in <path_tracer> (default = 5)***
+      - max_depth INTEGER  maximum number of reflection for a ray, used in <path_tracer> (default = 5)***
 
       Note*:   <onoff_tracer> has a different dedicated scene to avoid generating a white image.
       Note**:  All advanced arguments need to be specified when using Advanced mode.
