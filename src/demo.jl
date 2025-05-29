@@ -65,7 +65,7 @@ function demo_image(width, height, camera, angle_deg, renderer_name; dir_name = 
 
     # Spheres aspect
         # earth
-    earth_pfm = RayTracer.read_pfm_image("./examples/earth.pfm")
+    earth_pfm = RayTracer.read_pfm_image("./examples/reference_earth.pfm")
     earth_brdf = DiffuseBRDF(ImagePigment(earth_pfm))
     earth_material = Material(earth_brdf, UniformPigment(BLACK))
     earth = Sphere(translation(Vec(1., 1., 2.)) , earth_material)
