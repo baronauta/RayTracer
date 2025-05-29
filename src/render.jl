@@ -144,13 +144,16 @@ Creates a closure using the specified renderer.
 # Arguments
 - `renderer`: the rendering function to use (e.g., `onoff_tracer`, `flat_tracer`, `path_tracer`).
 - `world::World`: the scene to be traced.
-- `pcg`: (optional) needed for `path_tracer`.
-- `kwargs...`: additional keyword arguments to pass to the renderer.
+- `pcg::PCG`: (optional) needed for `path_tracer`.
+- `bkg_color::RGB`: the background color (default=BLACK)
+- `n_rays::Integer`: number of rays generated for surface reflection, used in `path_tracer`(default=10)
+- `max_depth::Integer`: maximum number of reflection for a ray, used in `path_tracer`(default=10)
+- `russian_roulette_limit::Integer`: minimum number of iteration before possible iteration kill (default=3)
 
 # Returns
 - A function `ray -> RGB` that takes a ray and returns the color computed by the renderer.
 """
-function my_renderer(renderer, world; pcg = nothing, kwargs...)
-    isnothing(pcg) ? (ray -> renderer(world, ray; kwargs...)) :
-    (ray -> renderer(world, ray, pcg; kwargs...))
+function my_renderer(renderer, world; pcg = nothing, bkg_color=BLACK, n_rays=10, max_depth=10, russian_roulette_limit=3)
+    isnothing(pcg) ? (ray -> renderer(world, ray; bkg_color = bkg_color)) :
+    (ray -> renderer(world, ray, pcg; bkg_color = bkg_color, n_rays = n_rays, max_depth = max_depth, russian_roulette_limit = russian_roulette_limit))
 end
