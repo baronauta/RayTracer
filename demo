@@ -1,5 +1,5 @@
 #!/usr/bin/env julia
-using Revise
+
 using Pkg
 Pkg.activate(normpath(@__DIR__))
 
