@@ -6,6 +6,7 @@ Manifest.toml
 *.png
 *.tiff
 *.jpeg
+*.jpg
 *.gif
 *.bmp
 *.PFM

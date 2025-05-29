@@ -41,7 +41,9 @@ function check_pfm_extension(s)
     # Check if the file extension is .pfm (case-insensitive)
     if !endswith(lowercase(s), ".pfm")
         throw(
-            WrongPFMformat("the file must be a PFM file. Please provide a valid file name."),
+            WrongPFMformat(
+                "the file must be a PFM file. Please provide a valid file name.",
+            ),
         )
     end
 end
@@ -67,12 +69,18 @@ function write_color(io::IO, color::ColorTypes.RGB{Float32}; endianness = HOST_E
     b = reinterpret(UInt32, color.b)
     # Change endianness according to th chosen one, default `HOST_ENDIANNESS`
     if endianness > 0
-        r = hton(r); g = hton(g); b = hton(b)
+        r = hton(r)
+        g = hton(g)
+        b = hton(b)
     elseif endianness < 0
-        r = htol(r); g = htol(g); b = htol(b)
+        r = htol(r)
+        g = htol(g)
+        b = htol(b)
     end
 
-    write(io, r); write(io, g); write(io, b)
+    write(io, r)
+    write(io, g)
+    write(io, b)
 end
 
 """
@@ -136,9 +144,9 @@ function write_ldr_image(filename::String, image::HdrImage; gamma = 1.0)
         for w = 1:image.width
             pix = get_pixel(image, w, h)
             color = ColorTypes.RGB{Float32}(
-                pix.r^(1 / gamma),
-                pix.g^(1 / gamma),
-                pix.b^(1 / gamma),
+                clamp(pix.r^(1 / gamma), 0f0, 1f0),
+                clamp(pix.g^(1 / gamma), 0f0, 1f0),
+                clamp(pix.b^(1 / gamma), 0f0, 1f0),
             )
             set_pixel!(image, w, h, color)
         end
@@ -244,4 +252,27 @@ function read_pfm_image(filename::String)
     open(filename, "r") do io
         return read_pfm_image(io)
     end
+end
+
+"""
+    read_ldr_image(filename::String)
+
+Read a ldr Image (.png, .jpg, ...) from a file and returns the corresponding HdrImage.
+"""
+function read_ldr_image(filename::String)
+    img_ldr = Images.load(filename)                            
+    img_pfm = convert.(ColorTypes.RGB{Float32}, img_ldr) 
+    height, width = size(img_ldr)
+    img = HdrImage(width, height, img_pfm)
+    return img                                  
+end
+
+"""
+    ldr_to_pfm_image(filename::String, output_name::String)
+
+Read a ldr Image (.png, .jpg, ...) from a file and save the corresponding HdrImage (.pfm) file.
+"""
+function ldr_to_pfm_image(filename::String, output_name::String)
+    img = read_ldr_image(filename)
+    write(output_name, img)                                  
 end

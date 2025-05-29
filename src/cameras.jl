@@ -207,9 +207,43 @@ function fire_ray(
     return fire_ray(tracer.camera, u, v)
 end
 
+"""
+    simple_progress_bar(i, total; width=40)
+
+Display a simple progress bar in the terminal.
+
+# Arguments
+- `i::Int`: Current iteration number.
+- `total::Int`: Total number of iterations.
+- `item::String`: type of item for iteration (for video: frame, for image: row; default: row)
+- `width::Int=40`: Width of the progress bar in characters (default: 40).
+
+Displays a colored progress bar with percentage and iteration count.
+"""
+function simple_progress_bar(i, total; item = "row", width=40)
+    # calculate the preogress as fraction of done/total, then calculate the % to indicate aside the bar.
+    progress = i / total # the fraction o
+    percent = round(progress * 100; digits=1)
+
+    # calculate the number of space and the number of special caracter to fill the bar.
+    filled = round(Int, progress * width)
+    empty = width - filled
+
+    # To print a green block:
+    # \e[32m█  → enter terminal graphics mode, set text color to green, and print the "█" character
+    # \e[0m    → reset terminal style to default
+    bar = repeat("\e[32m█\e[0m", filled) * repeat(" ", empty)
+    print("\r[$bar] $percent% (generating $item n. $i / $total)")
+
+    # Julia keeps output in a buffer to print multiple things at once for efficiency.
+    # Not needed in this case — I want the progress bar to update in real time.
+    # Forces immediate output to the terminal by flushing the output buffer.
+    flush(stdout)
+end
+
 
 """
-    fire_all_rays!(tracer::ImageTracer, func)
+    fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
 
 Calculate the solution to the rendering equation with a specified method for all pixels in an image
 
@@ -218,15 +252,19 @@ Set all images pixels to calculated colors
 # Arguments
 - `tracer::ImageTracer`: An object containing the camera and the image.
 - `func`: The function that resolve the rendering equation for one pixel
+- `progress_flag::Bool`: If `true`, display a progress bar during rendering (default: true).
 
 The function set all the pixels of the passed `HdrImage` to calculated colors.
 """
-function fire_all_rays!(tracer::ImageTracer, func)
+function fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
     for row = 1:tracer.image.height
         for col = 1:tracer.image.width
             ray = fire_ray(tracer, col, row) # if i want i can pass u_pixel and v_pixel ≠ 0.5 (default value)
             color = func(ray)
             set_pixel!(tracer.image, col, row, color)
         end
+        # for video i dont want a progress bar for all rows of all images, only for frames.
+        # so i need  the progress_flag, if is an image the progress_flag is true, if video is false
+        (progress_flag==true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
     end
 end
