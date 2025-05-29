@@ -76,7 +76,7 @@
             function lambda(ray::Ray)
                 return RGB(0.0, 0.7, 0.8)
             end
-            RayTracer.fire_all_rays!(tracer, lambda)
+            RayTracer.fire_all_rays!(tracer, lambda; progress_flag = false)
             for row = 1:tracer.image.height
                 for col = 1:tracer.image.width
                     @test RayTracer.get_pixel(tracer.image, col, row) ≈ RGB(0.0, 0.7, 0.8)

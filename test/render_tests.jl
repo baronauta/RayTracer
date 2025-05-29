@@ -11,7 +11,7 @@
         world = World([sphere])
         # f = ray -> onoff_tracer(world, ray)
         # RayTracer.fire_all_rays!(tracer, f)
-        RayTracer.fire_all_rays!(tracer, my_renderer(onoff_tracer, world))
+        RayTracer.fire_all_rays!(tracer, my_renderer(onoff_tracer, world); progress_flag=false)
 
         @test RayTracer.get_pixel(img, 1, 1) ≈ BLACK
         @test RayTracer.get_pixel(img, 2, 1) ≈ BLACK
@@ -39,7 +39,7 @@
         world = World([sphere])
         # f = ray -> flat_tracer(world, ray)
         # RayTracer.fire_all_rays!(tracer, f)
-        RayTracer.fire_all_rays!(tracer, my_renderer(flat_tracer, world))
+        RayTracer.fire_all_rays!(tracer, my_renderer(flat_tracer, world); progress_flag=false)
 
         @test RayTracer.get_pixel(img, 1, 1) ≈ BLACK
         @test RayTracer.get_pixel(img, 2, 1) ≈ BLACK

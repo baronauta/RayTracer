@@ -119,9 +119,9 @@ function write_ldr_image(filename::String, image::HdrImage; gamma = 1.0)
         for w = 1:image.width
             pix = get_pixel(image, w, h)
             color = ColorTypes.RGB{Float32}(
-                pix.r^(1 / gamma),
-                pix.g^(1 / gamma),
-                pix.b^(1 / gamma),
+                clamp(pix.r^(1 / gamma), 0f0, 1f0),
+                clamp(pix.g^(1 / gamma), 0f0, 1f0),
+                clamp(pix.b^(1 / gamma), 0f0, 1f0),
             )
             set_pixel!(image, w, h, color)
         end
@@ -197,7 +197,7 @@ function read_pfm_image(stream::IO)
                     # Read the three floats for the pixel
                     (r, g, b) = [_read_float(stream, endianness) for _ = 1:3]
                     bytes_read += 3 * sizeof(Float32)
-                    color = ColorTypes.RGB{Float32}(clamp(r, 0f0, 1f0), clamp(g, 0f0, 1f0), clamp(b, 0f0, 1f0))
+                    color = ColorTypes.RGB{Float32}(r, g, b)
                     # Set pixel in HdrImage
                     set_pixel!(image, x, y, color)
                 else
@@ -248,9 +248,6 @@ end
 Read a ldr Image (.png, .jpg, ...) from a file and save the corresponding HdrImage (.pfm) file.
 """
 function ldr_to_pfm_image(filename::String, output_name::String)
-    img_ldr = Images.load(filename)                            
-    img_pfm = convert.(ColorTypes.RGB{Float32}, img_ldr) 
-    height, width = size(img_ldr)
-    img = HdrImage(width, height, img_pfm)
+    img = read_ldr_image(filename)
     write(output_name, img)                                  
 end
