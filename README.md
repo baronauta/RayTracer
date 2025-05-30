@@ -17,7 +17,7 @@ A command-line ray tracing tool written in Julia, designed to generate photoreal
    Converts PFM files to standard LDR formats (PNG, JPEG, etc.), with configurable tone mapping.
 
 2. **Ray-Traced Demo Scene Rendering**  
-   Renders a built-in scene using a basic on/off ray tracer, producing either a single image or a 360° `.mp4` animation.
+   Renders a built-in scene using three different types of renderers (see the Demo Examples [section](?tab=readme-ov-file#demo-example)), producing either a single image or a 360° `.mp4` animation.
 
 ## Installation
 ### Requirements
@@ -27,7 +27,7 @@ A command-line ray tracing tool written in Julia, designed to generate photoreal
 
 ### Installation and Environment Setup
 
-1. Download the [latest release](https://github.com/baronauta/RayTracer/releases/tag/v0.2.0) and extract the archive. Navigate to the extracted directory.
+1. Download the [latest release](https://github.com/baronauta/RayTracer/releases/tag/v0.3.0) and extract the archive. Navigate to the extracted directory.
 
 2. Launch Julia from within the project directory and set up the environment:
 
@@ -66,39 +66,49 @@ julia demo
 
 ### Conversion Example:
 ```
-julia pfm2image image.pfm 1.0 1.0 output.png
+julia pfm2image ./examples/reference_earth.pfm 1.0 1.0 output.png
 ```
 
-This reads the HDR image `image.pfm`, normalizes and clamps the data, and exports it as an LDR file with gamma correction to `output.png`.
+This reads the HDR image `./examples/reference_earth.pfm`, normalizes and clamps the data, and exports it as an LDR file with gamma correction to `output.png`.
 
 Note: This code uses the _images.jl_ package. A list of supported output formats is available [here](https://github.com/JuliaIO/ImageIO.jl).
 
 ### Demo Example:
-The demo scene represents a cube made from 8 white spheres, with 2 additional ones placed for visual reference.
-- To generate a single image (perspective projection with a 20° field of view):
+There are three different renderers:
+- `onoff_tracer`: simply returns a white pixel when there is an object, black otherwise.
+- `flat_tracer`: a more advanced yet still basic renderer. Returns the surface color of the object, ignoring reflections and contributions from other light.
+- `path_tracer`: the main and most advanced renderer of this project; it is able to produce unbiased rendering equation solutions.
+
+The demo scene for `onoff_tracer` represents a cube made from 8 white spheres, with 2 additional ones placed for visual reference.
+
+The demo scene for `path_tracer` and `flat_tracer` features a checkered plane with a sky background and three spheres: one is a mirror, one is textured using a custom PFM image, and one has a uniform color.
+
+#### To generate a single image (perspective projection, using the `path_tracer` renderer):
   ```
-  julia demo 512 512 Perspective 20
+  julia demo image 300 300 perspective path_tracer
   ```
 
-To generate an `.mp4` animation (a 360° camera orbit around the scene):
+#### To generate an `.mp4` animation (a 360° camera orbit around the scene, using the `flat_tracer` renderer):
   ```
-  julia demo 512 512 Perspective video
+  julia demo video 300 300 perspective flat_tracer
   ```
-  Note: Saves individual animation frames in `/demo_output/all_video_frames/` and the final video or single image in `/demo_output/`.
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="./examples/reference_demo.png" width="50%"/>
-      <br/>
-      <em>Fig. 1: Static render with 20° field of view</em>
-    </td>
-    <td align="center" width="50%">
-      <img src="./examples/reference_demo_video.gif" width="50%"/>
-      <br/>
-      <em>Fig. 2: 360° orbit animation</em>
-    </td>
-  </tr>
-</table>
+  Note: Individual animation frames are saved in `/demo_output/all_video_frames/` and the final video or single image in `/demo_output/`.
+
+### Output Examples:
+<div style="display: flex; gap: 20px; justify-content: center;">
+  <figure>
+    <img src="./examples/reference_demo_onoff.png" alt="onoff_tracer, 20° angle" width="300">
+    <figcaption><em><strong>onoff_tracer</strong>, 20° angle</em></figcaption>
+  </figure>
+  <figure>
+    <img src="./examples/reference_demo_flat_video.gif" alt="flat_tracer, 360° animation" width="300">
+    <figcaption><em><strong>flat_tracer</strong>, 360° animation</em></figcaption>
+  </figure>
+  <figure>
+    <img src="./examples/reference_demo_path.png" alt="path_tracer, static image" width="300">
+    <figcaption><em><strong>path_tracer</strong>, static image</em></figcaption>
+  </figure>
+</div>
 
 
 
