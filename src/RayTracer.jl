@@ -49,7 +49,7 @@ export Material
 export DiffuseBRDF, SpecularBRDF
 export onoff_tracer, flat_tracer, path_tracer, my_renderer
 
-export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError
+export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError, GrammarError
 
 export IS_LITTLE_ENDIAN, HOST_ENDIANNESS
 
@@ -72,4 +72,6 @@ include("world.jl")
 include("demo.jl")
 include("render.jl")
 include("pfm2image.jl")
+include("lexer.jl")
+
 end
