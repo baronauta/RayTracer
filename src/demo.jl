@@ -32,6 +32,8 @@
 # ─────────────────────────────────────────────────────────────
 
 function demo_image(width, height, camera, angle_deg, renderer_name; dir_name = "./demo_output/", pfm = true, progress_flag = true, bkg_color=BLACK, n_rays=10, max_depth=10, russian_roulette_limit=3)
+    # create demo directory for outputs
+    mkpath(dir_name)
     # HdrImage
     width = width
     height = height
