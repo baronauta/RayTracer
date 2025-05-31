@@ -1,14 +1,63 @@
+# ─────────────────────────────────────────────────────────────
+# STRUCTS, TOKEN and CONSTANTS
+# ─────────────────────────────────────────────────────────────
+
+# --- constans ---
 # Double quotes " for String, single quotes ' for Char
 const WHITESPACE = [' ', '\t', '\n', '\r']
 const COMMENT = '#'
-    
-abstract type Token end
+const SYMBOLS = "()<>[],*"
+const NUMBERS = "0123456789eE.+-"
+
+# A list of keyword types is needed; @enum provides a simpler and more robust solution than a list of constants.
+# then using a dictionary to map string on keywords
+@enum KeywordEnum begin
+    IMAGE
+    NEW
+    MATERIAL
+    DIFFUSE
+end 
+
+const KEYWORDS = Dict(
+    "new" => NEW,
+    "image" => IMAGE,
+    "diffuse" => DIFFUSE,
+    "material" => MATERIAL,
+)
 
 "Holds the location of a character in the source code."
 mutable struct SourceLocation
     filename::AbstractString
     line_num::Integer
     col_num::Integer
+end
+
+# --- token ---
+abstract type Token end
+
+struct KeywordToken <: Token
+    location::SourceLocation
+    keyword::KeywordEnum
+end
+
+struct IdentifierToken <: Token
+    location::SourceLocation
+    identifier::AbstractString
+end
+
+struct LiteralString <: Token
+    location::SourceLocation
+    string::AbstractString
+end
+
+struct LiteralNumber <: Token
+    location::SourceLocation
+    number::AbstractFloat
+end
+
+struct SymbolToken <: Token
+    location::SourceLocation
+    symbol::AbstractString
 end
 
 """
@@ -28,6 +77,10 @@ mutable struct InputStream
     saved_location::SourceLocation
     tabulation::Integer
 end
+
+# ─────────────────────────────────────────────────────────────
+# InputStream functions
+# ─────────────────────────────────────────────────────────────
 
 "Creates a new `InputStream` from an `IO` object and filename."
 function InputStream(io::IO, filename::AbstractString; tab=4)
@@ -112,28 +165,89 @@ function skip_whitespaces_and_comments!(instream::InputStream)
     _unread_char!(instream, ch)
 end
 
-struct Keyword <: Token
+# ─────────────────────────────────────────────────────────────
+# Token reading functions
+# ─────────────────────────────────────────────────────────────
+#--- custom exception ---
+"Exception to throw for reporting error in parsing scene files."
+struct GrammarError <: Exception
     location::SourceLocation
+    msg::String
 end
 
-struct Identifier <: Token
-    location::SourceLocation
+function _parse_word_token(instream::InputStream, start_char::AbstractChar)
+    token = string(start_char)
+    while true
+        ch = _read_char!(instream)
+        if !(isletter(ch) || isdigit(ch) || ch=='_')
+            _unread_char!(instream, ch)
+            break
+        end
+        token = token*ch
+    end
+    # If the token is in the keyword list, return a Keyword token; otherwise, return an Identifier token
+    haskey(KEYWORDS, token) ? 
+    (return KeywordToken(instream.location, KEYWORDS[token])) : 
+    (return IdentifierToken(instream.location, token))
 end
 
-struct LiteralString <: Token
-    location::SourceLocation
+function _parse_number_token(instream::InputStream, start_char::AbstractChar)
+    token = string(start_char)
+    
+    while true
+        ch = _read_char!(instream)
+        if !occursin(ch, NUMBERS)
+            _unread_char!(instream, ch)
+            break
+        end
+        token *= ch
+    end
+
+    try
+        return LiteralNumber(instream.location, parse(Float32, token))
+    catch e
+        if isa(e, ArgumentError)
+            throw(GrammarError(instream.location, "'$token' is an invalid floating-point number"))
+        else
+            rethrow()
+        end
+    end
 end
 
-struct LiteralNumber <: Token
-    location::SourceLocation
+
+function _parse_string_token(instream::InputStream)
+    token = ""
+    while true
+        # read the char and update token if not the end of string or eof 
+        ch = _read_char!(instream)
+        ch == '"' && break
+        isnothing(ch) && throw(GrammarError(instream.location, "unterminated string"))
+        token = token * ch
+    end
+    return LiteralString(instream.location, token)
 end
+ 
+function read_token(instream::InputStream)
+    # first skip whitespaces and comments
+    skip_whitespaces_and_comments!(instream)
+    # read first char and decide which token to return
+    ch = _read_char!(instream)
+    # if is eof return a "nothing token"
+    isnothing(ch) && return nothing
+    # token_location = deepcopy(instream.saved_location)
+    
+    # if symbol return symbol token
+    occursin(ch, SYMBOLS) && return SymbolToken(instream.location, string(ch))
+    
+    # if string return LiteralString token
+    ch == '"' && return _parse_string_token(instream)
 
-struct LexerSymbol <: Token
-    location::SourceLocation
+    # if number return LiteralNumber token
+    (isdigit(ch) || ch == '+' || ch == '-') && return _parse_number_token(instream, ch)
+
+    # if alphabethic return KeywordToken or IdentifierToken
+    (isletter(ch) || ch=='_') && return _parse_word_token(instream, ch)
+    
+    # if no condition is satisfied means that not interrupted with a return, so
+    throw(GrammarError(instream.location, "Invalid character: $ch"))
 end
-
-struct StopToken <: Token
-    location::SourceLocation
-end
-
-

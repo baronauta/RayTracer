@@ -69,8 +69,3 @@ Custom exception for errors encountered during geometry operations (ex: comparin
 struct GeometryError <: Exception
     msg::String
 end
-
-"Exception to throw for reporting error in parsing scene files."
-struct GrammarError <: Exception
-    msg::String
-end

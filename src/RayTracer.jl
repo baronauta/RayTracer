@@ -50,6 +50,7 @@ export DiffuseBRDF, SpecularBRDF
 export onoff_tracer, flat_tracer, path_tracer, my_renderer
 
 export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError, GrammarError
+export Token, KeywordToken, LiteralNumber, LiteralString, SymbolToken, IdentifierToken
 
 export IS_LITTLE_ENDIAN, HOST_ENDIANNESS
 
