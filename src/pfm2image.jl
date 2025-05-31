@@ -83,9 +83,7 @@ Parses and validates command-line arguments in basic or advanced mode.
 """
 function Conversion_Params(A)
     if (length(A) != 4) && (length(A) != 7)
-        throw(
-            RuntimeError(message_error),
-        )
+        throw(RuntimeError(message_error))
 
     end
     factor = 0.0

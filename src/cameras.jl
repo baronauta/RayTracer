@@ -220,10 +220,10 @@ Display a simple progress bar in the terminal.
 
 Displays a colored progress bar with percentage and iteration count.
 """
-function simple_progress_bar(i, total; item = "row", width=40)
+function simple_progress_bar(i, total; item = "row", width = 40)
     # calculate the preogress as fraction of done/total, then calculate the % to indicate aside the bar.
     progress = i / total # the fraction o
-    percent = round(progress * 100; digits=1)
+    percent = round(progress * 100; digits = 1)
 
     # calculate the number of space and the number of special caracter to fill the bar.
     filled = round(Int, progress * width)
@@ -265,6 +265,6 @@ function fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
         end
         # for video i dont want a progress bar for all rows of all images, only for frames.
         # so i need  the progress_flag, if is an image the progress_flag is true, if video is false
-        (progress_flag==true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
+        (progress_flag == true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
     end
 end

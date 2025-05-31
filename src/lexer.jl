@@ -16,14 +16,10 @@ const NUMBERS = "0123456789eE.+-"
     NEW
     MATERIAL
     DIFFUSE
-end 
+end
 
-const KEYWORDS = Dict(
-    "new" => NEW,
-    "image" => IMAGE,
-    "diffuse" => DIFFUSE,
-    "material" => MATERIAL,
-)
+const KEYWORDS =
+    Dict("new" => NEW, "image" => IMAGE, "diffuse" => DIFFUSE, "material" => MATERIAL)
 
 "Holds the location of a character in the source code."
 mutable struct SourceLocation
@@ -73,7 +69,7 @@ Wraps an input stream with location tracking for lexing.
 mutable struct InputStream
     stream::IO
     location::SourceLocation
-    saved_char::Union{AbstractChar, Nothing}
+    saved_char::Union{AbstractChar,Nothing}
     saved_location::SourceLocation
     tabulation::Integer
 end
@@ -83,7 +79,7 @@ end
 # ─────────────────────────────────────────────────────────────
 
 "Creates a new `InputStream` from an `IO` object and filename."
-function InputStream(io::IO, filename::AbstractString; tab=4)
+function InputStream(io::IO, filename::AbstractString; tab = 4)
     # Initialize with line number and column number equal to 1
     location = SourceLocation(filename, 1, 1)
     # At the beginning saved_location is equal to location,
@@ -92,7 +88,7 @@ function InputStream(io::IO, filename::AbstractString; tab=4)
 end
 
 "Given a character `ch`, in-place update of the position in `InputStream`."
-function _update_pos!(instream::InputStream, ch::Union{AbstractChar, Nothing})
+function _update_pos!(instream::InputStream, ch::Union{AbstractChar,Nothing})
     if isnothing(ch)
         return
     elseif ch == '\n'
@@ -160,7 +156,7 @@ function skip_whitespaces_and_comments!(instream::InputStream)
             return
         end
     end
-    
+
     # Put the non-whitespace character back
     _unread_char!(instream, ch)
 end
@@ -179,21 +175,20 @@ function _parse_word_token(instream::InputStream, start_char::AbstractChar)
     token = string(start_char)
     while true
         ch = _read_char!(instream)
-        if !(isletter(ch) || isdigit(ch) || ch=='_')
+        if !(isletter(ch) || isdigit(ch) || ch == '_')
             _unread_char!(instream, ch)
             break
         end
-        token = token*ch
+        token = token * ch
     end
     # If the token is in the keyword list, return a Keyword token; otherwise, return an Identifier token
-    haskey(KEYWORDS, token) ? 
-    (return KeywordToken(instream.location, KEYWORDS[token])) : 
+    haskey(KEYWORDS, token) ? (return KeywordToken(instream.location, KEYWORDS[token])) :
     (return IdentifierToken(instream.location, token))
 end
 
 function _parse_number_token(instream::InputStream, start_char::AbstractChar)
     token = string(start_char)
-    
+
     while true
         ch = _read_char!(instream)
         if !occursin(ch, NUMBERS)
@@ -207,7 +202,12 @@ function _parse_number_token(instream::InputStream, start_char::AbstractChar)
         return LiteralNumber(instream.location, parse(Float32, token))
     catch e
         if isa(e, ArgumentError)
-            throw(GrammarError(instream.location, "'$token' is an invalid floating-point number"))
+            throw(
+                GrammarError(
+                    instream.location,
+                    "'$token' is an invalid floating-point number",
+                ),
+            )
         else
             rethrow()
         end
@@ -222,11 +222,11 @@ function _parse_string_token(instream::InputStream)
         ch = _read_char!(instream)
         ch == '"' && break
         isnothing(ch) && throw(GrammarError(instream.location, "unterminated string"))
-        token = token * ch
+        token *= ch
     end
     return LiteralString(instream.location, token)
 end
- 
+
 function read_token(instream::InputStream)
     # first skip whitespaces and comments
     skip_whitespaces_and_comments!(instream)
@@ -235,10 +235,10 @@ function read_token(instream::InputStream)
     # if is eof return a "nothing token"
     isnothing(ch) && return nothing
     # token_location = deepcopy(instream.saved_location)
-    
+
     # if symbol return symbol token
     occursin(ch, SYMBOLS) && return SymbolToken(instream.location, string(ch))
-    
+
     # if string return LiteralString token
     ch == '"' && return _parse_string_token(instream)
 
@@ -246,8 +246,8 @@ function read_token(instream::InputStream)
     (isdigit(ch) || ch == '+' || ch == '-') && return _parse_number_token(instream, ch)
 
     # if alphabethic return KeywordToken or IdentifierToken
-    (isletter(ch) || ch=='_') && return _parse_word_token(instream, ch)
-    
+    (isletter(ch) || ch == '_') && return _parse_word_token(instream, ch)
+
     # if no condition is satisfied means that not interrupted with a return, so
     throw(GrammarError(instream.location, "Invalid character: $ch"))
 end

@@ -54,25 +54,35 @@ end
 @testset "Token" begin
     function _test_keyword(token::Token, keyword::RayTracer.KeywordEnum)
         @test token isa RayTracer.KeywordToken
-        @test token.keyword == keyword || println("Token: $(token.keyword) at location: $(token.location) is not equal to keyword $keyword")
+        @test token.keyword == keyword || println(
+            "Token: $(token.keyword) at location: $(token.location) is not equal to keyword $keyword",
+        )
     end
     function _test_identifier(token::Token, identifier::AbstractString)
         @test token isa RayTracer.IdentifierToken
-        @test token.identifier == identifier || println("Token: $(token.identifier) at location: $(token.location) is not equal to identifier $identifier")
+        @test token.identifier == identifier || println(
+            "Token: $(token.identifier) at location: $(token.location) is not equal to identifier $identifier",
+        )
     end
     function _test_string(token::Token, string::AbstractString)
         @test token isa RayTracer.LiteralString
-        @test token.string == string || println("Token: $(token.string) at location: $(token.location) is not equal to string $string")
+        @test token.string == string || println(
+            "Token: $(token.string) at location: $(token.location) is not equal to string $string",
+        )
     end
     function _test_number(token::Token, number::Float32)
         @test token isa RayTracer.LiteralNumber
-        @test token.number == number || println("Token: $(token.number) at location: $(token.location) is not equal to number $number")
+        @test token.number == number || println(
+            "Token: $(token.number) at location: $(token.location) is not equal to number $number",
+        )
     end
     function _test_symbol(token::Token, symbol::AbstractString)
         @test token isa RayTracer.SymbolToken
-        @test token.symbol == symbol || println("Token: $(token.symbol) at location: $(token.location) is not equal to symbol $symbol")
+        @test token.symbol == symbol || println(
+            "Token: $(token.symbol) at location: $(token.location) is not equal to symbol $symbol",
+        )
     end
-    
+
     stream = IOBuffer("""
                         # This is a comment
                         # This is another comment

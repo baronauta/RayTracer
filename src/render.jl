@@ -153,7 +153,25 @@ Creates a closure using the specified renderer.
 # Returns
 - A function `ray -> RGB` that takes a ray and returns the color computed by the renderer.
 """
-function my_renderer(renderer, world; pcg = nothing, bkg_color=BLACK, n_rays=10, max_depth=10, russian_roulette_limit=3)
+function my_renderer(
+    renderer,
+    world;
+    pcg = nothing,
+    bkg_color = BLACK,
+    n_rays = 10,
+    max_depth = 10,
+    russian_roulette_limit = 3,
+)
     isnothing(pcg) ? (ray -> renderer(world, ray; bkg_color = bkg_color)) :
-    (ray -> renderer(world, ray, pcg; bkg_color = bkg_color, n_rays = n_rays, max_depth = max_depth, russian_roulette_limit = russian_roulette_limit))
+    (
+        ray -> renderer(
+            world,
+            ray,
+            pcg;
+            bkg_color = bkg_color,
+            n_rays = n_rays,
+            max_depth = max_depth,
+            russian_roulette_limit = russian_roulette_limit,
+        )
+    )
 end
