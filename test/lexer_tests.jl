@@ -14,7 +14,7 @@
     # Force the use of _unread_char!
     RayTracer._unread_char!(instream, 'Z') # instream.location is restored to the saved_location
     @test instream.location.line_num == 1
-    @test instream.location.col_num == 2
+    @test instream.location.col_num == 1
 
     # Next call of _read_char! should read the char in saved_char
     @test RayTracer._read_char!(instream) == 'Z'

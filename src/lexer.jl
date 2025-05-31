@@ -72,7 +72,7 @@ function _read_char!(instream::InputStream)
     end
     # Save the current location: if the lexer finds a lexical error,
     # this is the location to be reported. Then update the position.
-    instream.saved_location = instream.location
+    instream.saved_location = deepcopy(instream.location)
     _update_pos!(instream, ch)
     return ch
 end
