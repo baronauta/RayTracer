@@ -95,18 +95,18 @@ The demo scene for `path_tracer` and `flat_tracer` features a checkered plane wi
   Note: Individual animation frames are saved in `/demo_output/all_video_frames/` and the final video or single image in `/demo_output/`.
 
 ### Output Examples:
-<table>
+<table width="100%">
   <tr>
-    <td align="center">
-      <img src="./examples/reference_demo_onoff.png" alt="onoff_tracer, 20° angle" width="300"><br>
+    <td align="center" width="33%">
+      <img src="./examples/reference_demo_onoff.png" alt="onoff_tracer, 20° angle" width="90%"><br>
       <em><strong>onoff_tracer</strong>, 20° angle</em>
     </td>
-    <td align="center">
-      <img src="./examples/reference_demo_flat_video.gif" alt="flat_tracer, 360° animation" width="300"><br>
+    <td align="center" width="33%">
+      <img src="./examples/reference_demo_flat_video.gif" alt="flat_tracer, 360° animation" width="90%"><br>
       <em><strong>flat_tracer</strong>, 360° animation</em>
     </td>
-    <td align="center">
-      <img src="./examples/reference_demo_path.png" alt="path_tracer, static image" width="300"><br>
+    <td align="center" width="33%">
+      <img src="./examples/reference_demo_path.png" alt="path_tracer, static image" width="90%"><br>
       <em><strong>path_tracer</strong>, static image</em>
     </td>
   </tr>
