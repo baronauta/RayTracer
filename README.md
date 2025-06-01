@@ -76,7 +76,7 @@ Note: This code uses the _images.jl_ package. A list of supported output formats
 ### Demo Example:
 There are three different renderers:
 - `onoff_tracer`: simply returns a white pixel when there is an object, black otherwise.
-- `flat_tracer`: a more advanced yet still basic renderer. Returns the surface color of the object, ignoring reflections and contributions from other light.
+- `flat_tracer`: a more advanced yet still basic renderer. This renderer relies solely on the pigment of each surface to compute the final radiance, ignoring all light contributions.
 - `path_tracer`: the main and most advanced renderer of this project; it is able to produce unbiased rendering equation solutions.
 
 The demo scene for `onoff_tracer` represents a cube made from 8 white spheres, with 2 additional ones placed for visual reference.
@@ -95,20 +95,23 @@ The demo scene for `path_tracer` and `flat_tracer` features a checkered plane wi
   Note: Individual animation frames are saved in `/demo_output/all_video_frames/` and the final video or single image in `/demo_output/`.
 
 ### Output Examples:
-<div style="display: flex; gap: 20px; justify-content: center;">
-  <figure>
-    <img src="./examples/reference_demo_onoff.png" alt="onoff_tracer, 20° angle" width="300">
-    <figcaption><em><strong>onoff_tracer</strong>, 20° angle</em></figcaption>
-  </figure>
-  <figure>
-    <img src="./examples/reference_demo_flat_video.gif" alt="flat_tracer, 360° animation" width="300">
-    <figcaption><em><strong>flat_tracer</strong>, 360° animation</em></figcaption>
-  </figure>
-  <figure>
-    <img src="./examples/reference_demo_path.png" alt="path_tracer, static image" width="300">
-    <figcaption><em><strong>path_tracer</strong>, static image</em></figcaption>
-  </figure>
-</div>
+<table>
+  <tr>
+    <td align="center">
+      <img src="./examples/reference_demo_onoff.png" alt="onoff_tracer, 20° angle" width="300"><br>
+      <em><strong>onoff_tracer</strong>, 20° angle</em>
+    </td>
+    <td align="center">
+      <img src="./examples/reference_demo_flat_video.gif" alt="flat_tracer, 360° animation" width="300"><br>
+      <em><strong>flat_tracer</strong>, 360° animation</em>
+    </td>
+    <td align="center">
+      <img src="./examples/reference_demo_path.png" alt="path_tracer, static image" width="300"><br>
+      <em><strong>path_tracer</strong>, static image</em>
+    </td>
+  </tr>
+</table>
+
 
 
 
