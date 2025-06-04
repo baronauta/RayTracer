@@ -70,7 +70,7 @@ end
             "Token: $(token.string) at location: $(token.location) is not equal to string $string",
         )
     end
-    function _test_number(token::Token, number::Float32)
+    function _test_number(token::Token, number::AbstractFloat)
         @test token isa RayTracer.LiteralNumber
         @test token.number == number || println(
             "Token: $(token.number) at location: $(token.location) is not equal to number $number",
@@ -102,5 +102,15 @@ end
     _test_keyword(RayTracer.read_token(instream), RayTracer.IMAGE)
     _test_symbol(RayTracer.read_token(instream), "(")
     _test_string(RayTracer.read_token(instream), "my file.pfm")
+    _test_symbol(RayTracer.read_token(instream), ")")
+    _test_symbol(RayTracer.read_token(instream), ")")
+    _test_symbol(RayTracer.read_token(instream), ",")
+    _test_symbol(RayTracer.read_token(instream), "<")
+    _test_number(RayTracer.read_token(instream), 5.0)
+    _test_symbol(RayTracer.read_token(instream), ",")
+    _test_number(RayTracer.read_token(instream), 500.0)
+    _test_symbol(RayTracer.read_token(instream), ",")
+    _test_number(RayTracer.read_token(instream), 300.0)
+    _test_symbol(RayTracer.read_token(instream), ">")
     _test_symbol(RayTracer.read_token(instream), ")")
 end
