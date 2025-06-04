@@ -1,8 +1,28 @@
-# ─────────────────────────────────────────────────────────────
-# STRUCTS, TOKEN and CONSTANTS
-# ─────────────────────────────────────────────────────────────
+#     __________________________________________________________
+#
+#     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
+#     __________________________________________________________
+#
+#   This file is licensed under the European Union Public Licence (EUPL), version 1.2.
+#
+#   You are free to use, modify, and distribute this software under the conditions
+#   of the EUPL v.1.2, as published by the European Commission.
+#
+#   Obligations include:
+#     - Retaining this notice and the licence terms
+#     - Providing access to the source code
+#     - Distributing derivative works under the same or a compatible licence
+#
+#   Full licence text: see the LICENSE file or visit https://eupl.eu
+#
+#   Disclaimer:
+#     Unless required by applicable law or agreed to in writing,
+#     this software is provided "AS IS", without warranties or conditions
+#     of any kind, either express or implied.
+#
+#_______________________________________________________________________________________
 
-# --- constans ---
+# --- Constants ---
 # Double quotes " for String, single quotes ' for Char
 const WHITESPACE = [' ', '\t', '\n', '\r']
 const COMMENT = '#'
@@ -11,15 +31,50 @@ const NUMBERS = "0123456789eE.+-"
 
 # A list of keyword types is needed; @enum provides a simpler and more robust solution than a list of constants.
 # then using a dictionary to map string on keywords
+"Enumeration of all the possible keywords recognized by the lexer."
 @enum KeywordEnum begin
-    IMAGE
-    NEW
-    MATERIAL
-    DIFFUSE
+    NEW    
+    MATERIAL    
+    PLANE    
+    SPHERE    
+    DIFFUSE    
+    SPECULAR    
+    UNIFORM    
+    CHECKERED    
+    IMAGE    
+    IDENTITY
+    TRANSLATION
+    ROTATION_X
+    ROTATION_Y
+    ROTATION_Z
+    SCALING
+    CAMERA
+    ORTHOGONAL
+    PERSPECTIVE
+    FLOAT
 end
 
-const KEYWORDS =
-    Dict("new" => NEW, "image" => IMAGE, "diffuse" => DIFFUSE, "material" => MATERIAL)
+const KEYWORDS = Dict(
+    "new" => NEW,
+    "material" => MATERIAL,
+    "plane" => PLANE,
+    "sphere" => SPHERE,
+    "diffuse" => DIFFUSE,
+    "specular" => SPECULAR,
+    "uniform" => UNIFORM,
+    "checkered" => CHECKERED,
+    "image" => IMAGE,
+    "identity" => IDENTITY,
+    "translation" => TRANSLATION,
+    "rotation_x" => ROTATION_X,
+    "rotation_y" => ROTATION_Y,
+    "rotation_z" => ROTATION_Z,
+    "scaling" => SCALING,
+    "camera" => CAMERA,
+    "orthogonal" => ORTHOGONAL,
+    "perspective" => PERSPECTIVE,
+    "float" => FLOAT,
+)
 
 "Holds the location of a character in the source code."
 mutable struct SourceLocation
