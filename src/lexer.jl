@@ -135,10 +135,9 @@ is already buffered, the function does nothing.
 """
 function _unread_char!(instream::InputStream, ch::AbstractChar)
     # Only push back if no character is currently saved
-    if isnothing(instream.saved_char)
-        instream.saved_char = ch
-        instream.location = deepcopy(instream.saved_location)
-    end
+    @assert isnothing(instream.saved_char)
+    instream.saved_char = ch
+    instream.location = deepcopy(instream.saved_location)
 end
 
 "Keep reading until a whitespace or a comment (begins with #) is found."
