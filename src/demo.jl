@@ -135,6 +135,8 @@ function demo_image(width, height, camera, angle_deg, renderer_name; dir_name = 
     pfm && write(name * "_$renderer_name.PFM", img)
 
     # LDR Image saving (default png)
+    normalize_image!(img) # normalize image with default parameters
+    clamp_image!(img)
     RayTracer.write_ldr_image(name * "_$renderer_name.png", img; gamma = 0.80)
 
     progress_flag && println("\n ✅ Successfully generated the demo image. Files are saved in the < /demo_output/ > folder")
