@@ -116,12 +116,19 @@ function _expect_keywords(instream::InputStream, keywords::Vector{KeywordEnum})
     end
 end
 
+"Parse a vector as [x, y, z], returning a 'Vec'."
 function parse_vector(instream::InputStream, scene::Scene)
-    
-
+    _expect_symbol(instream, "[")
+    x = expect_number(instream, scene)
+    _expect_symbol(instream, ",")
+    y = expect_number(instream, scene)
+    _expect_symbol(instream, ",")
+    z = expect_number(instream, scene)
+    _expect_symbol(instream, "]")
+    return Vec(x, y, z)
 end
 
-"Parse color as <r, g, b>, returning a ColorTypes.RGB{Float32}."
+"Parse color as <r, g, b>, returning a 'ColorTypes.RGB{Float32}'."
 function parse_color(instream::InputStream, scene::Scene)
     _expect_symbol(instream, "<")
     red = _expect_number(instream, scene)
