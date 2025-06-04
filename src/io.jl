@@ -148,7 +148,8 @@ function write_ldr_image(filename::String, image::HdrImage; gamma = 1.0)
                 pix.g^(1 / gamma),
                 pix.b^(1 / gamma),
             )
-            set_pixel!(image, w, h, color)
+            image_copy = deepcopy(image)
+            set_pixel!(image_copy, w, h, color)
         end
     end
     # Using save function from Images packages
