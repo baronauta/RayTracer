@@ -40,6 +40,7 @@ function _expect_symbol(instream::InputStream, symbol::AbstractString)
             ),
         )
     end
+    return token.symbol
 end
 
 """
@@ -91,6 +92,7 @@ function _expect_identifier(instream::InputStream, identifier::AbstractString)
             ),
         )
     end
+    return token.identifier
 end
 
 "Read a token form the stream and check that it is one of the keywords in the given list of keywords."
@@ -114,6 +116,7 @@ function _expect_keywords(instream::InputStream, keywords::Vector{KeywordEnum})
             )
         )
     end
+    return token.keyword
 end
 
 function parse_vector(instream::InputStream, scene::Scene)
@@ -132,4 +135,3 @@ function parse_color(instream::InputStream, scene::Scene)
     _expect_symbol(input_file, ">")
     return RGB(red, green, blue)
 end
-
