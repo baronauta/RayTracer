@@ -23,12 +23,13 @@
 
 "A scene read from a scene file."
 struct Scene
-    materials::Dict{string, Material}
+    materials::Dict{String, Material}
     world::World
     camera::Union{Camera, Nothing}
+    float_variables::Dict{String, AbstractFloat}
 end
 
-"Read a token form the stream and check that it matches 'symbol'."
+"Read a token from the stream and check that it matches 'symbol'."
 function _expect_symbol(instream::InputStream, symbol::AbstractString)
     token = read_token(instream)
     if !(isa(token, SymbolToken)) || token.symbol != symbol
@@ -41,20 +42,31 @@ function _expect_symbol(instream::InputStream, symbol::AbstractString)
     end
 end
 
-"Read a token form the stream and check that it matches 'number'."
-function _expect_number(instream::InputStream, number::AbstractFloat)
+"""
+Reads a token from the input stream and returns its numeric value.
+Accepts a `LiteralNumber` or an `IdentifierToken` matching a variable in `scene.float_variables`.  
+"""
+function _expect_number(instream::InputStream, scene::Scene)
     token = read_token(instream)
-    if !(isa(token, LiteralNumber)) || token.number != number
-        throw(
-            GrammarError(
-                token.location,
-                "got '$token'  instead of '$number'",
-            ),
-        )
+    if isa(token, LiteralNumber)
+        return token.number
+    elseif isa(token, IdentfierToken)
+        variable_name = token.identifier
+        if haskey(scene.float_variables, variable_name)
+            return scene.float_variables[variable_name]
+        else
+            throw(
+                GrammarError(
+                    token.location,
+                    "expected number instead of '$token'.",
+                ),
+            )
+        end
     end
+    return token.number
 end
 
-"Read a token form the stream and check that it matches 'string'."
+"Read a token from the stream and check that it matches 'string', returning a string."
 function _expect_string(instream::InputStream, string::AbstractString)
     token = read_token(instream)
     if !(isa(token, LiteralString)) || token.string != string
@@ -65,9 +77,10 @@ function _expect_string(instream::InputStream, string::AbstractString)
             ),
         )
     end
+    return token.string
 end
 
-"Read a token form the stream and check that it matches 'identifier'."
+"Read a token from the stream and check that it matches 'identifier'."
 function _expect_identifier(instream::InputStream, identifier::AbstractString)
     token = read_token(instream)
     if !(isa(token, IdentifierToken)) || token.identifier != identifier
@@ -102,3 +115,21 @@ function _expect_keywords(instream::InputStream, keywords::Vector{KeywordEnum})
         )
     end
 end
+
+function parse_vector(instream::InputStream, scene::Scene)
+    
+
+end
+
+"Parse color as <r, g, b>, returning a ColorTypes.RGB{Float32}."
+function parse_color(instream::InputStream, scene::Scene)
+    _expect_symbol(instream, "<")
+    red = _expect_number(instream, scene)
+    _expect_symbol(instream, ",")
+    green = _expect_number(instream, scene)
+    _expect_symbol(instream, ",")
+    blue = _expect_number(instream, scene)
+    _expect_symbol(input_file, ">")
+    return RGB(red, green, blue)
+end
+
