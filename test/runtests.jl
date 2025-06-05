@@ -13,4 +13,5 @@ include("setup.jl")
     include("material_tests.jl")
     include("render_tests.jl")
     include("lexer_tests.jl")
+    include("parser_tests.jl")
 end
