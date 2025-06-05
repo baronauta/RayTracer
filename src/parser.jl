@@ -262,3 +262,30 @@ function parse_transformation(instream::InputStream, scene::Scene)
     end
     return result
 end
+
+"""
+Parses a camera expression:  
+- `perspective(distance, aspect_ratio, transformation)`  
+- `orthogonal(distance, aspect_ratio, transformation)`
+
+Returns a `PerspectiveCamera` or `OrthogonalCamera` accordingly.
+"""
+function parse_camera(instream::InputStream, scene::Scene)
+    _expect_symbol(instream, "(")
+    cam_token = _expect_keywords(instream, [PERSPECTIVE, ORTHOGONAL])
+    _expect_symbol(instream, ",")
+    distance = _expect_number(instream, scene)
+    _expect_symbol(instream, ",")
+    aspect_ratio = _expect_number(instream, scene)
+    _expect_symbol(instream, ",")
+    transformation = parse_transformation(instream, scene)
+    _expect_symbol(instream, ")")
+    if cam_token == PERSPECTIVE
+        camera = PerspectiveCamera(distance, aspect_ratio, transformation)
+    elseif cam_token == ORTHOGONAL
+        camera = OrthogonalCamera(aspect_ratio, transformation)
+    else
+        throw(GrammarError(instream.location, "Invalid camera keyword"))
+    end
+    return camera
+end
