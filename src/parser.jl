@@ -1,3 +1,4 @@
+#     __________________________________________________________
 #
 #     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
 #     __________________________________________________________
@@ -30,7 +31,7 @@ struct Scene
 end
 
 "Read a token from the stream and check that it matches 'symbol'."
-function _expect_symbol(instream::InputStream, symbol::AbstractString)
+function expect_symbol(instream::InputStream, symbol::AbstractString)
     token = read_token(instream)
     if !(isa(token, SymbolToken)) || token.symbol != symbol
         throw(
@@ -47,7 +48,7 @@ end
 Reads a token from the input stream and returns its numeric value.
 Accepts a `LiteralNumber` or an `IdentifierToken` matching a variable in `scene.float_variables`.  
 """
-function _expect_number(instream::InputStream, scene::Scene)
+function expect_number(instream::InputStream, scene::Scene)
     token = read_token(instream)
     if isa(token, LiteralNumber)
         return token.number
@@ -68,7 +69,7 @@ function _expect_number(instream::InputStream, scene::Scene)
 end
 
 "Read a token from the stream and check that it matches 'string', returning a string."
-function _expect_string(instream::InputStream)
+function expect_string(instream::InputStream)
     token = read_token(instream)
     if !(isa(token, LiteralString))
         throw(
@@ -82,7 +83,7 @@ function _expect_string(instream::InputStream)
 end
 
 "Read a token from the stream and check that it matches 'identifier'."
-function _expect_identifier(instream::InputStream, identifier::AbstractString)
+function expect_identifier(instream::InputStream, identifier::AbstractString)
     token = read_token(instream)
     if !(isa(token, IdentifierToken)) || token.identifier != identifier
         throw(
@@ -96,7 +97,7 @@ function _expect_identifier(instream::InputStream, identifier::AbstractString)
 end
 
 "Read a token form the stream and check that it is one of the keywords in the given list of keywords."
-function _expect_keywords(instream::InputStream, keywords::Vector{KeywordEnum})
+function expect_keywords(instream::InputStream, keywords::Vector{KeywordEnum})
     token = read_token(instream)
 
     if !(isa(token, KeywordToken))
@@ -121,25 +122,25 @@ end
 
 "Parse a vector as [x, y, z], returning a 'Vec'."
 function parse_vector(instream::InputStream, scene::Scene)
-    _expect_symbol(instream, "[")
+    expect_symbol(instream, "[")
     x = expect_number(instream, scene)
-    _expect_symbol(instream, ",")
+    expect_symbol(instream, ",")
     y = expect_number(instream, scene)
-    _expect_symbol(instream, ",")
+    expect_symbol(instream, ",")
     z = expect_number(instream, scene)
-    _expect_symbol(instream, "]")
+    expect_symbol(instream, "]")
     return Vec(x, y, z)
 end
 
 "Parse color as <r, g, b>, returning a 'ColorTypes.RGB{Float32}'."
 function parse_color(instream::InputStream, scene::Scene)
-    _expect_symbol(instream, "<")
-    red = _expect_number(instream, scene)
-    _expect_symbol(instream, ",")
-    green = _expect_number(instream, scene)
-    _expect_symbol(instream, ",")
-    blue = _expect_number(instream, scene)
-    _expect_symbol(input_file, ">")
+    expect_symbol(instream, "<")
+    red = expect_number(instream, scene)
+    expect_symbol(instream, ",")
+    green = expect_number(instream, scene)
+    expect_symbol(instream, ",")
+    blue = expect_number(instream, scene)
+    expect_symbol(input_file, ">")
     return RGB(red, green, blue)
 end
 
@@ -150,8 +151,8 @@ Returns a `UniformPigment`, `CheckeredPigment`, or `ImagePigment`.
 Supports image formats: `.pfm`, `.jpg`, `.jpeg`, `.png`, `.tiff`, `.tif`.
 """
 function parse_pigment(instream::InputStream, scene::Scene)
-    keyword = _expect_keywords(instream, [IMAGE, UNIFORM, CHECKERED])
-    _expect_symbol(instream, "(")
+    keyword = expect_keywords(instream, [IMAGE, UNIFORM, CHECKERED])
+    expect_symbol(instream, "(")
     # return a UniformPigment
     if keyword == UNIFORM
         color = parse_color(instream, scene)
@@ -160,15 +161,15 @@ function parse_pigment(instream::InputStream, scene::Scene)
     # return a CheckeredPigment
     elseif keyword == CHECKERED
         color1 = parse_color(instream, scene)
-        _expect_symbol(instream, ",")
+        expect_symbol(instream, ",")
         color2 = parse_color(instream, scene)
-        _expect_symbol(instream, ",")
-        number = _expect_number(instream, scene)
+        expect_symbol(instream, ",")
+        number = expect_number(instream, scene)
 
         result = CheckeredPigment(color1, color2, number)
     # return an ImagePigment
     elseif keyword == IMAGE
-        filename = _expect_string(instream) 
+        filename = expect_string(instream) 
         # need to separate cases where the user pass a pfm image (no need to convert) 
         #     or a ldr image (need conversion to pfm first)
         if endswith(lowercase(filename),".pfm")
@@ -184,7 +185,7 @@ function parse_pigment(instream::InputStream, scene::Scene)
     else
         throw(GrammarError(instream.location, "Invalid pigment keyword"))
     end
-    _expect_symbol(instream, ")")
+    expect_symbol(instream, ")")
     return result
 end
 
@@ -194,8 +195,8 @@ Parses a BRDF expression: `diffuse(...)` or `specular(...)`.
 Returns a `DiffuseBRDF` or `SpecularBRDF` using the parsed pigment.
 """
 function parse_brdf(instream::InputStream, scene::Scene)
-    brdf = _expect_keywords(instream, [DIFFUSE, SPECULAR])
-    _expect_symbol(instream, "(")
+    brdf = expect_keywords(instream, [DIFFUSE, SPECULAR])
+    expect_symbol(instream, "(")
     pigment = parse_pigment(input_file, scene)
     expect_symbol(input_file, ")")
     if brdf == DIFFUSE
@@ -216,38 +217,38 @@ function parse_transformation(instream::InputStream, scene::Scene)
     result = Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
     # transformation can be composed, try to do that until breaking
     while true
-        transformation = _expect_keywords(instream, [IDENTITY, TRANSLATION, ROTATION_X, ROTATION_Y, ROTATION_Z, SCALING])
+        transformation = expect_keywords(instream, [IDENTITY, TRANSLATION, ROTATION_X, ROTATION_Y, ROTATION_Z, SCALING])
         if transformation == IDENTITY
             # no need to do anything
 
         elseif transformation == TRANSLATION
-            _expect_symbol(instream, "(")
+            expect_symbol(instream, "(")
             result *= translation(parse_vector(instream, scene))
-            _expect_symbol(instream, ")")
+            expect_symbol(instream, ")")
 
         elseif transformation == ROTATION_X
-            _expect_symbol(instream, "(")
-            result *= rotation_x(_expect_number(instream, scene))
-            _expect_symbol(instream, ")")
+            expect_symbol(instream, "(")
+            result *= rotation_x(expect_number(instream, scene))
+            expect_symbol(instream, ")")
 
         elseif transformation == ROTATION_Y
-            _expect_symbol(instream, "(")
-            result *= rotation_y(_expect_number(instream, scene))
-            _expect_symbol(instream, ")")
+            expect_symbol(instream, "(")
+            result *= rotation_y(expect_number(instream, scene))
+            expect_symbol(instream, ")")
 
         elseif transformation == ROTATION_Z
-            _expect_symbol(instream, "(")
-            result *= rotation_z(_expect_number(instream, scene))
-            _expect_symbol(instream, ")")
+            expect_symbol(instream, "(")
+            result *= rotation_z(expect_number(instream, scene))
+            expect_symbol(instream, ")")
 
         elseif transformation == SCALING
-            _expect_symbol(instream, "(")
-            x = _expect_number(instream, scene)
-            _expect_symbol(instream, ",")
-            y = _expect_number(instream, scene)
-            _expect_symbol(instream, ",")
-            z = _expect_number(instream, scene)
-            _expect_symbol(instream, ")")
+            expect_symbol(instream, "(")
+            x = expect_number(instream, scene)
+            expect_symbol(instream, ",")
+            y = expect_number(instream, scene)
+            expect_symbol(instream, ",")
+            z = expect_number(instream, scene)
+            expect_symbol(instream, ")")
             result *= scaling(x,y,z)
         else
             throw(GrammarError(instream.location, "Invalid transformation keyword"))
@@ -271,15 +272,15 @@ Parses a camera expression:
 Returns a `PerspectiveCamera` or `OrthogonalCamera` accordingly.
 """
 function parse_camera(instream::InputStream, scene::Scene)
-    _expect_symbol(instream, "(")
-    cam_token = _expect_keywords(instream, [PERSPECTIVE, ORTHOGONAL])
-    _expect_symbol(instream, ",")
-    distance = _expect_number(instream, scene)
-    _expect_symbol(instream, ",")
-    aspect_ratio = _expect_number(instream, scene)
-    _expect_symbol(instream, ",")
+    expect_symbol(instream, "(")
+    cam_token = expect_keywords(instream, [PERSPECTIVE, ORTHOGONAL])
+    expect_symbol(instream, ",")
+    distance = expect_number(instream, scene)
+    expect_symbol(instream, ",")
+    aspect_ratio = expect_number(instream, scene)
+    expect_symbol(instream, ",")
     transformation = parse_transformation(instream, scene)
-    _expect_symbol(instream, ")")
+    expect_symbol(instream, ")")
     if cam_token == PERSPECTIVE
         camera = PerspectiveCamera(distance, aspect_ratio, transformation)
     elseif cam_token == ORTHOGONAL
