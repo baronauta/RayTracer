@@ -206,3 +206,59 @@ function parse_brdf(instream::InputStream, scene::Scene)
         throw(GrammarError(instream.location, "Invalid BRDF keyword"))
     end
 end
+
+"""
+Parses one or more transformations: identity, translation, rotation (x/y/z), or scaling.
+
+Returns a final composed `Transformation`.
+"""
+function parse_transformation(instream::InputStream, scene::Scene)
+    result = Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+    # transformation can be composed, try to do that until breaking
+    while true
+        transformation = _expect_keywords(instream, [IDENTITY, TRANSLATION, ROTATION_X, ROTATION_Y, ROTATION_Z, SCALING])
+        if transformation == IDENTITY
+            # no need to do anything
+
+        elseif transformation == TRANSLATION
+            _expect_symbol(instream, "(")
+            result *= translation(parse_vector(instream, scene))
+            _expect_symbol(instream, ")")
+
+        elseif transformation == ROTATION_X
+            _expect_symbol(instream, "(")
+            result *= rotation_x(_expect_number(instream, scene))
+            _expect_symbol(instream, ")")
+
+        elseif transformation == ROTATION_Y
+            _expect_symbol(instream, "(")
+            result *= rotation_y(_expect_number(instream, scene))
+            _expect_symbol(instream, ")")
+
+        elseif transformation == ROTATION_Z
+            _expect_symbol(instream, "(")
+            result *= rotation_z(_expect_number(instream, scene))
+            _expect_symbol(instream, ")")
+
+        elseif transformation == SCALING
+            _expect_symbol(instream, "(")
+            x = _expect_number(instream, scene)
+            _expect_symbol(instream, ",")
+            y = _expect_number(instream, scene)
+            _expect_symbol(instream, ",")
+            z = _expect_number(instream, scene)
+            _expect_symbol(instream, ")")
+            result *= scaling(x,y,z)
+        else
+            throw(GrammarError(instream.location, "Invalid transformation keyword"))
+        end
+
+        # see next token, if not for a transformation composition brake the cicle
+        next_token = read_token(instream) 
+        if !(isa(token, SymbolToken)) || token.symbol != "*"
+            unread_token(instream, next_token)
+            break
+        end
+    end
+    return result
+end
