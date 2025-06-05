@@ -285,6 +285,52 @@ function parse_transformation(instream::InputStream, scene::Scene)
 end
 
 """
+Parses a sphere definition from the input stream using the format:
+`sphere(material_name, transformation(...))`. Looks up the material in
+`scene.materials` and applies the parsed transformation.
+Returning a `Sphere`.
+"""
+function parse_sphere(instream::InputStream, scene::Scene)
+    # Example to be parsed;
+    # sphere(sphere_material, translation([0, 0, 1]))
+    expect_keywords(instream, [SPHERE])
+    expect_symbol(instream, "(")
+    material_name = expect_identifier(input_file)
+    if !haskey(scene.materials, material_name)
+        throw(GrammarError(instream.location, "unknown material `$material_name`"))
+    end
+    expect_symbol(instream, ",")
+    transformation = parse_transformation(instream, scene)
+    expect_symbol(instream, "(")
+    return Sphere(
+        transformation, scene.materials[material_name]
+    )
+end
+
+"""
+Parses a plane definition from the input stream using the format:
+`plane(material_name, transformation(...))`. Looks up the material in
+`scene.materials` and applies the parsed transformation.
+Returning a `Plane`.
+"""
+function parse_plane(instream::InputStream, scene::Scene)
+    # Example to be parsed;
+    # plane(ground_material, identity)
+    expect_keywords(instream, [PLANE])
+    expect_symbol(instream, "(")
+    material_name = expect_identifier(input_file)
+    if !haskey(scene.materials, material_name)
+        throw(GrammarError(instream.location, "unknown material `$material_name`"))
+    end
+    expect_symbol(instream, ",")
+    transformation = parse_transformation(instream, scene)
+    expect_symbol(instream, "(")
+    return Plane(
+        transformation, scene.materials[material_name]
+    )
+end
+
+"""
 Parses a camera expression:  
 - `perspective(distance, aspect_ratio, transformation)`  
 - `orthogonal(distance, aspect_ratio, transformation)`
