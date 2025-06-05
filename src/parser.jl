@@ -68,28 +68,28 @@ function expect_number(instream::InputStream, scene::Scene)
     return token.number
 end
 
-"Read a token from the stream and check that it matches 'string', returning a string."
+"Read a token from the stream and check that it is a String, returning a String."
 function expect_string(instream::InputStream)
     token = read_token(instream)
     if !(isa(token, LiteralString))
         throw(
             GrammarError(
                 token.location,
-                "got '$token'  instead of a string",
+                "expected a string, got '$token'",
             ),
         )
     end
     return token.string
 end
 
-"Read a token from the stream and check that it matches 'identifier'."
-function expect_identifier(instream::InputStream, identifier::AbstractString)
+"Read a token from the stream and check that it is an 'identifier', returning a String."
+function expect_identifier(instream::InputStream)
     token = read_token(instream)
-    if !(isa(token, IdentifierToken)) || token.identifier != identifier
+    if !(isa(token, IdentifierToken))
         throw(
             GrammarError(
                 token.location,
-                "got '$token'  instead of '$identifier'",
+                "expected an identifier, got '$token'",
             ),
         )
     end
