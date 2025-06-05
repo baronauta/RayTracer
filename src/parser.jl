@@ -68,13 +68,13 @@ function _expect_number(instream::InputStream, scene::Scene)
 end
 
 "Read a token from the stream and check that it matches 'string', returning a string."
-function _expect_string(instream::InputStream, string::AbstractString)
+function _expect_string(instream::InputStream)
     token = read_token(instream)
-    if !(isa(token, LiteralString)) || token.string != string
+    if !(isa(token, LiteralString))
         throw(
             GrammarError(
                 token.location,
-                "got '$token'  instead of '$string'",
+                "got '$token'  instead of a string",
             ),
         )
     end
@@ -141,4 +141,49 @@ function parse_color(instream::InputStream, scene::Scene)
     blue = _expect_number(instream, scene)
     _expect_symbol(input_file, ">")
     return RGB(red, green, blue)
+end
+
+"""
+Parses a pigment expression: `uniform(...)`, `checkered(...)`, or `image("...")`.
+
+Returns a `UniformPigment`, `CheckeredPigment`, or `ImagePigment`.  
+Supports image formats: `.pfm`, `.jpg`, `.jpeg`, `.png`, `.tiff`, `.tif`.
+"""
+function parse_pigment(instream::InputStream, scene::Scene)
+    keyword = _expect_keywords(instream, [IMAGE, UNIFORM, CHECKERED])
+    _expect_symbol(instream, "(")
+    # return a UniformPigment
+    if keyword == UNIFORM
+        color = parse_color(instream, scene)
+
+        result = UniformPigment(color)
+    # return a CheckeredPigment
+    elseif keyword == CHECKERED
+        color1 = parse_color(instream, scene)
+        _expect_symbol(instream, ",")
+        color2 = parse_color(instream, scene)
+        _expect_symbol(instream, ",")
+        number = _expect_number(instream, scene)
+
+        result = CheckeredPigment(color1, color2, number)
+    # return an ImagePigment
+    elseif keyword == IMAGE
+        filename = _expect_string(instream) 
+        # need to separate cases where the user pass a pfm image (no need to convert) 
+        #     or a ldr image (need conversion to pfm first)
+        if endswith(lowercase(filename),".pfm")
+            image = read_pfm_image(filename)
+        elseif any(endswith(lowercase(filename), ext) for ext in [".jpg", ".jpeg", ".png", ".tiff", ".tif"])
+            image = read_ldr_image(filename)
+        else
+            throw(GrammarError(instream.location, "Unexpected image format, plese use PFM, jpg, tif, or png"))
+        end
+
+        result = image
+
+    else
+        throw(GrammarError(instream.location, "Invalid pigment keyword"))
+    end
+    _expect_symbol(instream, ")")
+    return result
 end
