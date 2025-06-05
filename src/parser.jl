@@ -209,6 +209,26 @@ function parse_brdf(instream::InputStream, scene::Scene)
 end
 
 """
+Parse material as `material sky_material(brdf, emitted_radiance)`, 
+returning the identifier and the `Material`.
+"""
+function parse_material(instream::InputStream, scene::Scene)
+    # Example to be parsed:
+    # material sky_material(
+    #     diffuse(image("sky-dome.pfm")),
+    #     uniform(<0.7, 0.5, 1>)
+    # )
+    expect_keywords(instream, [MATERIAL])
+    name = expect_identifier(instream)
+    expect_symbol(instream, "(")
+    brdf = parse_brdf(instream, scene)
+    expect_symbol(input_file, ",")
+    emitted_radiance = parse_pigment(input_file, scene)
+    expect_symbol(instream, ")")
+    return name, Material(brdf, emitted_radiance)
+end
+
+"""
 Parses one or more transformations: identity, translation, rotation (x/y/z), or scaling.
 
 Returns a final composed `Transformation`.
