@@ -187,3 +187,22 @@ function parse_pigment(instream::InputStream, scene::Scene)
     _expect_symbol(instream, ")")
     return result
 end
+
+"""
+Parses a BRDF expression: `diffuse(...)` or `specular(...)`.
+
+Returns a `DiffuseBRDF` or `SpecularBRDF` using the parsed pigment.
+"""
+function parse_brdf(instream::InputStream, scene::Scene)
+    brdf = _expect_keywords(instream, [DIFFUSE, SPECULAR])
+    _expect_symbol(instream, "(")
+    pigment = parse_pigment(input_file, scene)
+    expect_symbol(input_file, ")")
+    if brdf == DIFFUSE
+        return DiffuseBRDF(pigment)
+    elseif brdf_keyword == SPECULAR
+        return SpecularBRDF(pigment)
+    else
+        throw(GrammarError(instream.location, "Invalid BRDF keyword"))
+    end
+end
