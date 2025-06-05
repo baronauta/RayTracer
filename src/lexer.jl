@@ -127,6 +127,7 @@ mutable struct InputStream
     saved_char::Union{AbstractChar,Nothing}
     saved_location::SourceLocation
     tabulation::Integer
+    saved_token::Token
 end
 
 # ─────────────────────────────────────────────────────────────
@@ -282,6 +283,11 @@ function _parse_string_token(instream::InputStream)
 end
 
 function read_token(instream::InputStream)
+    if !isnothing(instream.saved_token)
+        result = instream.saved_token
+        instream.saved_token = nothing
+        return result
+    end
     # first skip whitespaces and comments
     skip_whitespaces_and_comments!(instream)
     # read first char and decide which token to return
@@ -304,4 +310,9 @@ function read_token(instream::InputStream)
 
     # if no condition is satisfied means that not interrupted with a return, so
     throw(GrammarError(instream.location, "Invalid character: $ch"))
+end
+
+function unread_token(instream::InputStream, token::Token)
+    @assert isnothing(instream.saved_token)
+    instream.saved_token = token
 end
