@@ -29,25 +29,208 @@ Pkg.activate(normpath(@__DIR__))
 using RayTracer
 import Crayons # enables colorful and expressive terminal output
 
+# define a struct for parsing parameters via CLI
+struct Parameters
+    # Basic
+    mode::AbstractString
+    width::Integer
+    height::Integer
+    scene_file::AbstractAbstractString
+    renderer::AbstractString
+    out_name::AbstractString
+
+    # Advanced
+    cam_angle_x::AbstractFloat
+    cam_angle_y::AbstractFloat
+    cam_angle_z::AbstractFloat
+    cam_translation_x::AbstractFloat
+    cam_translation_y::AbstractFloat
+    cam_translation_z::AbstractFloat
+    n_rays::Integer
+    max_depth::Integer
+    russian_roulette_limit::Integer
+    factor::AbstractFloat
+    gamma::AbstractFloat
+    mean_type::Symbol
+    weights::Vector{AbstractFloat}
+    delta::AbstractFloat
+end
+
+"Constructor from ARGS-like vector, with support for default values."
+function Parameters(A::Vector{String})
+    # Default values
+    default = Parameters(
+        "image", 512, 512, "./examples/demo_scene.txt","path_tracer", "out.png", # base
+        0.0, 0.0, 0.0,                   # angles
+        -3.0, 0.0, 1.0,                  # translations
+        5, 5, 3,                         # path tracing
+        1.0, 1.0,                        # tone mapping
+        :max_min, [1.0, 1.0, 1.0], 0.001 # tone mapping extras
+    )
+
+    # If no arguments or not enough: return defaults
+    if length(A) < 6    
+        return default
+    end
+
+    # Basic usage: mode, width, height, renderer, out_name
+    mode        = A[1]
+    width       = parse(Int, A[2])
+    height      = parse(Int, A[3])
+    scene_file  = A[4]
+    renderer    = A[5]
+    out_name    = A[6]
+
+    if length(A) == 6
+        return Parameters(mode, width, height, scene_file, renderer, out_name,
+                          default.cam_angle_x, default.cam_angle_y, default.cam_angle_z,
+                          default.cam_translation_x, default.cam_translation_y, default.cam_translation_z,
+                          default.n_rays, default.max_depth, default.russian_roulette_limit,
+                          default.factor, default.gamma, default.mean_type, default.weights, default.delta)
+    elseif length(A) == 20
+        # Advanced parameters
+        cam_angle_x      = parse(Float32, A[7])
+        cam_angle_y      = parse(Float32, A[8])
+        cam_angle_z      = parse(Float32, A[9])
+        cam_translation_x = parse(Float32, A[10])
+        cam_translation_y = parse(Float32, A[11])
+        cam_translation_z = parse(Float32, A[12])
+        n_rays           = parse(Int, A[13])
+        max_depth        = parse(Int, A[14])
+        russian_roulette_limit = parse(Int, A[15])
+        factor           = parse(Float32, A[16])
+        gamma            = parse(Float32, A[17])
+        mean_type        = Symbol(A[18])
+        weights          = parse.(Float32, split(strip(A[19], ['[', ']']), ","))  # e.g. "[1.0,2.0,3.0]"
+        delta            = parse(Float32, A[20])
+
+        return Parameters(mode, width, height, scene_file, renderer, out_name,
+                          cam_angle_x, cam_angle_y, cam_angle_z,
+                          cam_translation_x, cam_translation_y, cam_translation_z,
+                          n_rays, max_depth, russian_roulette_limit,
+                          factor, gamma, mean_type, weights, delta)
+    else
+        error("Invalid number of arguments. Use 6 for basic or 20 for full advanced mode.")
+    end
+end
+
+"Extract the variables for scene construction from parameters"
+function extract_cam_variables(params::Parameters)::Dict{AbstractString, AbstractFloat}
+    return Dict(
+        "cam_angle_x" => params.cam_angle_x,
+        "cam_angle_y" => params.cam_angle_y,
+        "cam_angle_z" => params.cam_angle_z,
+        "cam_translation_x" => params.cam_translation_x,
+        "cam_translation_y" => params.cam_translation_y,
+        "cam_translation_z" => params.cam_translation_z,
+        "aspect_ratio" => params.width/params.height,
+    )
+end
+
+"check if help is needed"
+f = x -> occursin("help", x)
+help_function = A -> any(f, A)
+
 function main()
     try
-        println(
-                """\n
-                ------------------------------------------------------------
-                Raytracer v0.3.0 - Photorealistic Image Generator
+        #check if need help, print an help message and stop the execution
+        if help_function(ARGS)
+            println(
+                    """\n
+                    ------------------------------------------------------------
+                    Raytracer v1.0.0 - Photorealistic Image generator
 
-                ⚠️  The main ray tracing generator is still under development.
+                    Correct command usage:
+                    julia RayTracer [ARGUMENTS]
 
-                Currently available usage:
-                - julia demo       runs a demo render
-                - julia pfm2image  converts .pfm files to standard image formats (e.g. PNG, JPEG)
+                    BASIC USAGE:
+                    Arguments:
+                    - mode STRING        <image> for image creation, <video> for 360° .mp4 animation
+                    - width INTEGER      Image width in pixels
+                    - height INTEGER     Image height in pixels
+                    - scene.txt STRING   Path to the file describing scene (default = './examples/demo_scene.txt')
+                    - renderer STRING    Type of renderer: onoff_tracer* , flat_tracer, path_tracer
+                    - out_name STRING    Path to the output file
 
-                Stay tuned for future releases!
+                    ADVANCED USAGE
+                    Additional Arguments (after basic usage Args)**:
+                    - cam_angle_x FLOAT  Angle of view from start position (around x-axes)
+                    - cam_angle_y FLOAT  Angle of view from start position (around y-axes)
+                    - cam_angle_z FLOAT  Angle of view from start position (around z-axes)
+                    - cam_translation_x  Camera translation along x-axis
+                    - cam_translation_y  Camera translation along y-axis
+                    - cam_translation_z  Camera translation along z-axis
+                    - n_rays INTEGER     Number of rays generated for surface reflection, used in <path_tracer> (default = 5)***
+                    - max_depth INTEGER  Maximum number of reflection for a ray, used in <path_tracer> (default = 5)***
+                    - factor FLOAT       Constant to tune the image luminosity
+                    - gamma FLOAT        Monitor correction value
+                    - mean_type SYMBOL   Type of mean used in luminosity (default: :max_min)****
+                    - weights VECTOR     Weights for weighted luminosity (e.g. [1.0, 2.0, 3.0])
+                    - delta FLOAT        Small offset to stabilize log_average near zero values
 
-                GitHub: https://github.com/baronauta/RayTracer.git
-                ------------------------------------------------------------
-                """
-            )
+                    Note*:    <onoff_tracer> has a different dedicated scene to avoid generating a white image.
+                    Note**:   All advanced arguments need to be specified when using Advanced mode.
+                    Note***:  Image generation with <path_tracer> can be slow with high resolution or large n_rays/max_depth.
+                            For quick demos, low or default values are recommended.
+                    Note****: mean_type is interpreted as a symbol (to have ':max_min' type 'max_min')
+
+                    the created files will be saved in the < /output/ > folder
+
+                    Stay tuned for future updates!
+                    GitHub: https://github.com/baronauta/RayTracer.git
+                    ------------------------------------------------------------
+                    """
+                )
+            return nothing
+        end
+        # collect the parameters
+        params = Parameters(ARGS)
+
+        # extract variables for scene construction
+        variables = extract_cam_variables(params)
+        
+        # read the scene file
+        open(filename, "rt") do io
+            scene = parse_scene(io, variables)
+            #return the scene
+            scene 
+        end
+
+        img = HdrImage(params.width, params.height)
+        tracer = ImageTracer(img, scene.camera)
+
+        # Rendering
+        if lowercase(params.renderer) == "path_tracer"
+            pcg = RayTracer.PCG()
+            renderer = path_tracer
+        else
+            if lowercase(params.renderer) == "onoff_tracer"
+                renderer = onoff_tracer
+                progress_flag && println("\n<onoff_tracer> option use an on/off renderer that return white when there is an object and black otherwise. For these reason has a different dedicated scene to avoid generating a white image.\n")
+            elseif lowercase(params.renderer) == "flat_tracer"
+                renderer = flat_tracer
+            else
+                println("ERROR, undefined renderer, plees select a valid renderer \n $(params.renderer)")
+                return 1
+            end
+            pcg = nothing
+        end
+
+        # make renderer run!
+        RayTracer.fire_all_rays!(tracer, my_renderer(renderer, scene.world, pcg = pcg; bkg_color=BLACK, n_rays=params.n_rays, max_depth=params.max_depth, russian_roulette_limit=params.russian_roulette_limit); progress_flag = true)
+
+        # output_name without extension, if no extension no problem, entire name
+        base_name = splitext(params.out_name)[1]
+        
+        # PFM Image saving
+        pfm && write(base_name * ".PFM", img)
+
+        # LDR Image saving (default png)
+        RayTracer.write_ldr_image(params.out_name, img)
+
+        # final message print
+        progress_flag && println("\n ✅ Successfully generated the demo image.")
+
     catch e
         # Define colors for the error message
         red_bold = Crayons.crayon"bold red"  # Bold red text
