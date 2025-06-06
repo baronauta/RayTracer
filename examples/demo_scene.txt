@@ -1,0 +1,60 @@
+# Comments start with #
+
+# Scene file format guide: ---------------------------------------------------------------------
+
+# 1. Must define default float values for overridable variables (e.g., camera orientation via CLI).
+#    This allows external overrides (e.g., via CLI).
+# 1.1 Camera rotation angles (radians) around x, y, z axes:
+#       - cam_angle_x, cam_angle_y, cam_angle_z
+# 1.2 Camera translation along x, y, z axes:
+#       - cam_translation_x, cam_translation_y, cam_translation_z
+# 1.3 Camera aspect ratio
+#
+# 2. Float variables:
+#    - You can define float variables.
+#    - Variables defined here can be overridden by external float variables; otherwise, their value is used.
+#    - Variables defined in the file can only be defined once.
+#
+# 3. Materials:
+#    - You can declare named materials and use them later.
+#
+# 4. Cannot declare named general variables; use them directly instead.
+#    - You cannot create named Transformations, Spheres, Planes, Colors, vectors, etc.
+#
+# 5. Camera:
+#    - Only one camera can be defined.
+#
+# Follow this structure to create valid scene files.
+#------------------------------------------------------------------------------------------------
+
+# Default camera angles, translation and aspect ratio
+float cam_angle_x(0)
+float cam_angle_y(0)
+float cam_angle_z(0)
+float cam_translation_x(-3)
+float cam_translation_y(0)
+float cam_translation_z(1)
+float aspect_ratio(1)
+
+
+# Materials
+material plane_material(
+    diffuse(checkered(<0.78, 0.902, 0.471>, <0.953, 0.718, 1>, 6)),
+    uniform(<0, 0, 0>)
+)
+material earth_material(diffuse(image("./examples/reference_earth.pfm")), uniform(<0, 0, 0>))
+material sphere_material(diffuse(uniform(<1, 0.314, 0.314>)), uniform(<0, 0, 0>))
+material mirror_material(specular(uniform(<0.9, 0.9, 0.9>)), uniform(<0, 0, 0>))
+material sky_material(diffuse(uniform(<0, 0, 0>)), uniform(<0.7, 0.8, 1>))
+
+
+# Objects definitions
+sphere(earth_material, translation([1, 1, 2]))
+sphere(sphere_material, translation([-1, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
+sphere(mirror_material, identity)
+sphere(sky_material, scaling(50, 50, 50))
+plane(plane_material, identity)
+
+
+# Camera definition
+camera(perspective, 1.0, aspect_ratio, rotation_x(cam_angle_x) * rotation_y(cam_angle_y) * rotation_z(cam_angle_z) * translation([cam_translation_x, cam_translation_y, cam_translation_z]))
