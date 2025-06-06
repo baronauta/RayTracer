@@ -373,3 +373,102 @@ function parse_camera(instream::InputStream, scene::Scene)
     end
     return camera
 end
+
+"""
+    parse_scene(instream::InputStream; variables::Dict{String, AbstractFloat})
+
+Parses a scene description from the given input stream and constructs a `Scene` object.
+
+# Behavior
+- Reads tokens from the stream sequentially until EOF.
+- Recognizes keywords.
+- Parses and adds corresponding elements to the scene.
+- Variable handling rules:
+  - External variables provided via `variables` are preserved and cannot be overridden by the scene file.
+  - Variables defined internally inside the scene file can only be defined once.
+  - Redefinition of an internal variable in the scene file results in a parse error.
+- Only one camera definition is allowed; attempts to define multiple cameras raise an error.
+
+# Returns
+- A `Scene` object representing the parsed scene.
+
+# Throws
+- `GrammarError` if the input contains syntax errors, redefinitions, or unexpected tokens.
+"""
+function parse_scene(instream::InputStream; variables::Dict{String, AbstractFloat})
+    # This function parses scene.txt and builds the world to render.
+    # Some variables can be defined externally (e.g., via CLI) and others directly inside scene.txt
+    #
+    # Variable resolution rules:
+    # - If a variable is defined externally and redefined in scene.txt, the external value is kept.
+    # - If a variable is not defined externally, it can be defined once inside scene.txt.
+    # - If an internal variable is redefined later in the file, that is an error.
+
+    scene = Scene()
+
+    # Copy external variables into the scene
+    scene.float_variables = deepcopy(variables)
+    # Track the names of externally defined variables
+    scene.overridden_variables = Set(keys(variables))
+
+    # Parse the file token by token
+    while true
+        token = read_token(instream)
+        # Stop if end of file is reached
+        isnothing(token) && break
+
+        # The first token of each construct must be a keyword, either a definition of var or a creation of object
+        #       (e.g., FLOAT, MATERIAL, SPHERE, etc.)
+        # Note: using 'expect_keywords' would require first read the token and check if reached end of file, 
+        #       then unread_token and then use expect_keywords; this is simpler and clearer:
+        if !(isa(token, KeywordToken))
+            throw(
+                GrammarError(
+                    token.location,
+                    "expected a keyword instead of '$token'",
+                ),
+            )
+        end
+
+        if token.keyword == FLOAT
+            # memorize token name and value
+            var_name = expect_identifier(instream)
+            var_loc = instream.location
+            expect_symbol(instream, "(")
+            var_val = expect_number(instream, scene)
+            expect_symbol(instream, ")")
+
+            # do the previously mentioned check:
+            # Only allow internal variables to be defined once; redefinitions are errors
+            if !(var_name in scene.overridden_variables)
+                if haskey(scene.float_variables, var_name)
+                    throw(GrammarError(
+                        var_loc,
+                        "variable '$var_name' cannot be redefined",
+                    ))
+                end
+                scene.float_variables[var_name] = var_val
+            end
+
+        # Handle other recognized keywords
+        elseif token.keyword == MATERIAL
+            material_name, material = parse_material(instream, scene)
+            scene.materials[material_name] = material
+
+        elseif token.keyword == PLANE
+            add!(scene.world, parse_plane(instream, scene))
+
+        elseif token.keyword == SPHERE
+            add!(scene.world, parse_sphere(instream, scene))
+
+        elseif token.keyword == CAMERA
+            # Only one camera can be defined in the scene
+            !isnothing(scene.camera) && throw(GrammarError(token.location, "You cannot define more than one camera"))
+            scene.camera = parse_camera(instream, scene)
+        else
+            # Raise an error for any unexpected keyword
+            throw(GrammarError(token.location, "Unexpected keyword: $token"))
+        end
+    end
+    return scene
+end
