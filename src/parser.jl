@@ -23,11 +23,28 @@
 #_______________________________________________________________________________________
 
 "A scene read from a scene file."
-struct Scene
-    materials::Dict{String, Material}
+mutable struct Scene
+    # `Material`s can be explicitly declared and named, e.g. `material ground_material(...)`. 
+    # In contrast, other types like `Sphere` or `Plane` cannot be assigned to named variables.
+    materials::Dict{String, Material} 
     world::World
-    camera::Union{Camera, Nothing}
-    float_variables::Dict{String, AbstractFloat}
+    camera::Union{Camera, Nothing} # only one camera is allowed
+    float_variables::Dict{String, AbstractFloat} #| Float variables defined externally or already defined in the scene file.
+                                                 #| This is a float dictionarry so camera transformation parameters 
+                                                 #| need to be passed has single floats (angle = angle, x_translation = ..., ...).
+    overridden_variables::Set{String}  #| Names of variables defined externally (e.g., from the CLI).
+                                       #| If re-encountered in scene.txt, their value is not overridden —
+                                       #| the external value is preserved.
+
+end
+
+"A default `Scene` constructor"
+function Scene()
+    Scene(Dict{String, Material}(),
+          World(),
+          nothing,
+          Dict{String, Float64}(),
+          Set{String}())
 end
 
 "Read a token from the stream and check that it matches 'symbol'."
@@ -140,7 +157,7 @@ function parse_color(instream::InputStream, scene::Scene)
     green = expect_number(instream, scene)
     expect_symbol(instream, ",")
     blue = expect_number(instream, scene)
-    expect_symbol(input_file, ">")
+    expect_symbol(instream, ">")
     return RGB(red, green, blue)
 end
 
@@ -197,8 +214,8 @@ Returns a `DiffuseBRDF` or `SpecularBRDF` using the parsed pigment.
 function parse_brdf(instream::InputStream, scene::Scene)
     brdf = expect_keywords(instream, [DIFFUSE, SPECULAR])
     expect_symbol(instream, "(")
-    pigment = parse_pigment(input_file, scene)
-    expect_symbol(input_file, ")")
+    pigment = parse_pigment(instream, scene)
+    expect_symbol(instream, ")")
     if brdf == DIFFUSE
         return DiffuseBRDF(pigment)
     elseif brdf_keyword == SPECULAR
@@ -222,8 +239,8 @@ function parse_material(instream::InputStream, scene::Scene)
     name = expect_identifier(instream)
     expect_symbol(instream, "(")
     brdf = parse_brdf(instream, scene)
-    expect_symbol(input_file, ",")
-    emitted_radiance = parse_pigment(input_file, scene)
+    expect_symbol(instream, ",")
+    emitted_radiance = parse_pigment(instream, scene)
     expect_symbol(instream, ")")
     return name, Material(brdf, emitted_radiance)
 end
@@ -295,7 +312,7 @@ function parse_sphere(instream::InputStream, scene::Scene)
     # sphere(sphere_material, translation([0, 0, 1]))
     expect_keywords(instream, [SPHERE])
     expect_symbol(instream, "(")
-    material_name = expect_identifier(input_file)
+    material_name = expect_identifier(instream)
     if !haskey(scene.materials, material_name)
         throw(GrammarError(instream.location, "unknown material `$material_name`"))
     end
@@ -318,7 +335,7 @@ function parse_plane(instream::InputStream, scene::Scene)
     # plane(ground_material, identity)
     expect_keywords(instream, [PLANE])
     expect_symbol(instream, "(")
-    material_name = expect_identifier(input_file)
+    material_name = expect_identifier(instream)
     if !haskey(scene.materials, material_name)
         throw(GrammarError(instream.location, "unknown material `$material_name`"))
     end
