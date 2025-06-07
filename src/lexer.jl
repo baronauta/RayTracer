@@ -125,7 +125,7 @@ end
 
 "Show IdentifierToken in the format IdentifierToken(identifier @ filename:line:column)."
 function Base.show(io::IO, ::MIME"text/plain", tok::IdentifierToken)
-    print(io, "IdentifierToken($(tok.identifier) @ ")
+    print(io, "IdentifierToken(\"$(tok.identifier)\" @ ")
     show(io, MIME"text/plain"(), tok.location)
     print(io, ")")
 end
@@ -138,7 +138,7 @@ end
 
 "Show StringToken in the format StringToken(string @ filename:line:column)."
 function Base.show(io::IO, ::MIME"text/plain", tok::StringToken)
-    print(io, "StringToken($(tok.string) @ ")
+    print(io, "StringToken(\"$(tok.string)\" @ ")
     show(io, MIME"text/plain"(), tok.location)
     print(io, ")")
 end
@@ -164,7 +164,7 @@ end
 
 "Show SymbolToken in the format SymbolToken(symbol @ filename:line:column)."
 function Base.show(io::IO, ::MIME"text/plain", tok::SymbolToken)
-    print(io, "SymbolToken($(tok.symbol) @ ")
+    print(io, "SymbolToken(\"$(tok.symbol)\" @ ")
     show(io, MIME"text/plain"(), tok.location)
     print(io, ")")
 end
