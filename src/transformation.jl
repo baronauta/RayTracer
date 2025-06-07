@@ -42,7 +42,8 @@ struct Transformation{T<:AbstractFloat}
 end
 
 function Transformation()
-    Transformation(IDENTITY_MATR4x4, IDENTITY_MATR4x4)
+    I = HomMatrix(IDENTITY_MATR4x4)
+    Transformation(I, I)
 end
 
 "Product between two `HomMatrix` types. Returns a `HomMatrix` type."
