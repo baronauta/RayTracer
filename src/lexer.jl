@@ -91,6 +91,11 @@ mutable struct SourceLocation
     col_num::Integer
 end
 
+"Show SourceLocation in the format filename:line:column (e.g. file.txt:3:45)."
+function Base.show(io::IO, ::MIME"text/plain", s::SourceLocation)
+    print(io, "$(s.filename):$(s.line_num):$(s.col_num)")
+end
+
 "Exception to throw for reporting error while parsing scene file."
 struct GrammarError <: Exception
     location::SourceLocation
