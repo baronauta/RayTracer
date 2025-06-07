@@ -285,6 +285,7 @@ Skip all whitespace characters and comments in the input stream.
 """
 function _skip_whitespaces_and_comments!(instream::InputStream)
     ch = _read_char!(instream)
+    isnothing(ch) && return nothing
     while ch in WHITESPACE || ch == '#'
         if ch == '#'
             # Skip the end of the line
@@ -356,7 +357,7 @@ function _parse_number_token(instream::InputStream, start_char::AbstractChar)
     try
         # ⚠️ Possible bottleneck: why to define functions with AbstractFloat if we are able only to parse
         # float32?
-        return LiteralNumberToken(instream.location, parse(Float32, token))
+        return LiteralNumberToken(instream.location, parse(Float64, token))
     catch e
         if isa(e, ArgumentError)
             throw(
