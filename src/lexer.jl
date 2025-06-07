@@ -111,14 +111,14 @@ struct IdentifierToken <: Token
     identifier::AbstractString
 end
 
-"Token containing a literal string."
-struct LiteralString <: Token
+"Token containing a string."
+struct StringToken <: Token
     location::SourceLocation
     string::AbstractString
 end
 
 "Token containing a literal number."
-struct LiteralNumber <: Token
+struct LiteralNumberToken <: Token
     location::SourceLocation
     number::AbstractFloat
 end
@@ -161,108 +161,148 @@ end
 
 
 # ─────────────────────────────────────────────────────────────
-# InputStream functions
+# Stream reading
+#
+# Functions for reading characters from the input stream one by one.
+# These functions skip over whitespace and comments, while accurately
+# tracking the current position (line and column) within the stream.
 # ─────────────────────────────────────────────────────────────
 
-"Given a character `ch`, in-place update of the position in `InputStream`."
+"Given a character `ch`, update the position in `instream` in-place."
 function _update_pos!(instream::InputStream, ch::Union{AbstractChar,Nothing})
     if isnothing(ch)
+        # No position update is performed
         return
     elseif ch == '\n'
+        # Newline: increment the line number and reset the column to 1
         instream.location.line_num += 1
         instream.location.col_num = 1
     elseif ch == '\t'
+        # Tab: advance the column number by the configured tab width
         instream.location.col_num += instream.tabulation
     else
+        # Char: increment the column number
         instream.location.col_num += 1
     end
 end
 
 """
-Read a new character from the stream if `InpuStream.saved_char` is empty, otherwise
-consider the saved char, returning a string. If it is the end of file return nothing.
+Read the next character from the input stream.
+
+If `instream.saved_char` contains a character, consume and return it.
+Otherwise, read a new character from the stream.
+
+- Returns a single character as a `Char`.
+- Returns `nothing` if the end of the file is reached.
+
+Updates the saved location before updating the current position, so that
+lexical errors can be reported accurately.
 """
 function _read_char!(instream::InputStream)
-    # Fisrt look at saved_char: if there is a char read it, 
-    # otherwise keep reading from the stream.
     if !isnothing(instream.saved_char)
+        # saved_char contains a char
         ch = instream.saved_char
         instream.saved_char = nothing
     else
-        # Check that it is not the end of file
-        if !eof(instream.stream)
-            ch = read(instream.stream, Char)
-        else
+        if eof(instream.stream)
+            # end of file: return nothing
             return nothing
+        else
+            # read from the stream
+            ch = read(instream.stream, Char)
         end
     end
-    # Save the current location: if the lexer finds a lexical error,
-    # this is the location to be reported. Then update the position.
+    # Save the current location before advancing
     instream.saved_location = deepcopy(instream.location)
     _update_pos!(instream, ch)
     return ch
 end
 
 """
-Pushes a character back into the input stream buffer.
+Push a character back into the input stream buffer for one-character look-ahead.
 
-This function implements a one-character look-ahead by storing the given character
-in `saved_char` and restoring the location to `saved_location`. If a character
-is already buffered, the function does nothing.
+- Stores the given character in `saved_char`.
+- Restores the stream position to `saved_location`.
+- Throws an assertion error if `saved_char` is already occupied.
 """
 function _unread_char!(instream::InputStream, ch::AbstractChar)
-    # Only push back if no character is currently saved
-    @assert isnothing(instream.saved_char)
+    @assert isnothing(instream.saved_char) "Buffer already contains a saved character"
     instream.saved_char = ch
     instream.location = deepcopy(instream.saved_location)
 end
 
-"Keep reading until a whitespace or a comment (begins with #) is found."
-function skip_whitespaces_and_comments!(instream::InputStream)
+"""
+Skip all whitespace characters and comments in the input stream.
+
+- Whitespace characters are defined by `WHITESPACE`.
+- Comments start with `#` and continue until the end of the line.
+- Reading stops at the first non-whitespace, non-comment character.
+- The first such character is pushed back onto the stream for subsequent processing.
+"""
+function _skip_whitespaces_and_comments!(instream::InputStream)
     ch = _read_char!(instream)
     while ch in WHITESPACE || ch == '#'
         if ch == '#'
-            # Skip the rest of the line
+            # Skip the end of the line
             while (ch = _read_char!(instream)) !== nothing && !(ch in ['\r', '\n'])
-                # Do nothing, just consume characters
+                # consume characters silently
             end
         end
         ch = _read_char!(instream)
-        if isnothing(ch) # end of file
+        if isnothing(ch)
+            # we used `nothing` to mark the eof
             return
         end
     end
-
-    # Put the non-whitespace character back
+    # Reading stops at the first non-whitespace, non-comment character.
+    # The first such character is pushed back onto the stream for subsequent processing.
     _unread_char!(instream, ch)
 end
 
 
 # ─────────────────────────────────────────────────────────────
-# Token reading functions
+# Read Tokens
+#
+# Read and classify tokens from the input stream.
 # ─────────────────────────────────────────────────────────────
 
-function _parse_word_token(instream::InputStream, start_char::AbstractChar)
-    token = string(start_char)
+"""
+Parse a string token enclosed in double quotes.
+
+Reads characters until the closing quote is found. Raises a `GrammarError`
+if the string is not properly terminated.
+"""
+function _parse_string_token(instream::InputStream)
+    token = ""
     while true
+        # Read the char and update token if not the end of string or eof 
         ch = _read_char!(instream)
-        if !(isletter(ch) || isdigit(ch) || ch == '_')
-            _unread_char!(instream, ch)
+        if ch == '"'
+            # Closing quote is found: parsed string is complete
             break
         end
-        token = token * ch
+        if isnothing(ch)
+            # Reached eof, closing quote not found
+            throw(GrammarError(instream.location, "unterminated string"))
+        end
+        token *= ch
     end
-    # If the token is in the keyword list, return a Keyword token; otherwise, return an Identifier token
-    haskey(KEYWORDS, token) ? (return KeywordToken(instream.location, KEYWORDS[token])) :
-    (return IdentifierToken(instream.location, token))
+    return StringToken(instream.location, token)
 end
 
-function _parse_number_token(instream::InputStream, start_char::AbstractChar)
-    token = string(start_char)
+"""
+Parse a numeric token from the stream.
 
+Accumulates digits (and optional sign) into a string and attempts to parse
+a `Float32` from it. If parsing fails, raises a `GrammarError`.
+"""
+function _parse_number_token(instream::InputStream, start_char::AbstractChar)
+    token = start_char
     while true
+        # Accumulates digits
         ch = _read_char!(instream)
         if !occursin(ch, NUMBERS)
+            # Non-digit found: parsed number is complete
             _unread_char!(instream, ch)
             break
         end
@@ -270,7 +310,9 @@ function _parse_number_token(instream::InputStream, start_char::AbstractChar)
     end
 
     try
-        return LiteralNumber(instream.location, parse(Float32, token))
+        # ⚠️ Possible bottleneck: why to define functions with AbstractFloat if we are able only to parse
+        # float32?
+        return LiteralNumberToken(instream.location, parse(Float32, token))
     catch e
         if isa(e, ArgumentError)
             throw(
@@ -285,50 +327,75 @@ function _parse_number_token(instream::InputStream, start_char::AbstractChar)
     end
 end
 
+"""
+Parse an identifier or keyword token from the input stream.
 
-function _parse_string_token(instream::InputStream)
-    token = ""
+Starting with `start_char`, this function accumulates a sequence of letters, digits,
+and underscores into a token. If the token matches a known keyword, it returns a
+`KeywordToken`; otherwise, it returns an `IdentifierToken`.
+"""
+function _parse_keyword_or_identifier(instream::InputStream, start_char::AbstractChar)
+    token = start_char
     while true
-        # read the char and update token if not the end of string or eof 
+        # Accumulate accepted char
         ch = _read_char!(instream)
-        ch == '"' && break
-        isnothing(ch) && throw(GrammarError(instream.location, "unterminated string"))
+        if !(isletter(ch) || isdigit(ch) || ch == '_')
+            # Non valid char: parsed word is complete
+            _unread_char!(instream, ch)
+            break
+        end
         token *= ch
     end
-    return LiteralString(instream.location, token)
+    if haskey(KEYWORDS, token)
+        # If it is a KeywordToken it must be listed in the KEYWORDS dictionary
+        return KeywordToken(instream.location, KEYWORDS[token])
+    else
+        return IdentifierToken(instream.location, token)
+    end
 end
 
+"""
+Read the next token from the stream.
+
+Skips whitespace and comments, then reads and returns the appropriate token:
+- `SymbolToken` for symbols
+- `LiteralString` for quoted strings
+- `LiteralNumber` for numeric literals
+- `KeywordToken` or `IdentifierToken` for words
+
+Returns `nothing` at the end of the file.
+"""
 function read_token(instream::InputStream)
     if !isnothing(instream.saved_token)
         result = instream.saved_token
         instream.saved_token = nothing
         return result
     end
-    # first skip whitespaces and comments
-    skip_whitespaces_and_comments!(instream)
-    # read first char and decide which token to return
-    ch = _read_char!(instream)
-    # if is eof return a "nothing token"
-    isnothing(ch) && return nothing
-    # token_location = deepcopy(instream.saved_location)
 
-    # if symbol return symbol token
+    _skip_whitespaces_and_comments!(instream)
+    ch = _read_char!(instream)
+
+    # End of file
+    isnothing(ch) && return nothing
+
+    # SymbolToken
     occursin(ch, SYMBOLS) && return SymbolToken(instream.location, string(ch))
 
-    # if string return LiteralString token
+    # StringToken
     ch == '"' && return _parse_string_token(instream)
 
-    # if number return LiteralNumber token
+    # LiteralNumberToken
     (isdigit(ch) || ch == '+' || ch == '-') && return _parse_number_token(instream, ch)
 
-    # if alphabethic return KeywordToken or IdentifierToken
-    (isletter(ch) || ch == '_') && return _parse_word_token(instream, ch)
+    # KeywordToken or IdentifierToken
+    (isletter(ch) || ch == '_') && return _parse_keyword_or_identifier(instream, ch)
 
-    # if no condition is satisfied means that not interrupted with a return, so
-    throw(GrammarError(instream.location, "Invalid character: $ch"))
+    # If no condition is satisfied
+    throw(GrammarError(instream.location, "invalid character $ch"))
 end
 
+"Push a token back into the stream."
 function unread_token(instream::InputStream, token::Token)
-    @assert isnothing(instream.saved_token)
+    @assert isnothing(instream.saved_token) "Cannot push back multiple tokens"
     instream.saved_token = token
 end
