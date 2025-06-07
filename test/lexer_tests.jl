@@ -29,7 +29,7 @@
     @test instream.location.line_num == 1
     @test instream.location.col_num == 4
 
-    RayTracer.skip_whitespaces_and_comments!(instream)
+    RayTracer._skip_whitespaces_and_comments!(instream)
 
     @test RayTracer._read_char!(instream) == 'd'
     @test instream.location.line_num == 2
@@ -65,13 +65,13 @@ end
         )
     end
     function _test_string(token::Token, string::AbstractString)
-        @test token isa RayTracer.LiteralString
+        @test token isa RayTracer.StringToken
         @test token.string == string || println(
             "Token: $(token.string) at location: $(token.location) is not equal to string $string",
         )
     end
     function _test_number(token::Token, number::AbstractFloat)
-        @test token isa RayTracer.LiteralNumber
+        @test token isa RayTracer.LiteralNumberToken
         @test token.number == number || println(
             "Token: $(token.number) at location: $(token.location) is not equal to number $number",
         )
