@@ -110,10 +110,24 @@ struct KeywordToken <: Token
     keyword::KeywordEnum
 end
 
+"Show KeywordToken in the format IdentifierToken(KEYWORD @ filename:line:column)."
+function Base.show(io::IO, ::MIME"text/plain", tok::KeywordToken)
+    print(io, "KeywordToken($(tok.keyword) @ ")
+    show(io, MIME"text/plain"(), tok.location)
+    print(io, ")")
+end
+
 "Token containing an identifier (i.e. variable name)."
 struct IdentifierToken <: Token
     location::SourceLocation
     identifier::AbstractString
+end
+
+"Show IdentifierToken in the format IdentifierToken(identifier @ filename:line:column)."
+function Base.show(io::IO, ::MIME"text/plain", tok::IdentifierToken)
+    print(io, "IdentifierToken($(tok.identifier) @ ")
+    show(io, MIME"text/plain"(), tok.location)
+    print(io, ")")
 end
 
 "Token containing a string."
@@ -122,10 +136,24 @@ struct StringToken <: Token
     string::AbstractString
 end
 
+"Show StringToken in the format StringToken(string @ filename:line:column)."
+function Base.show(io::IO, ::MIME"text/plain", tok::StringToken)
+    print(io, "StringToken($(tok.string) @ ")
+    show(io, MIME"text/plain"(), tok.location)
+    print(io, ")")
+end
+
 "Token containing a literal number."
 struct LiteralNumberToken <: Token
     location::SourceLocation
     number::AbstractFloat
+end
+
+"Show LiteralNumberToken in the format LiteralNumberToken(number @ filename:line:column)."
+function Base.show(io::IO, ::MIME"text/plain", tok::LiteralNumberToken)
+    print(io, "LiteralNumberToken($(tok.number) @ ")
+    show(io, MIME"text/plain"(), tok.location)
+    print(io, ")")
 end
 
 "Token containing a symbolic character (e.g., parentheses and operators)"
@@ -134,6 +162,12 @@ struct SymbolToken <: Token
     symbol::AbstractString
 end
 
+"Show SymbolToken in the format SymbolToken(symbol @ filename:line:column)."
+function Base.show(io::IO, ::MIME"text/plain", tok::SymbolToken)
+    print(io, "SymbolToken($(tok.symbol) @ ")
+    show(io, MIME"text/plain"(), tok.location)
+    print(io, ")")
+end
 
 # --- InputStream ---
 """
