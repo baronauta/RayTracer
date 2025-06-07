@@ -181,12 +181,12 @@ Generates a `Ray` directed towards a specific point on the pixel's surface of th
     ray = fire_ray(tracer, 100, 150; u_pixel=0.25, v_pixel=0.75)  # custom point in the pixel
 """
 function fire_ray(
-    tracer::ImageTracer{T},
+    tracer::ImageTracer,
     col::Integer,
     row::Integer;
-    u_pixel::T = 0.5,
-    v_pixel::T = 0.5,
-) where {T<:AbstractFloat}
+    u_pixel::AbstractFloat = 0.5,
+    v_pixel::AbstractFloat = 0.5,
+)
 
     # all pixels have dimensions '(1,1)', so the pixel center is at the pixel coordinates '+ (0.5,0.5)'
     # !!Attention!!
