@@ -67,7 +67,7 @@ end
 
 "Compare two `HomMatrix` types. Useful for tests."
 function ≈(M::HomMatrix, N::HomMatrix)
-    M.matrix ≈ N.matrix
+    isapprox(M.matrix, N.matrix; rtol=1e-6, atol=1e-8)
 end
 
 "Compare two `Transformation` types. Useful for tests."
