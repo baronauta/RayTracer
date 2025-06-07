@@ -1,6 +1,5 @@
-import Base: *
-
-#_______________________________________________________________________________________
+#     __________________________________________________________
+#
 #     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
 #     __________________________________________________________
 #
@@ -30,6 +29,9 @@ import Base: *
 #   - Transformation
 # ─────────────────────────────────────────────────────────────
 
+const IDENTITY_MATR4x4 =
+    [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.0; 0.0 0.0 0.0 1.0]
+
 struct HomMatrix{T<:AbstractFloat}
     matrix::Matrix{T}
 end
@@ -39,8 +41,9 @@ struct Transformation{T<:AbstractFloat}
     invM::HomMatrix{T}
 end
 
-const IDENTITY_MATR4x4 =
-    [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.0; 0.0 0.0 0.0 1.0]
+function Transformation()
+    Transformation(IDENTITY_MATR4x4, IDENTITY_MATR4x4)
+end
 
 "Product between two `HomMatrix` types. Returns a `HomMatrix` type."
 function *(A::HomMatrix, B::HomMatrix)
