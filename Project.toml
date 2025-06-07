@@ -5,12 +5,16 @@ version = "0.1.0"
 
 [deps]
 ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
+Comonicon = "863f3e99-da2a-4334-8734-de3dacbe5542"
 Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 ColorTypes = "0.12.0"
+Comonicon = "1.0.8"
 Crayons = "4.1.1"
+Dates = "1.11.0"
 Images = "0.26.2"
 Test = "1.11.0"
