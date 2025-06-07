@@ -102,6 +102,11 @@ struct GrammarError <: Exception
     msg::String
 end
 
+"Display GrammarError as ‘GrammarError at filename:line:column: message’."
+function Base.show(io::IO, ::MIME"text/plain", err::GrammarError)
+    print(io, "GrammarError at ", err.location, ": ", err.msg)
+end
+
 
 # --- Tokens ---
 "Token containing a recognized keyword."
