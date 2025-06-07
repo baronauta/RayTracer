@@ -47,18 +47,23 @@ export World, add!
 export UniformPigment, CheckeredPigment, ImagePigment
 export Material
 export DiffuseBRDF, SpecularBRDF
+export PCG
 export onoff_tracer, flat_tracer, path_tracer, my_renderer
 
 export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError, GrammarError
 export Token, KeywordToken, LiteralNumberToken, StringToken, SymbolToken, IdentifierToken
 
-export IS_LITTLE_ENDIAN, HOST_ENDIANNESS
+export parse_scene
+
+export IS_LITTLE_ENDIAN, HOST_ENDIANNESS, SUPPORTED_EXTS
 
 # Determine if the host system uses little endian byte order
 const IS_LITTLE_ENDIAN = Base.ENDIAN_BOM == 0x04030201
 
 # Set endianness flag: -1.0 for little endian, 1.0 for big endian
 const HOST_ENDIANNESS = IS_LITTLE_ENDIAN ? -1.0 : 1.0
+
+const SUPPORTED_EXTS = [".jpg", ".jpeg", ".png", ".tiff", ".tif"]
 
 include("exceptions.jl")
 include("colors.jl")

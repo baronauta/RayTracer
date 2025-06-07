@@ -229,7 +229,7 @@ function parse_pigment(instream::InputStream, scene::Scene)
             pigment = ImagePigment(read_pfm_image(filename))
         elseif any(
             ext -> endswith(lowercase(filename), ext),
-            [".jpg", ".jpeg", ".png", ".tiff", ".tif"],
+            SUPPORTED_EXTS,
         )
             # not .pfm image requires to be converted in .pfm
             pigment = ImagePigment(read_ldr_image(filename))
