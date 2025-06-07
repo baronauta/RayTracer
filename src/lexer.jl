@@ -22,6 +22,11 @@
 #
 #_______________________________________________________________________________________
 
+
+# --- Abstract types ---
+abstract type Token end
+
+
 # --- Constants ---
 # Double quotes " for String, single quotes ' for Char
 const WHITESPACE = [' ', '\t', '\n', '\r']
@@ -29,11 +34,12 @@ const COMMENT = '#'
 const SYMBOLS = "()<>[],*"
 const NUMBERS = "0123456789eE.+-"
 
-# A list of keyword types is needed; @enum provides a simpler and more robust solution than a list of constants.
-# then using a dictionary to map string on keywords
-"Enumeration of all the possible keywords recognized by the lexer."
+# Enumeration of all the possible keywords recognized by the lexer.
+# @enum provides a simpler and more robust solution than a list of constants. 
+# Then use a dictionary to map strings to keywords.
+# For clarity keywords are in capital letters.
 @enum KeywordEnum begin
-    NEW    
+    NEW
     MATERIAL    
     PLANE    
     SPHERE    
@@ -76,6 +82,8 @@ const KEYWORDS = Dict(
     "float" => FLOAT,
 )
 
+
+# --- Source location ---
 "Holds the location of a character in the source code."
 mutable struct SourceLocation
     filename::AbstractString
@@ -83,34 +91,46 @@ mutable struct SourceLocation
     col_num::Integer
 end
 
-# --- token ---
-abstract type Token end
+"Exception to throw for reporting error while parsing scene file."
+struct GrammarError <: Exception
+    location::SourceLocation
+    msg::String
+end
 
+
+# --- Tokens ---
+"Token containing a recognized keyword."
 struct KeywordToken <: Token
     location::SourceLocation
     keyword::KeywordEnum
 end
 
+"Token containing an identifier (i.e. variable name)."
 struct IdentifierToken <: Token
     location::SourceLocation
     identifier::AbstractString
 end
 
+"Token containing a literal string."
 struct LiteralString <: Token
     location::SourceLocation
     string::AbstractString
 end
 
+"Token containing a literal number."
 struct LiteralNumber <: Token
     location::SourceLocation
     number::AbstractFloat
 end
 
+"Token containing a symbolic character (e.g., parentheses and operators)"
 struct SymbolToken <: Token
     location::SourceLocation
     symbol::AbstractString
 end
 
+
+# --- InputStream ---
 """
 Wraps an input stream with location tracking for lexing.
 
@@ -129,6 +149,7 @@ mutable struct InputStream
     tabulation::Integer
     saved_token::Token
 end
+
 
 # ─────────────────────────────────────────────────────────────
 # InputStream functions
@@ -216,15 +237,10 @@ function skip_whitespaces_and_comments!(instream::InputStream)
     _unread_char!(instream, ch)
 end
 
+
 # ─────────────────────────────────────────────────────────────
 # Token reading functions
 # ─────────────────────────────────────────────────────────────
-#--- custom exception ---
-"Exception to throw for reporting error in parsing scene files."
-struct GrammarError <: Exception
-    location::SourceLocation
-    msg::String
-end
 
 function _parse_word_token(instream::InputStream, start_char::AbstractChar)
     token = string(start_char)
