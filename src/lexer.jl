@@ -336,7 +336,7 @@ Accumulates digits (and optional sign) into a string and attempts to parse
 a `Float32` from it. If parsing fails, raises a `GrammarError`.
 """
 function _parse_number_token(instream::InputStream, start_char::AbstractChar)
-    token = start_char
+    token = string(start_char)
     while true
         # Accumulates digits
         ch = _read_char!(instream)
