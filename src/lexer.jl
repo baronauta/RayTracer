@@ -86,7 +86,7 @@ const KEYWORDS = Dict(
 # --- Source location ---
 "Holds the location of a character in the source code."
 mutable struct SourceLocation
-    filename::AbstractString
+    filename::String
     line_num::Integer
     col_num::Integer
 end
@@ -144,25 +144,25 @@ Wraps an input stream with location tracking for lexing.
 mutable struct InputStream
     stream::IO
     location::SourceLocation
-    saved_char::Union{AbstractChar,Nothing}
+    saved_char::Union{AbstractChar, Nothing}
     saved_location::SourceLocation
     tabulation::Integer
-    saved_token::Token
+    saved_token::Union{Token, Nothing}
+end
+
+"Initialize `InputStream` from an `IO` type and a filename."
+function InputStream(io::IO, filename::String; tab = 4)
+    # Initialize with line number and column number equal to 1
+    location = SourceLocation(filename, 1, 1)
+    # At the beginning saved_location is equal to location,
+    # and there are no saved character and saved token.
+    InputStream(io, location, nothing, location, tab, nothing)
 end
 
 
 # ─────────────────────────────────────────────────────────────
 # InputStream functions
 # ─────────────────────────────────────────────────────────────
-
-"Creates a new `InputStream` from an `IO` object and filename."
-function InputStream(io::IO, filename::AbstractString; tab = 4)
-    # Initialize with line number and column number equal to 1
-    location = SourceLocation(filename, 1, 1)
-    # At the beginning saved_location is equal to location,
-    # and there are no saved character.
-    InputStream(io, location, nothing, location, tab)
-end
 
 "Given a character `ch`, in-place update of the position in `InputStream`."
 function _update_pos!(instream::InputStream, ch::Union{AbstractChar,Nothing})
