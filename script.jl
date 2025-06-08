@@ -48,8 +48,11 @@ Comonicon.@cast function pathtracer(
     )
 
     try
-        # @assert lowercase(extension) in SUPPORTED_EXTS "Unsupported extension: $extension"
-        # should use an exception, assertion is limited inside here
+        # gestire estensione non supportata
+        # Diversificare però tra il caso in cui viene specificata l'estensione all'interno 
+        # del file di scena (in tal caso GrammarError)
+        # e il caso in cui viene richiesto da linea di comando un formato non supportato 
+        # (in tal caso tipo UnsopportedExtensionError)
         if isempty(output_name)
             timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
             output_name = "render_$timestamp" 
@@ -96,8 +99,11 @@ Comonicon.@cast function pathtracer(
         println("  • High dynamic range image (.pfm): $pfm_path")
 
     catch e
-        println("Error during rendering: ", e)
-        rethrow(e)
+        if isa(e, GrammarError)
+            println(e)
+        else
+            rethrow()
+        end
     end
 end
 
