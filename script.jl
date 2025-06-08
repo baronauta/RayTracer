@@ -42,9 +42,9 @@ Comonicon.@cast function pathtracer(
     height; 
     output_name::String="",
     extension::String = ".png",
-    n_rays::Integer=5,
-    max_depth::Integer=5,
-    russian_roulette_limit::Integer=3,
+    n_rays::Int=5,
+    max_depth::Int=5,
+    russian_roulette_limit::Int=3,
     )
 
     try
