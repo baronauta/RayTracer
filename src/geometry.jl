@@ -63,19 +63,31 @@ const VEC_X = Vec(1.0, 0.0, 0.0)
 const VEC_Y = Vec(0.0, 1.0, 0.0)
 const VEC_Z = Vec(0.0, 0.0, 1.0)
 
-"Display a `Point`."
-function Base.show(io::IO, ::MIME"text/plain", p::Point)
+"Show a `Point`"
+function Base.show(io::IO, p::Point)
     print(io, "Point(x=$(p.x), y=$(p.y), z=$(p.z))")
 end
 
-"Display a `Vec`."
-function Base.show(io::IO, ::MIME"text/plain", v::Vec)
+function Base.show(io::IO, ::MIME"text/plain", p::Point)
+    show(io, p)
+end
+
+"Show a `Vec`"
+function Base.show(io::IO, v::Vec)
     print(io, "Vec(x=$(v.x), y=$(v.y), z=$(v.z))")
 end
 
-"Display a `Normal`."
+function Base.show(io::IO, ::MIME"text/plain", v::Vec)
+    show(io, v)
+end
+
+"Show a `Normal`"
+function Base.show(io::IO, n::Normal)
+    print(io, "Normal(x=$(n.x), y=$(n.y), z=$(n.z))")
+end
+
 function Base.show(io::IO, ::MIME"text/plain", n::Normal)
-    print(io, "Point(x=$(n.x), y=$(n.y), z=$(n.z))")
+    show(io, n)
 end
 
 "Check if two `Point`s are approximately equal."
