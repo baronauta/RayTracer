@@ -28,9 +28,13 @@ function RGB(r, g, b)
     ColorTypes.RGB{Float32}(r, g, b)
 end
 
-"Display a RGB color."
-function Base.show(io::IO, ::MIME"text/plain", c::ColorTypes.RGB)
+"Show an RGB color"
+function Base.show(io::IO, c::ColorTypes.RGB)
     print(io, "ColorTypes.RGB(r=$(c.r), g=$(c.g), b=$(c.b))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", c::ColorTypes.RGB)
+    show(io, c)
 end
 
 const WHITE = RGB(1.0, 1.0, 1.0)
