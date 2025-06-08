@@ -126,7 +126,7 @@ end
 
 "Show KeywordToken"
 function Base.show(io::IO, tok::KeywordToken)
-    print(io, "KeywordToken($(tok.keyword) @ ", tok.location, ")")
+    print(io, "keyword \"($tok.keyword)\"")
 end
 
 
@@ -138,7 +138,7 @@ end
 
 "Show IdentifierToken"
 function Base.show(io::IO, tok::IdentifierToken)
-    print(io, "IdentifierToken(\"$(tok.identifier)\" @ ", tok.location, ")")
+    print(io, "identifier \"$(tok.identifier)\"")
 end
 
 "Token containing a string"
@@ -149,7 +149,7 @@ end
 
 "Show StringToken"
 function Base.show(io::IO, tok::StringToken)
-    print(io, "StringToken(\"$(tok.string)\" @ ", tok.location, ")")
+    print(io, "string \"$(tok.string)\"")
 end
 
 "Token containing a literal number"
@@ -160,7 +160,7 @@ end
 
 "Show LiteralNumberToken"
 function Base.show(io::IO, tok::LiteralNumberToken)
-    print(io, "LiteralNumberToken($(tok.number) @ ", tok.location, ")")
+    print(io, "number $(tok.number)")
 end
 
 "Token containing a symbolic character (e.g., parentheses and operators)"
@@ -171,7 +171,7 @@ end
 
 "Show SymbolToken"
 function Base.show(io::IO, tok::SymbolToken)
-    print(io, "SymbolToken(\"$(tok.symbol)\" @ ", tok.location, ")")
+    print(io, "symbol \"$(tok.symbol)\"")
 end
 
 # --- InputStream ---
