@@ -92,7 +92,7 @@ mutable struct SourceLocation
 end
 
 "Show SourceLocation in the format filename:line:column (e.g. file.txt:3:45)."
-function Base.show(io::IO, ::MIME"text/plain", s::SourceLocation)
+function Base.show(io::IO, s::SourceLocation)
     print(io, "$(s.filename):$(s.line_num):$(s.col_num)")
 end
 
@@ -102,63 +102,65 @@ struct GrammarError <: Exception
     msg::String
 end
 
-"Display GrammarError as ‘GrammarError at filename:line:column: message’."
-function Base.show(io::IO, ::MIME"text/plain", err::GrammarError)
-    print(io, "GrammarError at ", err.location, ": ", err.msg)
+"Show GrammarError"
+function Base.show(io::IO, err::GrammarError)
+    red_bold = Crayons.Crayon(foreground=:red, bold=true)
+    cyan = Crayons.Crayon(foreground=:cyan)
+    yellow_bold = Crayons.Crayon(foreground=:yellow, bold=true)
+    
+    print(io,
+        red_bold("GrammarError "),
+        "at ",
+        cyan(string(err.location)),
+        ": ",
+        yellow_bold(err.msg)
+    )
 end
 
-
 # --- Tokens ---
-"Token containing a recognized keyword."
+"Token containing a recognized keyword"
 struct KeywordToken <: Token
     location::SourceLocation
     keyword::KeywordEnum
 end
 
-"Show KeywordToken in the format IdentifierToken(KEYWORD @ filename:line:column)."
-function Base.show(io::IO, ::MIME"text/plain", tok::KeywordToken)
-    print(io, "KeywordToken($(tok.keyword) @ ")
-    show(io, MIME"text/plain"(), tok.location)
-    print(io, ")")
+"Show KeywordToken"
+function Base.show(io::IO, tok::KeywordToken)
+    print(io, "KeywordToken($(tok.keyword) @ ", tok.location, ")")
 end
 
-"Token containing an identifier (i.e. variable name)."
+
+"Token containing an identifier (i.e. variable name)"
 struct IdentifierToken <: Token
     location::SourceLocation
     identifier::AbstractString
 end
 
-"Show IdentifierToken in the format IdentifierToken(identifier @ filename:line:column)."
-function Base.show(io::IO, ::MIME"text/plain", tok::IdentifierToken)
-    print(io, "IdentifierToken(\"$(tok.identifier)\" @ ")
-    show(io, MIME"text/plain"(), tok.location)
-    print(io, ")")
+"Show IdentifierToken"
+function Base.show(io::IO, tok::IdentifierToken)
+    print(io, "IdentifierToken(\"$(tok.identifier)\" @ ", tok.location, ")")
 end
 
-"Token containing a string."
+"Token containing a string"
 struct StringToken <: Token
     location::SourceLocation
     string::AbstractString
 end
 
-"Show StringToken in the format StringToken(string @ filename:line:column)."
-function Base.show(io::IO, ::MIME"text/plain", tok::StringToken)
-    print(io, "StringToken(\"$(tok.string)\" @ ")
-    show(io, MIME"text/plain"(), tok.location)
-    print(io, ")")
+"Show StringToken"
+function Base.show(io::IO, tok::StringToken)
+    print(io, "StringToken(\"$(tok.string)\" @ ", tok.location, ")")
 end
 
-"Token containing a literal number."
+"Token containing a literal number"
 struct LiteralNumberToken <: Token
     location::SourceLocation
     number::AbstractFloat
 end
 
-"Show LiteralNumberToken in the format LiteralNumberToken(number @ filename:line:column)."
-function Base.show(io::IO, ::MIME"text/plain", tok::LiteralNumberToken)
-    print(io, "LiteralNumberToken($(tok.number) @ ")
-    show(io, MIME"text/plain"(), tok.location)
-    print(io, ")")
+"Show LiteralNumberToken"
+function Base.show(io::IO, tok::LiteralNumberToken)
+    print(io, "LiteralNumberToken($(tok.number) @ ", tok.location, ")")
 end
 
 "Token containing a symbolic character (e.g., parentheses and operators)"
@@ -167,11 +169,9 @@ struct SymbolToken <: Token
     symbol::AbstractString
 end
 
-"Show SymbolToken in the format SymbolToken(symbol @ filename:line:column)."
-function Base.show(io::IO, ::MIME"text/plain", tok::SymbolToken)
-    print(io, "SymbolToken(\"$(tok.symbol)\" @ ")
-    show(io, MIME"text/plain"(), tok.location)
-    print(io, ")")
+"Show SymbolToken"
+function Base.show(io::IO, tok::SymbolToken)
+    print(io, "SymbolToken(\"$(tok.symbol)\" @ ", tok.location, ")")
 end
 
 # --- InputStream ---
