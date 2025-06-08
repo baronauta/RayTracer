@@ -90,5 +90,125 @@
 end
 
 @testset "Parser exceptions" begin
-    
+
+    @testset "Unknown material" begin
+        stream = IOBuffer("""
+            plane(sky_material, rotation_y(10))
+        """)
+
+        instream = RayTracer.InputStream(stream, "test")
+
+        err_thrown = false
+        try
+            _ = RayTracer.parse_scene(instream)
+        catch e
+            if isa(e, GrammarError)
+                err_thrown = true
+            else
+                rethrow(e)  # Re-throw unexpected exceptions
+            end
+        end
+        @test err_thrown
+    end
+
+
+    @testset "Unknown float" begin
+        stream = IOBuffer(
+            """
+            float clock(13)
+
+            material sky_material(
+                diffuse(uniform(<0, 0, 0>)),
+                uniform(<0.7, 0.5, 1>)
+            )
+
+            plane(sky_material, rotation_y(pippo))
+            """
+        )
+
+        instream = RayTracer.InputStream(stream, "test")
+
+        err_thrown = false
+        try
+            _ = RayTracer.parse_scene(instream)
+        catch e
+            if isa(e, GrammarError)
+                err_thrown = true
+            else
+                rethrow(e)  # Re-throw unexpected exceptions
+            end
+        end
+        @test err_thrown
+    end
+
+    @testset "Double camera" begin
+        stream = IOBuffer(
+            """
+            camera(perspective, rotation_z(30) * translation([-4, 0, 1]), 1.0, 1.0)
+            camera(orthogonal, identity, 1.0, 1.0)
+            """
+        )
+
+        instream = RayTracer.InputStream(stream, "test")
+
+        err_thrown = false
+        try
+            _ = RayTracer.parse_scene(instream)
+        catch e
+            if isa(e, GrammarError)
+                err_thrown = true
+            else
+                rethrow(e)  # Re-throw unexpected exceptions
+            end
+        end
+        @test err_thrown
+    end
+
+    @testset "Missing keyword" begin
+
+        stream = IOBuffer(
+            """
+            camera(rullo, rotation_z(30) * translation([-4, 0, 1]), 1.0, 1.0)
+            """
+        )
+
+        instream = RayTracer.InputStream(stream, "test")
+
+        err_thrown = false
+        try
+            _ = RayTracer.parse_scene(instream)
+        catch e
+            if isa(e, GrammarError)
+                err_thrown = true
+            else
+                rethrow(e)  # Re-throw unexpected exceptions
+            end
+        end
+        @test err_thrown
+    end
+
+    @testset "Unexpected keyword" begin
+
+        stream = IOBuffer(
+            """
+            camera(identity, rotation_z(30) * translation([-4, 0, 1]), 1.0, 1.0)
+            """
+        )
+
+        instream = RayTracer.InputStream(stream, "test")
+
+        err_thrown = false
+        try
+            _ = RayTracer.parse_scene(instream)
+        catch e
+            if isa(e, GrammarError)
+                err_thrown = true
+            else
+                rethrow(e)  # Re-throw unexpected exceptions
+            end
+        end
+        @test err_thrown
+    end
+
+
 end
