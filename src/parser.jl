@@ -50,9 +50,7 @@ mutable struct Scene
     materials::Dict{String,Material}
     world::World
     camera::Union{Camera,Nothing}
-    float_variables::Dict{String,AbstractFloat} #| Float variables defined externally or already defined in the scene file.
-    #| This is a float dictionarry so camera transformation parameters 
-    #| need to be passed has single floats (angle = angle, x_translation = ..., ...).
+    float_variables::Dict{String,AbstractFloat}
     overridden_variables::Set{String}  #| Names of variables defined externally (e.g., from the CLI).
     #| If re-encountered in scene.txt, their value is not overridden —
     #| the external value is preserved.
@@ -92,7 +90,7 @@ end
 function expect_symbol(instream::InputStream, symbol::AbstractString)
     token = read_token(instream)
     if !(isa(token, SymbolToken)) || token.symbol != symbol
-        throw(GrammarError(token.location, "got '$token' instead of '$symbol'"))
+        throw(GrammarError(token.location, "expected $symbol but found $token"))
     end
     return token.symbol
 end
@@ -113,8 +111,10 @@ function expect_number(instream::InputStream, scene::Scene)
         if haskey(scene.float_variables, variable_name)
             return scene.float_variables[variable_name]
         else
-            throw(GrammarError(token.location, "expected number instead of '$token'."))
+            throw(GrammarError(token.location, "undefined $token"))
         end
+    else 
+        throw(GrammarError(token.location, "expected a number but found $token"))
     end
     return token.number
 end
@@ -123,7 +123,7 @@ end
 function expect_string(instream::InputStream)
     token = read_token(instream)
     if !(isa(token, LiteralString))
-        throw(GrammarError(token.location, "expected a string, got '$token'"))
+        throw(GrammarError(token.location, "expected a string but found $token"))
     end
     return token.string
 end
@@ -132,7 +132,7 @@ end
 function expect_identifier(instream::InputStream)
     token = read_token(instream)
     if !(isa(token, IdentifierToken))
-        throw(GrammarError(token.location, "expected an identifier, got '$token'"))
+        throw(GrammarError(token.location, "expected an identifier but found $token"))
     end
     return token.identifier
 end
@@ -142,14 +142,16 @@ function expect_keywords(instream::InputStream, keywords::Vector{KeywordEnum})
     token = read_token(instream)
 
     if !(isa(token, KeywordToken))
-        throw(GrammarError(token.location, "expected a keyword instead of '$token'"))
+        throw(GrammarError(token.location, "expected a keyword instead of $token"))
     end
 
     if !(token.keyword in keywords)
+        # Convert keywords vector to a vector of strings for display
+        expected = join(string.(keywords), ", ")
         throw(
             GrammarError(
                 token.location,
-                "expected one of these keywords $keywords instead of '$token'.",
+                "expected one of the keywords {$(expected)} but found $token"
             ),
         )
     end
@@ -472,7 +474,7 @@ function parse_scene(instream::InputStream; variables = Dict{String,AbstractFloa
         # Note: using 'expect_keywords' would require first read the token and check if reached end of file, 
         #       then unread_token and then use expect_keywords; this is simpler and clearer:
         if !(isa(token, KeywordToken))
-            throw(GrammarError(token.location, "expected a keyword instead of '$token'"))
+            throw(GrammarError(token.location, "expected a keyword instead of $token"))
         end
 
         if token.keyword == FLOAT
@@ -506,7 +508,7 @@ function parse_scene(instream::InputStream; variables = Dict{String,AbstractFloa
         elseif token.keyword == CAMERA
             # Only one camera can be defined in the scene
             !isnothing(scene.camera) && throw(
-                GrammarError(token.location, "You cannot define more than one camera"),
+                GrammarError(token.location, "you cannot define more than one camera"),
             )
             scene.camera = parse_camera(instream, scene)
         else
