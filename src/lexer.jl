@@ -126,7 +126,7 @@ end
 
 "Show KeywordToken"
 function Base.show(io::IO, tok::KeywordToken)
-    print(io, "keyword \"($tok.keyword)\"")
+    print(io, "keyword $(tok.keyword)")
 end
 
 
