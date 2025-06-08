@@ -26,6 +26,7 @@ module RayTracer
 
 import ColorTypes
 import Images
+import Crayons
 
 # Import the Base functions to extend them with new methods.
 # Since these functions are part of Base (which is always loaded),
