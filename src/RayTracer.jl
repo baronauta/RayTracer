@@ -51,7 +51,7 @@ export DiffuseBRDF, SpecularBRDF
 export PCG
 export onoff_tracer, flat_tracer, path_tracer, my_renderer
 
-export WrongPFMformat, ToneMappingError, RuntimeError, GeometryError, GrammarError
+export CustomException, WrongPFMformat, ToneMappingError, RuntimeError, GeometryError, GrammarError, ExtensionError
 export Token, KeywordToken, LiteralNumberToken, StringToken, SymbolToken, IdentifierToken
 
 export parse_scene

@@ -30,7 +30,7 @@ Note: Rendering and producing the `.pfm` file can be time-consuming.
   If not provided, a timestamped name like `render_2025-06-07_135023` will be used.  
   Output files will be saved as `render/<name>.<ext>` and `render/<name>.pfm`.
 
-- `--extension=<String>`: File format for the tone-mapped image (`png`, `jpeg`, or `tif`). Default: `png`.
+- `--extension=<String>`: File format for the tone-mapped image (`.png`, `.jpeg`, or `.tif`). Default: `.png`.
 
 - `--n-rays=<Integer>`: Number of rays per pixel (default: `5`).
 - `--max-depth=<Integer>`: Maximum ray recursion depth (default: `5`).

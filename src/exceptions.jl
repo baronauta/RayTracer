@@ -87,7 +87,7 @@ function Base.show(io::IO, err::CustomException)
     yellow_bold = Crayons.Crayon(foreground=:yellow, bold=true)
     
     print(io,
-        red_bold(nameof(typeof(err)), ": "),
+        red_bold(string(nameof(typeof(err)))*": "),
         yellow_bold(err.msg)
     )
 end
