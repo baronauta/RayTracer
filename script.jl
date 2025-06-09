@@ -84,21 +84,21 @@ Comonicon.@cast function pathtracer(
             "angle" => angle,
             "aspect_ratio" => aspect_ratio,
             )
-        # message for overwritten variable
-        (angle!=0) && println("⚠️ Warning: The variable 'angle' is being overwritten with a new value: $angle")
-        
+
         # Parse the scene from text file
         scene = open(scene_file, "r") do io
             instream = RayTracer.InputStream(io, scene_file)
             RayTracer.parse_scene(instream; variables)
         end
         println("✓ Scene parsing completed.")
+
         println("🖼️  Setting up the image canvas and camera...")
         # Prepare the canva to draw on
         img = HdrImage(width, height)
         # Prepare the environment made of the canva and the observer
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
+        
         println("🚀 Starting ray tracing (this may take a while)...")
         # RayTracing algorithm that need as input ...
         pcg = PCG()
