@@ -56,7 +56,6 @@ Comonicon.@cast function pathtracer(
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
-            const SUPPORTED_EXTS = [".jpg", ".jpeg", ".png", ".tiff", ".tif"]
             throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
         end
 
