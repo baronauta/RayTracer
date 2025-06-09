@@ -48,16 +48,19 @@ Comonicon.@cast function pathtracer(
     )
 
     try
-        # gestire estensione non supportata
-        # Diversificare però tra il caso in cui viene specificata l'estensione all'interno 
-        # del file di scena (in tal caso GrammarError)
-        # e il caso in cui viene richiesto da linea di comando un formato non supportato 
-        # (in tal caso tipo UnsopportedExtensionError)
+        # check if an output name is declared, if not use timestamp for default
         if isempty(output_name)
             timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
             output_name = "render_$timestamp" 
         end
 
+        # check correct output extension
+        if !(extension in SUPPORTED_EXTS)
+            const SUPPORTED_EXTS = [".jpg", ".jpeg", ".png", ".tiff", ".tif"]
+            throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
+        end
+
+        # make the path for output images
         base_path = "render"
         mkpath(base_path)
         ldr_path = joinpath(base_path, output_name * extension)
@@ -94,12 +97,12 @@ Comonicon.@cast function pathtracer(
         write(pfm_path, img)
         RayTracer.write_ldr_image(ldr_path, img)
 
-        println("\n✓ Rendering completed successfully. Output files:")
+        println("\n✅ Rendering completed successfully. Output files:")
         println("  • Tone-mapped image ($extension): $ldr_path")
         println("  • High dynamic range image (.pfm): $pfm_path")
 
     catch e
-        if isa(e, GrammarError)
+        if isa(e, CustomException)
             println(e)
         else
             rethrow()

@@ -76,6 +76,10 @@ struct GeometryError <: CustomException
     msg::String
 end
 
+struct ExtensionError <: CustomException
+    msg::String
+end
+
 #---
 
 function Base.show(io::IO, err::CustomException)
