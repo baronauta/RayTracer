@@ -268,7 +268,7 @@ A `Transformation` instance representing the scaling transformation and its inve
 """
 function scaling(sx::Real, sy::Real, sz::Real)
     if sx == 0 || sy == 0 || sz == 0
-        throw(GeometryError("Cannot scale with zero factor."))
+        throw(GeometryError("cannot scale with zero factor."))
     else
         M = HomMatrix([
             sx 0 0 0

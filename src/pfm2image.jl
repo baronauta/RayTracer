@@ -96,7 +96,7 @@ function Conversion_Params(A)
         if isa(e, ArgumentError)
             throw(
                 RuntimeError(
-                    "Invalid factor ($(A[2])), it must be a floating-point number.",
+                    "invalid factor ($(A[2])), it must be a floating-point number.",
                 ),
             )
         end
@@ -107,7 +107,7 @@ function Conversion_Params(A)
         if isa(e, ArgumentError)
             throw(
                 RuntimeError(
-                    "Invalid gamma ($(A[3])), it must be a floating-point number.",
+                    "invalid gamma ($(A[3])), it must be a floating-point number.",
                 ),
             )
         end
@@ -124,7 +124,7 @@ function Conversion_Params(A)
         catch
             throw(
                 RuntimeError(
-                    "Invalid weights ($(A[6])), it must be a floating-point numbers array, correct example: \"[1.0, 2.0, 3.0]\".",
+                    "invalid weights ($(A[6])), it must be a floating-point numbers array, correct example: \"[1.0, 2.0, 3.0]\".",
                 ),
             )
         end
@@ -133,7 +133,7 @@ function Conversion_Params(A)
         catch
             throw(
                 RuntimeError(
-                    "Invalid delta ($(A[7])), it must be a floating-point number.",
+                    "invalid delta ($(A[7])), it must be a floating-point number.",
                 ),
             )
 

@@ -239,12 +239,12 @@ function parse_pigment(instream::InputStream, scene::Scene)
             throw(
                 GrammarError(
                     instream.location,
-                    "Unexpected image format, plese use .pfm, .jpg, .tif, or .png",
+                    "unexpected image format, plese use .pfm, .jpg, .tif, or .png",
                 ),
             )
         end
     else
-        throw(GrammarError(instream.location, "Invalid pigment keyword"))
+        throw(GrammarError(instream.location, "invalid pigment keyword"))
     end
     expect_symbol(instream, ")")
     return pigment
@@ -268,7 +268,7 @@ function parse_brdf(instream::InputStream, scene::Scene)
     elseif brdf == SPECULAR
         return SpecularBRDF(pigment)
     else
-        throw(GrammarError(instream.location, "Invalid BRDF keyword"))
+        throw(GrammarError(instream.location, "invalid BRDF keyword"))
     end
 end
 

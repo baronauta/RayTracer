@@ -110,7 +110,7 @@ function Parameters(A::Vector{String})
                           n_rays, max_depth, russian_roulette_limit,
                           factor, gamma, mean_type, weights, delta)
     else
-        error("Invalid number of arguments. Use 6 for basic or 20 for full advanced mode.")
+        error("invalid number of arguments. Use 6 for basic or 20 for full advanced mode.")
     end
 end
 

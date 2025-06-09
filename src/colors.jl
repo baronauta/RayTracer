@@ -152,7 +152,7 @@ function luminosity(
     else
         throw(
             ToneMappingError(
-                "Invalid mean_type: $mean_type. Expected one of the following:\n" *
+                "invalid mean_type: $mean_type. Expected one of the following:\n" *
                 ":max_min\n" *
                 ":arithmetic\n" *
                 ":distance\n" *
