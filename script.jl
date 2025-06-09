@@ -158,7 +158,7 @@ Note: This algorithm returns the sum of the surface color and
 
     This tracer ignores lighting, shadows, and reflections, and is typically used
     for quick previews, debugging geometry, or visualizing base materials and emissive surfaces.
-        
+
 # Args
 
 - `scene_file`: Path to the scene description file (String).
@@ -233,6 +233,127 @@ Comonicon.@cast function flattracer(
         # RayTracing algorithm that need as input ...
         f =
             ray -> flat_tracer(
+                scene.world,
+                ray;
+                bkg_color = BLACK,
+            )
+
+
+        RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
+        println("\n")
+
+        write(pfm_path, img)
+        
+        # basic tone mapping
+        RayTracer.normalize_image!(img)
+        RayTracer.clamp_image!(img)
+        RayTracer.write_ldr_image(ldr_path, img)
+
+        println("✅ Rendering completed successfully. Output files:")
+        println("  • Tone-mapped image ($extension): $ldr_path")
+        println("  • High dynamic range image (.pfm): $pfm_path")
+
+    catch e
+        if isa(e, CustomException)
+            println(e)
+        else
+            rethrow()
+        end
+    end
+end
+
+# ─────────────────────────────────────────────────────────────
+# ON-OFF TRACER
+# ─────────────────────────────────────────────────────────────
+
+"""
+On-Off tracer command to render a 3D scene with a binary ray tracer algorithm
+that returns `WHITE` if the given `ray` intersects
+any object in the `world`, and `bkg_color` otherwise.
+
+This is a basic tracer useful for debugging or silhouette rendering.
+
+This tool generates two output images for each rendering:
+- a high dynamic range `.pfm` file
+- a tone-mapped image (`.png`, `.jpeg`, or `.tif`)
+
+Both images are saved in the `render/` folder. The tone-mapped image is generated using a basic built-in tone mapping, which may not produce optimal results for all scenes.  
+For higher-quality control, load the `.pfm` file and apply a custom tone mapping using the `tonemapping` function.
+
+# Args
+
+- `scene_file`: Path to the scene description file (String).
+- `width`: Width of the output image (Integer).
+- `height`: Height of the output image (Integer).
+
+# Options
+
+- `--output-name=<String>`: Base name for the output image files (without extension).  
+  If not provided, a timestamped name like `render_2025-06-07_135023` will be used.  
+  Output files will be saved as `render/<name>.<ext>` and `render/<name>.pfm`.
+
+- `--extension=<String>`: File format for the tone-mapped image (`.png`, `.jpeg`, or `.tif`). Default: `.png`.
+
+- `--angle=<float>`: Angle for rotating the camera around the Z axis.  
+  The distance from the origin is maintained.  
+  Useful for quickly changing the view without modifying the `scene_file` (default: `0.0`).
+"""
+Comonicon.@cast function onofftracer(
+    scene_file, 
+    width, 
+    height; 
+    output_name::String="",
+    extension::String = ".png",
+    angle::Float64=0.0,
+    )
+
+    try
+        println("📂 Preparing to parse the scene...")
+        # check if an output name is declared, if not use timestamp for default
+        if isempty(output_name)
+            timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
+            output_name = "render_$timestamp" 
+        end
+
+        # check correct output extension
+        if !(extension in SUPPORTED_EXTS)
+            throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
+        end
+
+        # make the path for output images
+        base_path = "render"
+        mkpath(base_path)
+        ldr_path = joinpath(base_path, output_name * extension)
+        pfm_path = joinpath(base_path, output_name * ".pfm")
+
+        # convert width e height to Int
+        img_width = parse(Int, width)
+        img_height = parse(Int, height)
+        # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
+        aspect_ratio = img_width/img_height
+        variables = Dict(
+            "angle" => angle,
+            "aspect_ratio" => aspect_ratio,
+            )
+
+        # Parse the scene from text file
+        scene = open(scene_file, "r") do io
+            instream = RayTracer.InputStream(io, scene_file)
+            RayTracer.parse_scene(instream; variables)
+        end
+        println("✓ Scene parsing completed.")
+
+        println("🖼️  Setting up the image canvas and camera...")
+        # Prepare the canva to draw on
+        img = HdrImage(img_width, img_height)
+        # Prepare the environment made of the canva and the observer
+        tracer = ImageTracer(img, scene.camera)
+        println("✓ Canvas and camera setup completed.")
+        
+        println("🚀 Starting ray tracing (this may take a while)...")
+        # RayTracing algorithm that need as input ...
+        f =
+            ray -> onoff_tracer(
                 scene.world,
                 ray;
                 bkg_color = BLACK,
