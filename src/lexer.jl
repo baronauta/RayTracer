@@ -97,7 +97,7 @@ function Base.show(io::IO, s::SourceLocation)
 end
 
 "Exception to throw for reporting error while parsing scene file."
-struct GrammarError <: Exception
+struct GrammarError <: CustomException
     location::SourceLocation
     msg::String
 end
