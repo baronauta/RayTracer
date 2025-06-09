@@ -404,8 +404,8 @@ Read the next token from the stream.
 
 Skips whitespace and comments, then reads and returns the appropriate token:
 - `SymbolToken` for symbols
-- `LiteralString` for quoted strings
-- `LiteralNumber` for numeric literals
+- `StringToken` for quoted strings
+- `LiteralNumberToken` for numeric literals
 - `KeywordToken` or `IdentifierToken` for words
 
 Returns `nothing` at the end of the file.

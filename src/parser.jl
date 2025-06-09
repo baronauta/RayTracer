@@ -122,7 +122,7 @@ end
 "Read a token from the stream and check that it is a String, returning a String."
 function expect_string(instream::InputStream)
     token = read_token(instream)
-    if !(isa(token, LiteralString))
+    if !(isa(token, StringToken))
         throw(GrammarError(token.location, "expected a string but found $token"))
     end
     return token.string
