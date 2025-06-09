@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        julia-version: ['1'] # ['lts', '1']
+        julia-version: ['lts', '1']
         # julia-arch: [x64, x86]
         os: [ubuntu-latest, windows-latest]
         
