@@ -6,6 +6,10 @@ using RayTracer
 using Comonicon
 using Dates
 
+# ─────────────────────────────────────────────────────────────
+# PATH TRACER
+# ─────────────────────────────────────────────────────────────
+
 """
 Path tracer command to render a scene.
 
@@ -94,6 +98,10 @@ Comonicon.@cast function pathtracer(
         
 
         write(pfm_path, img)
+        
+        # basic tone mapping
+        normalize_image!(img)
+        clamp_image!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("\n✅ Rendering completed successfully. Output files:")

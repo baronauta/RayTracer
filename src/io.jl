@@ -144,9 +144,9 @@ function write_ldr_image(filename::String, image::HdrImage; gamma = 1.0)
         for w = 1:image.width
             pix = get_pixel(image, w, h)
             color = ColorTypes.RGB{Float32}(
-                clamp(pix.r^(1 / gamma), 0.0f0, 1.0f0),
-                clamp(pix.g^(1 / gamma), 0.0f0, 1.0f0),
-                clamp(pix.b^(1 / gamma), 0.0f0, 1.0f0),
+                pix.r^(1 / gamma),
+                pix.g^(1 / gamma),
+                pix.b^(1 / gamma),
             )
             set_pixel!(image, w, h, color)
         end

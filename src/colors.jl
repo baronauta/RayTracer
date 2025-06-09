@@ -191,7 +191,7 @@ function log_average(
 end
 
 """
-    normalize_image(img::HdrImage; factor = 1.0, lumi = nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
+    normalize_image(img::HdrImage; factor = 0.2, lumi = nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
 
 Normalize the values of an RGB color using the average luminosity and the normalization factor (to be specified by the user).
 """
