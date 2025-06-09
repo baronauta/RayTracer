@@ -363,7 +363,7 @@ function _parse_number_token(instream::InputStream, start_char::AbstractChar)
             throw(
                 GrammarError(
                     instream.location,
-                    "'$token' is an invalid floating-point number",
+                    "$token is an invalid floating-point number",
                 ),
             )
         else

@@ -489,7 +489,7 @@ function parse_scene(instream::InputStream; variables = Dict{String,AbstractFloa
             # Only allow internal variables to be defined once; redefinitions are errors
             if !(var_name in scene.overridden_variables)
                 if haskey(scene.float_variables, var_name)
-                    throw(GrammarError(var_loc, "variable '$var_name' cannot be redefined"))
+                    throw(GrammarError(var_loc, "variable $var_name cannot be redefined"))
                 end
                 scene.float_variables[var_name] = var_val
             end
@@ -513,7 +513,7 @@ function parse_scene(instream::InputStream; variables = Dict{String,AbstractFloa
             scene.camera = parse_camera(instream, scene)
         else
             # Raise an error for any unexpected keyword
-            throw(GrammarError(token.location, "Unexpected keyword: $token"))
+            throw(GrammarError(token.location, "unexpected keyword $token"))
         end
     end
     return scene
