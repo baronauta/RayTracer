@@ -197,50 +197,46 @@ end
 Read a PFM Image from a stream and returns the corresponding HdrImage.
 """
 function read_pfm_image(stream::IO)
-    try
-        # Read the magic, expected "PF"
-        magic = readline(stream)
-        if magic != "PF"
-            throw(WrongPFMformat("invalid magic in PFM file."))
-        end
-        # Read the image size, expected "<width> <height>"
-        width, height = _parse_img_size(readline(stream))
-        # Read the endianness, expected "+1.0" or "-1.0"
-        endianness = _parse_endianness(readline(stream))
-        # Create HdrImage
-        image = HdrImage(width, height)
-        # Calculate expected data size (width * height * 3 for RGB)
-        expected_float = width * height * 3
-        expected_bytes = expected_float * sizeof(Float32)
-        # Initialise byte counter
-        bytes_read = 0
-        # Read and process the data
-        # PFM stores from bottom-left
-        for y = image.height:-1:1
-            for x = 1:image.width
-                if bytes_read < expected_bytes
-                    # Read the three floats for the pixel
-                    (r, g, b) = [_read_float(stream, endianness) for _ = 1:3]
-                    bytes_read += 3 * sizeof(Float32)
-                    color = ColorTypes.RGB{Float32}(r, g, b)
-                    # Set pixel in HdrImage
-                    set_pixel!(image, x, y, color)
-                else
-                    throw(
-                        WrongPFMformat(
-                            "number of bytes read exceeds the expected number of bytes",
-                        ),
-                    )
-                end
+    # Read the magic, expected "PF"
+    magic = readline(stream)
+    if magic != "PF"
+        throw(WrongPFMformat("invalid magic in PFM file."))
+    end
+    # Read the image size, expected "<width> <height>"
+    width, height = _parse_img_size(readline(stream))
+    # Read the endianness, expected "+1.0" or "-1.0"
+    endianness = _parse_endianness(readline(stream))
+    # Create HdrImage
+    image = HdrImage(width, height)
+    # Calculate expected data size (width * height * 3 for RGB)
+    expected_float = width * height * 3
+    expected_bytes = expected_float * sizeof(Float32)
+    # Initialise byte counter
+    bytes_read = 0
+    # Read and process the data
+    # PFM stores from bottom-left
+    for y = image.height:-1:1
+        for x = 1:image.width
+            if bytes_read < expected_bytes
+                # Read the three floats for the pixel
+                (r, g, b) = [_read_float(stream, endianness) for _ = 1:3]
+                bytes_read += 3 * sizeof(Float32)
+                color = ColorTypes.RGB{Float32}(r, g, b)
+                # Set pixel in HdrImage
+                set_pixel!(image, x, y, color)
+            else
+                throw(
+                    WrongPFMformat(
+                        "number of bytes read exceeds the expected number of bytes",
+                    ),
+                )
             end
         end
-        if bytes_read != expected_bytes
-            throw(WrongPFMformat("expected $expected_bytes bytes, got $(length(raw_data))"))
-        end
-        return image
-    catch e
-        println("$(typeof(e)): $(e.msg)")
     end
+    if bytes_read != expected_bytes
+        throw(WrongPFMformat("expected $expected_bytes bytes, got $(length(raw_data))"))
+    end
+    return image
 end
 
 """
