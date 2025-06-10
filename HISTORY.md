@@ -1,4 +1,12 @@
 ## HEAD
+## Breaking changes summary
+- **Breaking change:** Usage updated [#16](https://github.com/baronauta/RayTracer/pull/16):
+  - `demo` is now limited to the `demo_scene.txt` file in `example/` folder
+  - `pfm2image` functionality is now available under `julia RayTracer tonemapping`
+---
+- Added `image2pfm` to generate `.pfm` images from standard LDR formats (see this [commit](https://github.com/baronauta/RayTracer/commit/b99578f2e9ab31780a45ddaefe77ad86a6965c45)).
+- Introduced a modern, extensible CLI using Comonicon.jl [#16](https://github.com/baronauta/RayTracer/pull/16)
+- Added support for custom text-based scene descriptions [#16](https://github.com/baronauta/RayTracer/pull/16)
 - Fix Issue with reflective materials [#17](https://github.com/baronauta/RayTracer/issues/17).
 - Fix: now the original HDR image is not modified dirng ldr image writing
 - Add `lts julia version` compatibility (see these 2 commits: [934ffc7](https://github.com/baronauta/RayTracer/commit/934ffc75ee846e918f7fbad9eeca7376b5202b5d), [d8e4d53](https://github.com/baronauta/RayTracer/commit/d8e4d53e980a0b20df3a11af068fcb020158444a))
