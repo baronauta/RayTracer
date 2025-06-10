@@ -34,4 +34,22 @@
         @test RayTracer.get_color(pigment, Vec2D(0.0, 1.0)) ≈ (RGB(2.0, 1.0, 3.0))
         @test RayTracer.get_color(pigment, Vec2D(1.0, 1.0)) ≈ (RGB(3.0, 2.0, 1.0))
     end
+
+end
+
+
+@testset "BRDFs" begin
+    @testset "SpecularBRDF" begin
+        # Test direciton for scatter_ray
+        # A ray along the x=0 plane hit the z=0 plane mirror,
+        # with an angle of 30° from the normal, expect an output direction with 30° from normal but with z-dir inverted
+        pcg = RayTracer.RayTracer.PCG()
+        incoming_dir = Vec(0.0, 0.5, -(sqrt(3)/2))
+        expect_dir = Vec(0.0, 0.5, (sqrt(3)/2))
+        interaction_point = Point(0.,0.,0.)
+        normal = Normal(0.,0.,10.) # to be normalized
+        depth = 1
+        final_ray = RayTracer.scatter_ray( SpecularBRDF(), pcg, incoming_dir, interaction_point, normal, depth)
+        @test expect_dir ≈ final_ray.dir
+    end
 end

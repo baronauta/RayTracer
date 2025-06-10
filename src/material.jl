@@ -161,7 +161,7 @@ function scatter_ray(
     Ψ = normalize(Vec(incoming_dir.x, incoming_dir.y, incoming_dir.z))
     _n = normalize(normal)
     dot_prod = dot(Ψ, _n)
-    n = RayTracer.normal_to_vec((-1) * _n * dot_prod)
+    n = RayTracer.normal_to_vec((-2) * _n * dot_prod)
     Ψᵣ = Ψ + n
 
     return Ray(interaction_point, Ψᵣ, 1.0e-3, typemax(typeof(interaction_point.x)), depth)
