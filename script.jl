@@ -383,8 +383,70 @@ Comonicon.@cast function onofftracer(
     end
 end
 
-# Commonicon.@cast function tonemapping()
-# end
+
+"""
+Performs tone mapping on an HDR (High Dynamic Range) image read from the specified `filename`.
+The function reads a PFM image, normalizes its luminance, and then writes the result
+as an LDR (Low Dynamic Range) image with a specified extension and gamma correction.
+
+# Args
+
+- `filename`: The path to the input HDR image file (e.g., a PFM file).
+
+# Options
+
+- `--output-name=<String>`: Optional. The desired name for the output LDR image file, without an extension.
+                            If empty, the base name of the input `filename` will be used.
+- `--extension=<String>`: The desired file extension for the output LDR image (e.g., ".png", ".jpg").
+                        Defaults to ".png". Must be one of the `SUPPORTED_EXTS`.
+- `--factor=<Float64>`: A scaling factor applied during image normalization. Defaults to 1.0.
+- `--mean=<Symbol>`: The type of mean calculation to use during normalization. Defaults to `:`.
+                    (Note: The current `normalize_image!` call explicitly uses `:max_min`.)
+- `--gamma=<Float64>`: The gamma correction value applied when writing the LDR image. Defaults to 1.0.
+- `--weights=<Vector{Float64}>`: A vector of weights used for luminance calculation during normalization.
+                                Defaults to `[1., 1., 1.]` (typically for R, G, B channels).
+"""
+Comonicon.@cast function tonemapping(
+    filename;
+    output_name::String="",
+    extension::String = ".png",
+    factor::Float64=1.,
+    mean::Symbol=:max_min,
+    gamma::Float64=1.,
+    weights::Vector{Float64}=[1., 1., 1.]
+)
+    try
+        hdrimage = read_pfm_image(filename)
+        RayTracer.normalize_image!(
+            hdrimage;
+            factor = factor,
+            lumi = nothing,
+            delta = 1e-10,
+            mean_type = mean,
+            weights = weights,
+            )
+        RayTracer.clamp_image!(hdrimage)
+        # Determine the base output filename
+        base_output_name = if isempty(output_name)
+            splitext(filename)[1] # Get filename without its original extension
+        else
+            output_name
+        end
+        
+        if !(extension in SUPPORTED_EXTS)
+            throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
+        end
+        newfilename = base_output_name * extension
+        @info "Saving figure to $newfilename"
+        RayTracer.write_ldr_image(newfilename, hdrimage; gamma=gamma)
+    catch e
+        if isa(e, CustomException)
+            println(e)
+        else
+            rethrow()
+        end
+    end
+end
 
 # Use a single @main somewhere to define the entry.
 # Leave @main empty; it just activates the CLI parser and dispatcher.
