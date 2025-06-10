@@ -1,9 +1,13 @@
 # HEAD
+- Fix Issue with reflective materials [#17](https://github.com/baronauta/RayTracer/issues/17).
+- Fix: now the original HDR image is not modified dirng ldr image writing
+- Add `lts julia version` compatibility (see these 2 commits: [934ffc7](https://github.com/baronauta/RayTracer/commit/934ffc75ee846e918f7fbad9eeca7376b5202b5d), [d8e4d53](https://github.com/baronauta/RayTracer/commit/d8e4d53e980a0b20df3a11af068fcb020158444a))
+# Version 0.3.0
 ## Breaking changes summary
--   **Breaking change:** The `demo` interface now supports multiple renderers (`onoff_tracer`, `flat_tracer`, `path_tracer`) and uses `ImagePigment` for advanced textures.[#10](https://github.com/baronauta/RayTracer/pull/10/)
--   **Breaking change:** Now `HitRecord` require a `shape` field.[#10](https://github.com/baronauta/RayTracer/pull/10/)
--   **Breaking change:** All `Shape` subtypes now require a `material` field.[#10](https://github.com/baronauta/RayTracer/pull/10/)
--   **Breaking change:** Reorganized `/test`. In addition to running all tests, it is now possible to import `setup.jl` and run individual test files with specific `@testset`s. [#11](https://github.com/baronauta/RayTracer/pull/11)
+-   **Breaking change:** The `demo` interface now supports multiple renderers (`onoff_tracer`, `flat_tracer`, `path_tracer`) and uses `ImagePigment` for advanced textures [#10](https://github.com/baronauta/RayTracer/pull/10/).
+-   **Breaking change:** Now `HitRecord` require a `shape` field [#10](https://github.com/baronauta/RayTracer/pull/10/).
+-   **Breaking change:** All `Shape` subtypes now require a `material` field [#10](https://github.com/baronauta/RayTracer/pull/10/).
+-   **Breaking change:** Reorganized `/test`. In addition to running all tests, it is now possible to import `setup.jl` and run individual test files with specific `@testset`s [#11](https://github.com/baronauta/RayTracer/pull/11).
 
 ---
 -   Implement shapes' colors and rendering equation solutions [#10](https://github.com/baronauta/RayTracer/pull/10/)
