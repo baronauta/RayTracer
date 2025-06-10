@@ -78,7 +78,6 @@ include("shapes.jl")
 include("world.jl")
 include("demo.jl")
 include("render.jl")
-include("pfm2image.jl")
 include("lexer.jl")
 include("parser.jl")
 
