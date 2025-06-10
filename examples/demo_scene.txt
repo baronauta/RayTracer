@@ -1,0 +1,48 @@
+# Comments start with #
+
+# Scene file format guide: ---------------------------------------------------------------------
+
+# 1. Float variables:
+#    - You can define float variables.
+#    - Variables defined here can be overridden by external float variables; otherwise, their value is used.
+#    - Variables defined in the file can only be defined once.
+#
+# 1.1 NOTE: <angle> can be defined here and also passed externally (basic change of view around z-axis).
+#           <aspect_ratio> is passed externally to avoid distorsion (not necessary to be defined here).
+#
+# 2. Materials:
+#    - You can declare named materials and use them later.
+#
+# 3. Cannot declare named general variables; use them directly instead.
+#    - You cannot create named Transformations, Spheres, Planes, Colors, vectors, etc.
+#
+# 4. Camera:
+#    - Only one camera can be defined.
+#
+# Follow this structure to create valid scene files.
+#------------------------------------------------------------------------------------------------
+
+# Float Variables
+float angle(0.0)
+
+# Materials
+material plane_material(
+    diffuse(checkered(<0.78, 0.902, 0.471>, <0.953, 0.718, 1>, 6)),
+    uniform(<0, 0, 0>)
+)
+material earth_material(diffuse(image("./examples/reference_earth.pfm")), uniform(<0, 0, 0>))
+material sphere_material(diffuse(uniform(<1, 0.314, 0.314>)), uniform(<0, 0, 0>))
+material mirror_material(specular(uniform(<0.9, 0.9, 0.9>)), uniform(<0, 0, 0>))
+material sky_material(diffuse(uniform(<0, 0, 0>)), uniform(<0.7, 0.8, 1>))
+
+
+# Objects definitions
+sphere(earth_material, translation([1, 1, 2]))
+sphere(sphere_material, translation([-1, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
+sphere(mirror_material, identity)
+sphere(sky_material, scaling(50, 50, 50))
+plane(plane_material, identity)
+
+
+# Camera definition
+camera(perspective, rotation_z(angle) * translation([-3, 0, 1]), aspect_ratio, 1.0)

@@ -24,48 +24,70 @@
 
 
 # ─────────────────────────────────────────────────────────────
-# Defining new customized Exceptions
+# Defining new customized Exceptions with custom 'show' methods
 # ─────────────────────────────────────────────────────────────
+
+# general abstract type (useful for custom show method)
+abstract type CustomException <: Exception end
+
+#---
+
 """
-    struct WrongPFMformat <: Exception
+    struct WrongPFMformat <: CustomException
 Custom exception for handling incorrect PFM file format errors.
 
 # Fields
 - `msg::String`: Error message describing the issue.
 """
-struct WrongPFMformat <: Exception
+struct WrongPFMformat <: CustomException
     msg::String
 end
 
 """
-    struct ToneMappingError <: Exception
+    struct ToneMappingError <: CustomException
 Custom exception for errors encountered during tone mapping operations.
 
 # Fields
 - `msg::String`: Error message describing the issue.
 """
-struct ToneMappingError <: Exception
+struct ToneMappingError <: CustomException
     msg::String
 end
 
 """
-    struct RuntimeError <: Exception
+    struct RuntimeError <: CustomException
 Custom exception for errors encountered while running RayTracer, after being precompiled.
 
 # Fields
 - `msg::String`: Error message describing the issue.
 """
-struct RuntimeError <: Exception
+struct RuntimeError <: CustomException
     msg::String
 end
 
 """
-    struct GeometryError <: Exception
+    struct GeometryError <: CustomException
 Custom exception for errors encountered during geometry operations (ex: comparing Vector and Point).
 
 # Fields
 - `msg::String`: Error message describing the issue.
 """
-struct GeometryError <: Exception
+struct GeometryError <: CustomException
     msg::String
+end
+
+struct ExtensionError <: CustomException
+    msg::String
+end
+
+#---
+
+function Base.show(io::IO, err::CustomException)
+    red_bold = Crayons.Crayon(foreground=:red, bold=true)
+    yellow_bold = Crayons.Crayon(foreground=:yellow, bold=true)
+    
+    print(io,
+        red_bold(string(nameof(typeof(err)))*": "),
+        yellow_bold(err.msg)
+    )
 end

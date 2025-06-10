@@ -1,6 +1,5 @@
-import Base: *
-
-#_______________________________________________________________________________________
+#     __________________________________________________________
+#
 #     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
 #     __________________________________________________________
 #
@@ -30,6 +29,9 @@ import Base: *
 #   - Transformation
 # ─────────────────────────────────────────────────────────────
 
+const IDENTITY_MATR4x4 =
+    [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.0; 0.0 0.0 0.0 1.0]
+
 struct HomMatrix{T<:AbstractFloat}
     matrix::Matrix{T}
 end
@@ -39,8 +41,10 @@ struct Transformation{T<:AbstractFloat}
     invM::HomMatrix{T}
 end
 
-const IDENTITY_MATR4x4 =
-    [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.0; 0.0 0.0 0.0 1.0]
+function Transformation()
+    I = HomMatrix(IDENTITY_MATR4x4)
+    Transformation(I, I)
+end
 
 "Product between two `HomMatrix` types. Returns a `HomMatrix` type."
 function *(A::HomMatrix, B::HomMatrix)
@@ -63,7 +67,7 @@ end
 
 "Compare two `HomMatrix` types. Useful for tests."
 function ≈(M::HomMatrix, N::HomMatrix)
-    M.matrix ≈ N.matrix
+    isapprox(M.matrix, N.matrix; rtol=1e-6, atol=1e-8)
 end
 
 "Compare two `Transformation` types. Useful for tests."
@@ -264,7 +268,7 @@ A `Transformation` instance representing the scaling transformation and its inve
 """
 function scaling(sx::Real, sy::Real, sz::Real)
     if sx == 0 || sy == 0 || sz == 0
-        throw(GeometryError("Cannot scale with zero factor."))
+        throw(GeometryError("cannot scale with zero factor."))
     else
         M = HomMatrix([
             sx 0 0 0

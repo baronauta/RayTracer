@@ -181,12 +181,12 @@ Generates a `Ray` directed towards a specific point on the pixel's surface of th
     ray = fire_ray(tracer, 100, 150; u_pixel=0.25, v_pixel=0.75)  # custom point in the pixel
 """
 function fire_ray(
-    tracer::ImageTracer{T},
+    tracer::ImageTracer,
     col::Integer,
     row::Integer;
-    u_pixel::T = 0.5,
-    v_pixel::T = 0.5,
-) where {T<:AbstractFloat}
+    u_pixel::AbstractFloat = 0.5,
+    v_pixel::AbstractFloat = 0.5,
+)
 
     # all pixels have dimensions '(1,1)', so the pixel center is at the pixel coordinates '+ (0.5,0.5)'
     # !!Attention!!
@@ -220,10 +220,10 @@ Display a simple progress bar in the terminal.
 
 Displays a colored progress bar with percentage and iteration count.
 """
-function simple_progress_bar(i, total; item = "row", width=40)
+function simple_progress_bar(i, total; item = "row", width = 40)
     # calculate the preogress as fraction of done/total, then calculate the % to indicate aside the bar.
     progress = i / total # the fraction o
-    percent = round(progress * 100; digits=1)
+    percent = round(progress * 100; digits = 1)
 
     # calculate the number of space and the number of special caracter to fill the bar.
     filled = round(Int, progress * width)
@@ -265,6 +265,6 @@ function fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
         end
         # for video i dont want a progress bar for all rows of all images, only for frames.
         # so i need  the progress_flag, if is an image the progress_flag is true, if video is false
-        (progress_flag==true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
+        (progress_flag == true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
     end
 end

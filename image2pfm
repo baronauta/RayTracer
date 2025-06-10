@@ -1,0 +1,63 @@
+#!/usr/bin/env julia
+
+#_______________________________________________________________________________________
+#     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
+#     __________________________________________________________
+#
+#   This file is licensed under the European Union Public Licence (EUPL), version 1.2.
+#
+#   You are free to use, modify, and distribute this software under the conditions
+#   of the EUPL v.1.2, as published by the European Commission.
+#
+#   Obligations include:
+#     - Retaining this notice and the licence terms
+#     - Providing access to the source code
+#     - Distributing derivative works under the same or a compatible licence
+#
+#   Full licence text: see the LICENSE file or visit https://eupl.eu
+#
+#   Disclaimer:
+#     Unless required by applicable law or agreed to in writing,
+#     this software is provided "AS IS", without warranties or conditions
+#     of any kind, either express or implied.
+#
+#_______________________________________________________________________________________
+
+using Pkg
+Pkg.activate(normpath(@__DIR__))
+using RayTracer
+using Comonicon
+using Dates
+
+"""
+Converts a low dynamic range (LDR) image to a high dynamic range (HDR) image in PFM format.
+
+# Args
+- `filename`: Path to the input image file (String).
+
+# Options
+- `--output-name=<String>`: Base name for the output image files. 
+                            If not provided, it will be generated from the input file name.
+"""
+Comonicon.@main function image2pfm(
+    filename::String;
+    output_name::String = "",
+)
+    println("📂 Preparing to convert the image...")
+
+    # If no output name is provided, generate one from the input file name
+    if isempty(output_name)
+        name = splitext(filename)[1]
+        output_name = "$(name).pfm"
+    # If the output filename does not end with '.pfm', correct it
+    elseif !(endswith(".pfm", lowercase(output_name)))
+        println("\n⚠️  Warning: output file name has a wrong or missing extension — correcting to '.pfm'\n")
+        output_name = "$(splitext(output_name)[1]).pfm"
+    end
+
+    println("🖼️  Converting the image to PFM format...")
+    RayTracer.ldr_to_pfm_image(filename, output_name)
+
+    println("\n✅ Conversion completed successfully. Output files:")
+    println("  • $(output_name)")
+end
