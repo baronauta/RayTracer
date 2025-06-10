@@ -1,4 +1,13 @@
-# HEAD
+## HEAD
+## Breaking changes summary
+- **Breaking change:** Usage updated [#16](https://github.com/baronauta/RayTracer/pull/16):
+  - `demo` is now limited to the `demo_scene.txt` file in `example/` folder
+  - `pfm2image` functionality is now available under `julia RayTracer tonemapping`
+---
+- Added `image2pfm` to generate `.pfm` images from standard LDR formats (see this [commit](https://github.com/baronauta/RayTracer/commit/b99578f2e9ab31780a45ddaefe77ad86a6965c45)).
+- Introduced a modern, extensible CLI using Comonicon.jl [#16](https://github.com/baronauta/RayTracer/pull/16)
+- Added support for custom text-based scene descriptions [#16](https://github.com/baronauta/RayTracer/pull/16)
+# Version 0.3.0
 ## Breaking changes summary
 -   **Breaking change:** The `demo` interface now supports multiple renderers (`onoff_tracer`, `flat_tracer`, `path_tracer`) and uses `ImagePigment` for advanced textures.[#10](https://github.com/baronauta/RayTracer/pull/10/)
 -   **Breaking change:** Now `HitRecord` require a `shape` field.[#10](https://github.com/baronauta/RayTracer/pull/10/)
