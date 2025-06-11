@@ -157,6 +157,8 @@ Responsible for:
 struct ImageTracer{T<:AbstractFloat}
     image::HdrImage
     camera::Camera{T}
+    ray_for_pixel::Integer
+    pcg::PCG
 end
 
 """
