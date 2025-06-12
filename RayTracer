@@ -69,7 +69,7 @@ Determines the appropriate file extension to use for output.
 
             # Both extensions are present and they differ → show a warning
             if(!isnothing(ext_in_filename) && (extension != ext_in_filename))
-                @warn "\n⚠️  Warning: extension in output name ('$ext_in_filename') doesn't match the one specified ('$extension'). Using the specified one.\n")
+                @warn "\n⚠️  Warning: extension in output name ('$ext_in_filename') doesn't match the one specified ('$extension'). Using the specified one.\n"
             end
             return extension
         end
