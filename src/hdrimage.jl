@@ -240,9 +240,9 @@ Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma corr
 # Arguments
 - `filename::String`: The path where the LDR image will be saved (e.g., `"output.png"`).
 - `image::HdrImage`:  HDR image to convert.
-- `a`: scaling factor applied after normalization (default: `1.0`).
 - `mean_type`: Method for computing pixel luminosity (default: `:max_min`).
 - `weights`: Vector of weights for `:weighted` luminosity method (default: `nothing`).
+- `a`: scaling factor applied after normalization (default: `1.0`).
 - `gamma`: gamma correction factor (default: `1.0`).
 """
 function write_ldr_image(
