@@ -1,5 +1,5 @@
-
-#_______________________________________________________________________________________
+#     __________________________________________________________
+#
 #     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
 #     __________________________________________________________
 #
@@ -19,18 +19,18 @@
 #     Unless required by applicable law or agreed to in writing,
 #     this software is provided "AS IS", without warranties or conditions
 #     of any kind, either express or implied.
-#
-#_______________________________________________________________________________________
 
-
-# ─────────────────────────────────────────────────────────────
-# Defining new customized Exceptions with custom 'show' methods
-# ─────────────────────────────────────────────────────────────
-
-# general abstract type (useful for custom show method)
 abstract type CustomException <: Exception end
 
-#---
+function Base.show(io::IO, err::CustomException)
+    red_bold = Crayons.Crayon(foreground=:red, bold=true)
+    yellow_bold = Crayons.Crayon(foreground=:yellow, bold=true)
+    
+    print(io,
+        red_bold(string(nameof(typeof(err)))*": "),
+        yellow_bold(err.msg)
+    )
+end
 
 """
     struct WrongPFMformat <: CustomException
@@ -40,17 +40,6 @@ Custom exception for handling incorrect PFM file format errors.
 - `msg::String`: Error message describing the issue.
 """
 struct WrongPFMformat <: CustomException
-    msg::String
-end
-
-"""
-    struct ToneMappingError <: CustomException
-Custom exception for errors encountered during tone mapping operations.
-
-# Fields
-- `msg::String`: Error message describing the issue.
-"""
-struct ToneMappingError <: CustomException
     msg::String
 end
 
@@ -82,12 +71,3 @@ end
 
 #---
 
-function Base.show(io::IO, err::CustomException)
-    red_bold = Crayons.Crayon(foreground=:red, bold=true)
-    yellow_bold = Crayons.Crayon(foreground=:yellow, bold=true)
-    
-    print(io,
-        red_bold(string(nameof(typeof(err)))*": "),
-        yellow_bold(err.msg)
-    )
-end

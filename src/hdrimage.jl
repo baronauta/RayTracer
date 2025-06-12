@@ -76,6 +76,11 @@ end
 # is named Tone Mapping.
 # ─────────────────────────────────────────────────────────────
 
+"Custom exception for errors encountered during tone mapping"
+struct ToneMappingError <: CustomException
+    msg::String
+end
+
 """
 Computes the luminosity of an RGB color.
 
