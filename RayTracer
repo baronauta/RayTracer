@@ -230,10 +230,9 @@ Comonicon.@cast function pathtracer(
 
         write(pfm_path, img)
         
-        # basic tone mapping
+        # Basic tone mapping
         println("\n\nApplying basic tone mapping...\n")
-        RayTracer.normalize_image!(img)
-        RayTracer.clamp_image!(img)
+        RayTracer.tonemapping!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -349,10 +348,9 @@ Comonicon.@cast function flattracer(
 
         write(pfm_path, img)
         
-        # basic tone mapping
+        # Basic tone mapping
         println("\n\nApplying basic tone mapping...\n")
-        RayTracer.normalize_image!(img)
-        RayTracer.clamp_image!(img)
+        RayTracer.tonemapping!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -465,10 +463,9 @@ Comonicon.@cast function onofftracer(
 
         write(pfm_path, img)
         
-        # basic tone mapping
+        # Basic tone mapping
         println("\n\nApplying basic tone mapping...\n")
-        RayTracer.normalize_image!(img)
-        RayTracer.clamp_image!(img)
+        RayTracer.tonemapping!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -489,63 +486,57 @@ end
 # ─────────────────────────────────────────────────────────────
 
 """
-Performs tone mapping on an HDR (High Dynamic Range) image read from the specified `filename`.
-The function reads a PFM image, normalizes its luminance, and then writes the result
-as an LDR (Low Dynamic Range) image with a specified extension and gamma correction.
+Perform tone mapping on an HDR image loaded from a PFM file, then save it as an LDR image.
 
 # Args
 
-- `filename`: The path to the input HDR image file (e.g., a PFM file).
+- `input_file`: Path to the input HDR image file (must have a `.pfm` extension).
 
 # Options
 
-- `--output-name=<String>`: Optional. The desired name for the output LDR image file.
-                            If empty, the base name of the input `filename` will be used.
-- `--extension=<String>`: The desired file extension for the output LDR image (e.g., ".png", ".jpg").
-                        Defaults to ".png". Must be one of the `SUPPORTED_EXTS`.
-- `--factor=<Float64>`: A scaling factor applied during image normalization. Defaults to 1.0.
-- `--mean=<Symbol>`: The type of mean calculation to use during normalization. Defaults to `:`.
-                    (Note: The current `normalize_image!` call explicitly uses `:max_min`.)
+- `--out-ext=<String>`: Desired file extension for the output LDR image (e.g., ".png", ".jpg").
+                        Defaults to ".png".
+- `--mean=<Symbol>`: Method to compute the luminosity mean during normalization. Deafaults use :max_min method
+- `--weights=<Vector{Float64}>`: A vector of weights used for luminosity calculation during normalization.
+- `--a=<Float64>`: A scaling factor applied during image normalization. Defaults to 1.0.
 - `--gamma=<Float64>`: The gamma correction value applied when writing the LDR image. Defaults to 1.0.
-- `--weights=<Vector{Float64}>`: A vector of weights used for luminance calculation during normalization.
-                                Defaults to `[1., 1., 1.]` (typically for R, G, B channels).
 """
 Comonicon.@cast function tonemapping(
-    filename;
-    output_name::String="",
-    extension::String = "",
-    factor::Float64=1.,
+    input_file;
+    out_ext::String = "",
     mean::Symbol=:max_min,
+    weights::Vector{Float64} = Float64[],  # default to empty
+    a::Float64 = 1.,
     gamma::Float64=1.,
-    weights::Vector{Float64}=[1., 1., 1.]
 )
     try
         print_welcome()
-        hdrimage = read_pfm_image(filename)
-        RayTracer.normalize_image!(
-            hdrimage;
-            factor = factor,
-            lumi = nothing,
-            delta = 1e-10,
+
+        RayTracer.expected_extension(input_file, [".pfm"])
+       
+        # Output file will share the same the same path with the input file, 
+        # it does only change the extension (default .png)
+        path_without_ext = splitext(input_file)[1]
+        if isempty(out_ext)
+            output_file = path_without_ext * ".png"
+        else
+            if !(out_ext in SUPPORTED_EXTS)
+                throw(ExtensionError("$out_ext is an unsupported output extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
+            end
+            output_file = path_without_ext * out_ext
+        end
+
+        img = RayTracer.read_pfm_image(input_file)
+        RayTracer.tonemapping!(
+            img;
             mean_type = mean,
             weights = weights,
-            )
-        RayTracer.clamp_image!(hdrimage)
-        # Determine the base output filename
-        base_output_name = if isempty(output_name)
-            splitext(filename)[1] # Get filename without its original extension
-        else
-            splitext(output_name)[1] # Get output_name without its original extension
-        end
-        
-        extension = choose_ext(output_name, extension)
+            a = a
+        )
+        RayTracer.write_ldr_image(output_file, img; gamma = gamma)
 
-        if !(extension in SUPPORTED_EXTS)
-            throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
-        end
-        newfilename = base_output_name * extension
-        @info "Saving figure to $newfilename...\n"
-        RayTracer.write_ldr_image(newfilename, hdrimage; gamma=gamma)
+        @info "Saved to $output_file"
+
     catch e
         if isa(e, CustomException)
             println(e)

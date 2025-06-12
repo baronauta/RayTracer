@@ -68,9 +68,11 @@ const HOST_ENDIANNESS = IS_LITTLE_ENDIAN ? -1.0 : 1.0
 
 const SUPPORTED_EXTS = [".jpg", ".jpeg", ".png", ".tiff", ".tif"]
 
-include("exceptions.jl")
+include("misc.jl")
 include("colors.jl")
+include("hdrimage.jl")
 include("io.jl")
+include("pfm.jl")
 include("geometry.jl")
 include("transformation.jl")
 include("cameras.jl")
