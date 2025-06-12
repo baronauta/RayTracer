@@ -75,7 +75,7 @@ end
 # HdrImage are not suitable to be displayed: it stores pixels that
 # span the whole tonal range of real-world scenes. 
 # Convert to Low-Dynamic Range (LDR) images that are images where 
-# the values of pixels don't a maximum value, e.g. 255 or 1. 
+# the values of pixels don't exceed a maximum value, e.g. 255 or 1. 
 # This conversion is named Tone Mapping.
 #
 # Algorithm
@@ -83,6 +83,14 @@ end
 #      each pixel of the image,
 #   2. Normalize the color of each pixel to this average value,
 #   3. Apply a correction to the brightest spots.
+#
+# ─────────────────────────────────────────────────────────────
+# Saving LDR Images
+#
+# To save an image in an LDR format, we use `Images.save(filename, img)`.
+# The output format is inferred from the filename extension.
+# The image `img` must be a matrix of RGB pixels with values 
+# normalized in [0, 1].
 # ─────────────────────────────────────────────────────────────
 
 "Custom exception for errors encountered during tone mapping"
@@ -209,31 +217,6 @@ function clamp_image!(image::HdrImage)
     end
 end
 
-
-"""
-Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma correction.
-Return the LDR image.
-
-# Arguments
-- `image::HdrImage`: HDR image.
-- `gamma`: gamma value for correction (must be a real number, default: `1.0`).
-"""
-function _gamma_correction(img::HdrImage; gamma::Real=1.0)
-    LdrImage = Matrix{ColorTypes.RGB{Int8}}
-    for h = 1:img.height
-        for w = 1:img.width
-            pix = get_pixel(img, w, h)
-            color = ColorTypes.RGB{Int8}(
-                255*pix.r^(1 / gamma),
-                255*pix.g^(1 / gamma),
-                255*pix.b^(1 / gamma),
-            )
-            LdrImage[w, h] = color
-        end
-    end
-    return LdrImage
-end
-
 """
     write_ldr_image(filename::String, image::HdrImage; gamma=1.0)
 
@@ -280,9 +263,17 @@ function write_ldr_image(
 
     clamp_image!(img)
 
-    LdrImage = _gamma_correction(img; gamma = gamma)
+    # Gamma correction
+    for h in 1:img.height, w in 1:img.width
+        pix = get_pixel(img, w, h)
+        color = RGB(
+            pix.r^(1 / gamma),
+            pix.g^(1 / gamma),
+            pix.b^(1 / gamma)
+        )
+        set_pixel!(img, w, h, color)
+    end
 
-    # from "Images" package:
-    # saves the contents of a formatted file, trying to infer the format from filename
-    Images.save(filename, LdrImage)
+    # Values must be expressed in the range [0, 1]
+    Images.save(filename, img.pixels)
 end
