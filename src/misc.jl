@@ -40,10 +40,11 @@ end
 function expected_extension(filename::String, exts::Vector{String})
     allowed = any(endswith(lowercase(filename), lowercase(ext)) for ext in exts)
     if !allowed
-        expected = join(exts, ", ")
-        throw(
-            ExtensionError("expected extension to be one of {$expected}, but found $(extname(filename))")
-        )
+        expected_msg = length(exts) == 1 ?
+            "expected extension to be $(exts[1])" :
+            "expected extension to be one of: " * join(exts, ", ")
+        
+        throw(ExtensionError("$expected_msg, but found $(splitext(filename)[2])"))
     end
 end
 
