@@ -105,7 +105,7 @@ Computes the luminosity of an RGB color.
 """
 function luminosity(
     color::ColorTypes.RGB{Float32};
-    mean_type = :max_min,
+    mean_type::Symbol = :max_min,
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
 )
     r, g, b = color.r, color.g, color.b
@@ -149,7 +149,7 @@ Compute logarithmic average for the luminosity of the pixels in a HDR image.
 function log_average(
     image::HdrImage;
     delta = 1e-10,
-    mean_type = :max_min,
+    mean_type::Symbol = :max_min,
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
 )
     cumsum = 0
@@ -173,9 +173,9 @@ and a user-defined normalization factor.
 function normalize_image!(
     img::HdrImage;
     lumi::Union{Nothing, AbstractFloat} = nothing,
-    a::Real = 1.0,
-    mean_type = :max_min,
+    mean_type::Symbol = :max_min,
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
+    a::Real = 1.0,
 )
     if isnothing(lumi)
         lumi = log_average(img; mean_type = mean_type, weights = weights)
