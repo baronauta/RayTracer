@@ -222,18 +222,18 @@ Applies gamma correction to a HDR image (monitor correction).
 - `gamma`: gamma value for correction (must be a real number, default: `1.0`).
 """
 function _gamma_correction!(img::HdrImage; gamma=1.0)
-    if !isa(a, Real)
-        throw(ToneMappingError("expected \"gamma\" to be a real number, got $(typeof(a))"))
+    if !isa(gamma, Real)
+        throw(ToneMappingError("expected \"gamma\" to be a real number, got $(typeof(gamma))"))
     end
-    for h = 1:image.height
-        for w = 1:image.width
-            pix = get_pixel(image, w, h)
+    for h = 1:img.height
+        for w = 1:img.width
+            pix = get_pixel(img, w, h)
             color = RGB(
                 pix.r^(1 / gamma),
                 pix.g^(1 / gamma),
                 pix.b^(1 / gamma),
             )
-            set_pixel!(image, w, h, color)
+            set_pixel!(img, w, h, color)
         end
     end
 end
@@ -253,7 +253,7 @@ function write_ldr_image(
     img::HdrImage;
     mean_type = :max_min,
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
-    a = a,
+    a = 1.0,
     gamma = 1.0,
     )
 
@@ -266,7 +266,7 @@ function write_ldr_image(
 
     clamp_image!(img)
 
-    _gamma_correction(img; gamma = gamma)
+    _gamma_correction!(img; gamma = gamma)
 
     # Using save function from Images packages
     Images.save(filename, img.pixels)
