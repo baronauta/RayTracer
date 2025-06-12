@@ -25,10 +25,10 @@
     img = HdrImage(2, 1)
     RayTracer.set_pixel!(img, 1, 1, RGB(5.0, 10.0, 15.0))
     RayTracer.set_pixel!(img, 2, 1, RGB(500.0, 1000.0, 1500.0))
-    RayTracer.normalize_image!(img, factor = 1000.0, lumi = 100.0)
+    RayTracer.normalize_image!(img, a = 1000.0, lumi = 100.0)
     @test RayTracer.get_pixel(img, 1, 1) ≈ RGB(0.5e2, 1.0e2, 1.5e2)
     @test RayTracer.get_pixel(img, 2, 1) ≈ RGB(0.5e4, 1.0e4, 1.5e4)
-    RayTracer.normalize_image!(img, factor = 1000.0)
+    RayTracer.normalize_image!(img, a = 1000.0)
     @test RayTracer.get_pixel(img, 1, 1) ≈ RGB(0.5e2, 1.0e2, 1.5e2)
     @test RayTracer.get_pixel(img, 2, 1) ≈ RGB(0.5e4, 1.0e4, 1.5e4)
     # Clamp image
