@@ -91,7 +91,7 @@ struct ToneMappingError <: CustomException
 end
 
 """
-Computes the luminosity of an RGB color.
+Computes the luminosity of a RGB color.
 
 # Arguments
 - `mean_type`: method to compute luminosity (`:max_min`, `:arithmetic`, `:weighted`, or `:distance`).
@@ -105,7 +105,7 @@ Computes the luminosity of an RGB color.
 """
 function luminosity(
     color::ColorTypes.RGB{Float32};
-    mean_type::Symbol = :max_min,
+    mean_type = :max_min,
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
 )
     r, g, b = color.r, color.g, color.b
@@ -149,7 +149,7 @@ Compute logarithmic average for the luminosity of the pixels in a HDR image.
 function log_average(
     image::HdrImage;
     delta = 1e-10,
-    mean_type::Symbol = :max_min,
+    mean_type = :max_min,
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
 )
     cumsum = 0
@@ -173,16 +173,12 @@ and a user-defined normalization factor.
 function normalize_image!(
     img::HdrImage;
     lumi::Union{Nothing, AbstractFloat} = nothing,
-    mean_type::Symbol = :max_min,
+    mean_type = :max_min,
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
     a::Real = 1.0,
 )
     if isnothing(lumi)
         lumi = log_average(img; mean_type = mean_type, weights = weights)
-    end
-
-    if !isa(a, Real)
-        throw(ToneMappingError("expected \"a\" to be a real number, got $(typeof(a))"))
     end
 
     # Update the R, G, B values of the HDR image through
@@ -221,10 +217,7 @@ Applies gamma correction to a HDR image (monitor correction).
 - `image::HdrImage`: HDR image.
 - `gamma`: gamma value for correction (must be a real number, default: `1.0`).
 """
-function _gamma_correction!(img::HdrImage; gamma=1.0)
-    if !isa(gamma, Real)
-        throw(ToneMappingError("expected \"gamma\" to be a real number, got $(typeof(gamma))"))
-    end
+function _gamma_correction!(img::HdrImage; gamma::Real=1.0)
     for h = 1:img.height
         for w = 1:img.width
             pix = get_pixel(img, w, h)
@@ -257,6 +250,20 @@ function write_ldr_image(
     gamma = 1.0,
     )
 
+    # Validate `a`
+    if !isa(a, Real)
+        throw(ToneMappingError("expected a real number for \"a\", got $(typeof(a))"))
+    elseif !(a>0)
+        throw(ToneMappingError("expected a positive number for \"a\", got $(a)"))
+    end
+
+    # Validate `gamma`
+    if !isa(gamma, Real)
+        throw(ToneMappingError("expected a real number for \"gamma\", got $(typeof(gamma))"))
+    elseif !(gamma>0)
+        throw(ToneMappingError("expected a positive number for \"gamma\", got $(gamma)"))
+    end
+
     normalize_image!(
         img; 
         mean_type = mean_type,
@@ -268,6 +275,7 @@ function write_ldr_image(
 
     _gamma_correction!(img; gamma = gamma)
 
-    # Using save function from Images packages
+    # from "Images" package:
+    # saves the contents of a formatted file, trying to infer the format from filename
     Images.save(filename, img.pixels)
 end
