@@ -38,7 +38,7 @@ end
 
 "Check if filename ends with any allowed extension (case-insensitive)"
 function expected_extension(filename::String, exts::Vector{String})
-    allowed = any(endswith(lowercase(filename), lowercase.(exts)))
+    allowed = any(endswith(lowercase(filename), lowercase(ext)) for ext in exts)
     if !allowed
         expected = join(exts, ", ")
         throw(
@@ -47,17 +47,6 @@ function expected_extension(filename::String, exts::Vector{String})
     end
 end
 
-
-"""
-    struct WrongPFMformat <: CustomException
-Custom exception for handling incorrect PFM file format errors.
-
-# Fields
-- `msg::String`: Error message describing the issue.
-"""
-struct WrongPFMformat <: CustomException
-    msg::String
-end
 
 """
     struct RuntimeError <: CustomException
@@ -80,10 +69,4 @@ Custom exception for errors encountered during geometry operations (ex: comparin
 struct GeometryError <: CustomException
     msg::String
 end
-
-struct ExtensionError <: CustomException
-    msg::String
-end
-
-#---
 
