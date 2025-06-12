@@ -232,8 +232,6 @@ Comonicon.@cast function pathtracer(
         
         # basic tone mapping
         println("\n\nApplying basic tone mapping...\n")
-        RayTracer.normalize_image!(img)
-        RayTracer.clamp_image!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -351,8 +349,6 @@ Comonicon.@cast function flattracer(
         
         # basic tone mapping
         println("\n\nApplying basic tone mapping...\n")
-        RayTracer.normalize_image!(img)
-        RayTracer.clamp_image!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -467,8 +463,6 @@ Comonicon.@cast function onofftracer(
         
         # basic tone mapping
         println("\n\nApplying basic tone mapping...\n")
-        RayTracer.normalize_image!(img)
-        RayTracer.clamp_image!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -509,7 +503,7 @@ Comonicon.@cast function tonemapping(
     out_ext::String = "",
     mean::Symbol=:max_min,
     weights::Vector{Float64} = Float64[],  # default to empty
-    a::Float64=1.,
+    factor::Float64 = 1.,
     gamma::Float64=1.,
 )
     try
@@ -535,7 +529,7 @@ Comonicon.@cast function tonemapping(
             hdrimage;
             mean_type = mean,
             weights = weights,
-            a = a,
+            a = factor,
             gamma = gamma,
         )
 
