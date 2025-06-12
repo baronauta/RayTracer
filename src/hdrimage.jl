@@ -86,7 +86,7 @@ Computes the luminosity of an RGB color.
 
 # Arguments
 - `mean_type`: method to compute luminosity (`:max_min`, `:arithmetic`, `:weighted`, or `:distance`).
-- `weights`: Channel weights used only if `mean_type == :weighted` (default: `[1, 1, 1]`).
+- `weights`: Channel weights used only if `mean_type == :weighted` (default: `[1., 1., 1.]`).
 
 # Methods
 - `:max_min`: Average of the max and min RGB values.
@@ -97,17 +97,25 @@ Computes the luminosity of an RGB color.
 function luminosity(
     color::ColorTypes.RGB{Float32};
     mean_type = :max_min,
-    weights = [1, 1, 1],
+    weights = [1., 1., 1.],
 )
     r, g, b = color.r, color.g, color.b
+
     if mean_type == :max_min
         return (max(r, g, b) + min(r, g, b)) / 2
+
     elseif mean_type == :arithmetic
         return (r + g + b) / 3
+
     elseif mean_type == :weighted
+        if !isa(weights, AbstractVector) || length(weights) != 3
+            throw(ToneMappingError("weights must be a vector of length 3"))
+        end
         return Float32((r * weights[1] + g * weights[2] + b * weights[3]) / sum(weights))
+
     elseif mean_type == :distance
         return (r^2 + g^2 + b^2)^(0.5)
+
     else
         throw(
             ToneMappingError(
