@@ -98,17 +98,9 @@ Write a HDR image into a file with PFM format.
 - `endianness`: `>0` big, `<0` little (defaults to `HOST_ENDIANNESS`, which matches the host machine's byte order.)
 """
 function write(filename::String, image::HdrImage; endianness = HOST_ENDIANNESS)
-    try 
-        expected_extension(filename, [".pfm"])
-        open(filename, "w") do io
-            write(io, image; endianness)
-        end
-    catch e
-        if isa(e, CustomException)
-            println(e)
-        else
-            rethrow()
-        end
+    expected_extension(filename, [".pfm"])
+    open(filename, "w") do io
+        write(io, image; endianness)
     end
 end
 
@@ -189,16 +181,7 @@ end
 Read a PFM image from a stream and return an `HdrImage` with 32-bit float RGB values.
 """
 function read_pfm_image(filename::String)
-    try
-        open(filename, "r") do io
-            return read_pfm_image(io)
-        end
-    catch e
-        if isa(e, CustomException)
-            println(e)
-        else
-            rethrow()
-        end
+    open(filename, "r") do io
+        read_pfm_image(io)
     end
 end
-
