@@ -176,29 +176,31 @@ Returns a string encoding the tonemapping settings.
 """
 function tonemapping_name(
     name::String,
-    mean::Symbol,
+    mean::String,
     weights::Vector{Float64},
     a::Float64,
     gamma::Float64,
 )
+    # convert mean to a Symbol
+    symbol_mean = Symbol(mean)
     # Initialize mean and weights strings
     mean_str = ""
     weights_str = ""
 
     # Map mean type to abbreviation
-    if mean == :max_min
+    if symbol_mean == :max_min
         mean_str = "mxmn"
-    elseif mean == :arithmetic
+    elseif symbol_mean == :arithmetic
         mean_str = "arith"
-    elseif mean == :weighted
+    elseif symbol_mean == :weighted
         mean_str = "wavg"
         # Round weights to 2 decimals and format as [x,y,z]
         rounded_weights = round.(weights; digits=2)
         weights_str = "_w[" * join(rounded_weights, ",") * "]"
-    elseif mean == :distance
+    elseif symbol_mean == :distance
         mean_str = "dist"
     else
-        mean_str = string(mean)
+        mean_str = mean
     end
 
     # Build final filename
