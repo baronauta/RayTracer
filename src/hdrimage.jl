@@ -212,6 +212,7 @@ end
 
 """
 Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma correction.
+Return the LDR image.
 
 # Arguments
 - `image::HdrImage`: HDR image.
@@ -236,7 +237,8 @@ end
 """
     write_ldr_image(filename::String, image::HdrImage; gamma=1.0)
 
-Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma correction, and save it to a file.
+Perform tone mapping on a `HdrImage` to convert to an 8-bit Low Dynamic Range (LDR),
+and save it to a file.
 
 # Arguments
 - `filename::String`: The path where the LDR image will be saved (e.g., `"output.png"`).
