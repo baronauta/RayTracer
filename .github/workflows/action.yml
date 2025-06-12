@@ -45,7 +45,7 @@ jobs:
           julia RayTracer onofftracer ./examples/demo_scene.txt 5 5 --output-name out.png
           julia RayTracer flattracer ./examples/demo_scene.txt 5 5 --output-name out.png
           julia RayTracer tonemapping out.pfm
-          julia RayTracer image2pfm out.png
+          julia image2pfm out.png
 
       - name: Clean up generated files (Unix)
         if: runner.os != 'Windows'
@@ -59,7 +59,7 @@ jobs:
           julia RayTracer onofftracer .\examples\demo_scene.txt 5 5 --output-name out.png
           julia RayTracer flattracer .\examples\demo_scene.txt 5 5 --output-name out.png
           julia RayTracer tonemapping out.pfm
-          julia RayTracer image2pfm out.png
+          julia image2pfm out.png
 
       - name: Clean up generated files (Windows)
         if: runner.os == 'Windows'
