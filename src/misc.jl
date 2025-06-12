@@ -177,7 +177,7 @@ Returns a string encoding the tonemapping settings.
 function tonemapping_name(
     name::String,
     mean::String,
-    weights::Vector{Float64},
+    weights::Union{Nothing, Vector{Float64}},
     a::Float64,
     gamma::Float64,
 )
@@ -194,7 +194,8 @@ function tonemapping_name(
         mean_str = "arith"
     elseif symbol_mean == :weighted
         mean_str = "wavg"
-        # Round weights to 2 decimals and format as [x,y,z]
+        # Round weights to 2 decimals and format as [x,y,z], 
+        # no need to check if weights is nothing, not accepted from functions above.
         rounded_weights = round.(weights; digits=2)
         weights_str = "_w[" * join(rounded_weights, ",") * "]"
     elseif symbol_mean == :distance
