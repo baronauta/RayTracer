@@ -230,8 +230,9 @@ Comonicon.@cast function pathtracer(
 
         write(pfm_path, img)
         
-        # basic tone mapping
+        # Basic tone mapping
         println("\n\nApplying basic tone mapping...\n")
+        RayTracer.tonemapping!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -347,8 +348,9 @@ Comonicon.@cast function flattracer(
 
         write(pfm_path, img)
         
-        # basic tone mapping
+        # Basic tone mapping
         println("\n\nApplying basic tone mapping...\n")
+        RayTracer.tonemapping!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -461,8 +463,9 @@ Comonicon.@cast function onofftracer(
 
         write(pfm_path, img)
         
-        # basic tone mapping
+        # Basic tone mapping
         println("\n\nApplying basic tone mapping...\n")
+        RayTracer.tonemapping!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -507,31 +510,30 @@ Comonicon.@cast function tonemapping(
     gamma::Float64=1.,
 )
     try
+        print_welcome()
 
         RayTracer.expected_extension(input_file, [".pfm"])
-
-        if !(out_ext in SUPPORTED_EXTS)
-            throw(ExtensionError("$out_ext is an unsupported output extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
-        end
-        
-        # Output file is in the same path as the input file, 
+       
+        # Output file will share the same the same path with the input file, 
         # it does only change the extension (default .png)
-        path_without_ext = splitext(filename)[1]
+        path_without_ext = splitext(input_file)[1]
         if isempty(out_ext)
             output_file = path_without_ext * ".png"
         else
+            if !(out_ext in SUPPORTED_EXTS)
+                throw(ExtensionError("$out_ext is an unsupported output extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
+            end
             output_file = path_without_ext * out_ext
         end
 
-        hdrimage = RayTracer.read_pfm_image(input_file)
-        RayTracer.write_ldr_image(
-            output_file, 
-            hdrimage;
+        img = RayTracer.read_pfm_image(input_file)
+        RayTracer.tonemapping!(
+            img;
             mean_type = mean,
             weights = weights,
-            a = factor,
-            gamma = gamma,
+            a = factor
         )
+        RayTracer.write_ldr_image(output_file, img; gamma = gamma)
 
         @info "Saved to $output_file"
 

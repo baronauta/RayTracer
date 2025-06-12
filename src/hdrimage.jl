@@ -20,6 +20,7 @@
 #     this software is provided "AS IS", without warranties or conditions
 #     of any kind, either express or implied.
 
+
 """
     HdrImage
 
@@ -84,13 +85,6 @@ end
 #   2. Normalize the color of each pixel to this average value,
 #   3. Apply a correction to the brightest spots.
 #
-# ─────────────────────────────────────────────────────────────
-# Saving LDR Images
-#
-# To save an image in an LDR format, we use `Images.save(filename, img)`.
-# The output format is inferred from the filename extension.
-# The image `img` must be a matrix of RGB pixels with values 
-# normalized in [0, 1].
 # ─────────────────────────────────────────────────────────────
 
 "Custom exception for errors encountered during tone mapping"
@@ -218,40 +212,26 @@ function clamp_image!(image::HdrImage)
 end
 
 """
-    write_ldr_image(filename::String, image::HdrImage; gamma=1.0)
-
-Perform tone mapping on a `HdrImage` to convert to an 8-bit Low Dynamic Range (LDR),
-and save it to a file.
+Perform tone mapping on a `HdrImage`.
 
 # Arguments
-- `filename::String`: The path where the LDR image will be saved (e.g., `"output.png"`).
 - `image::HdrImage`:  HDR image to convert.
 - `mean_type`: Method for computing pixel luminosity (default: `:max_min`).
 - `weights`: Vector of weights for `:weighted` luminosity method (default: `nothing`).
 - `a`: scaling factor applied after normalization (default: `1.0`).
-- `gamma`: gamma correction factor (default: `1.0`).
 """
-function write_ldr_image(
-    filename::String, 
+function tonemapping!(
     img::HdrImage;
     mean_type = :max_min,
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
     a = 1.0,
-    gamma = 1.0,
-    )
-
+)
+    
     # Validate `a`
     if !isa(a, Real)
         throw(ToneMappingError("expected a real number for \"a\", got $(typeof(a))"))
     elseif !(a>0)
         throw(ToneMappingError("expected a positive number for \"a\", got $(a)"))
-    end
-
-    # Validate `gamma`
-    if !isa(gamma, Real)
-        throw(ToneMappingError("expected a real number for \"gamma\", got $(typeof(gamma))"))
-    elseif !(gamma>0)
-        throw(ToneMappingError("expected a positive number for \"gamma\", got $(gamma)"))
     end
 
     normalize_image!(
@@ -260,8 +240,43 @@ function write_ldr_image(
         weights = weights,
         a = a,
     )
-
     clamp_image!(img)
+
+    return img
+end
+
+
+# ─────────────────────────────────────────────────────────────
+# Saving LDR Images
+#
+# To save an image in an LDR format, we use `Images.save(filename, img)`.
+# The output format is inferred from the filename extension.
+# The image `img` must be a matrix of RGB pixels with values 
+# normalized in [0, 1].
+# ─────────────────────────────────────────────────────────────
+
+"""
+    write_ldr_image(filename::String, image::HdrImage; gamma=1.0)
+
+Create a copy of `HdrImage`, perform gamma correction and save it to a file.
+
+# Arguments
+- `filename::String`: The path where the LDR image will be saved (e.g., `"output.png"`).
+- `image::HdrImage`:  HDR image to convert.
+- `gamma`: gamma correction factor (default: `1.0`).
+"""
+function write_ldr_image(
+    filename::String, 
+    img::HdrImage;
+    gamma = 1.0,
+    )
+
+    # Validate `gamma`
+    if !isa(gamma, Real)
+        throw(ToneMappingError("expected a real number for \"gamma\", got $(typeof(gamma))"))
+    elseif !(gamma>0)
+        throw(ToneMappingError("expected a positive number for \"gamma\", got $(gamma)"))
+    end
 
     # Gamma correction
     for h in 1:img.height, w in 1:img.width
