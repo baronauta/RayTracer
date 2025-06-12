@@ -72,9 +72,11 @@ end
 # ─────────────────────────────────────────────────────────────
 # Tone Mapping
 #
-# HdrImage can't be displayed. Convert to Low-Dynamic Range (LDR)
-# images that encodes R,G,B components as ..... This conversion
-# is named Tone Mapping.
+# HdrImage are not suitable to be displayed: it stores pixels that
+# span the whole tonal range of real-world scenes. 
+# Convert to Low-Dynamic Range (LDR) images that are images where 
+# the values of pixels don't a maximum value, e.g. 255 or 1. 
+# This conversion is named Tone Mapping.
 #
 # Algorithm
 #   1. Establish an average value for the luminosity measured at
@@ -118,7 +120,7 @@ function luminosity(
         if isnothing(weights)
             throw(ToneMappingError("provide weights, it must be a vector of length 3"))
         elseif !isa(weights, AbstractVector) || length(weights) != 3
-            throw(ToneMappingError("weights must be a vector of length 3"))
+            throw(ToneMappingError("\"weights\" must be a vector of length 3"))
         else
             return Float32((r * weights[1] + g * weights[2] + b * weights[3]) / sum(weights))
         end
@@ -129,7 +131,7 @@ function luminosity(
     else
         throw(
             ToneMappingError(
-                "expected mean_type to be one of {:max_min, :arithmetic, :distance, :weighted}, found $mean_type."
+                "expected \"mean_type\" to be one of {:max_min, :arithmetic, :distance, :weighted}, found \"$mean_type\""
             )
         )
     end
@@ -148,64 +150,64 @@ function log_average(
     image::HdrImage;
     delta = 1e-10,
     mean_type = :max_min,
-    weights = [1, 1, 1],
+    weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
 )
     cumsum = 0
     for pixel in image.pixels
         cumsum += log10(luminosity(pixel; mean_type = mean_type, weights = weights) + delta)
     end
-    # Logarithmic (base 10) average
     return 10^(cumsum / (image.width * image.height))
 end
 
 """
-    normalize_image(img::HdrImage; factor = 0.2, lumi = nothing, delta = 1e-10, mean_type = :max_min, weights = [1, 1, 1])
+Normalise the pixel values of an HDR image by scaling colors based on the average luminosity 
+and a user-defined normalization factor.
 
-Normalize the values of an RGB color using the average luminosity and the normalization factor (to be specified by the user).
+# Arguments
+- `image::HdrImage`: HDR image to be normalized
+- `lumi`: precomputed average luminosity; if `nothing`, it is computed from the image (default: `nothing`).
+- `factor`: scaling factor applied after normalization (default: `1.0`).
+- `mean_type`: Method for computing pixel luminosity (default: `:max_min`).
+- `weights`: Vector of weights for `:weighted` luminosity method (default: `nothing`).
 """
 function normalize_image!(
     img::HdrImage;
-    factor = 1.0,
-    lumi = nothing,
-    delta = 1e-10,
+    lumi::Union{Nothing, AbstractFloat} = nothing,
+    a::Real = 1.0,
     mean_type = :max_min,
-    weights = [1, 1, 1],
+    weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
 )
-    lumi = something(
-        lumi,
-        log_average(img; delta = delta, mean_type = mean_type, weights = weights),
-    )
-    a = factor / lumi
+    if isnothing(lumi)
+        lumi = log_average(img; mean_type = mean_type, weights = weights)
+    end
+
+    if !isa(a, Real)
+        throw(ToneMappingError("expected \"a\" to be a real number, got $(typeof(a))"))
+    end
+
+    # Update the R, G, B values of the HDR image through
+    # the transformation: Rᵢ → a ⋅ Rᵢ / <l>.
+    scale = a / lumi
     for w = 1:img.width
         for h = 1:img.height
             c = get_pixel(img, w, h)
-            c *= a
-            set_pixel!(img, w, h, c)
+            set_pixel!(img, w, h, scale*c)
         end
     end
 end
 
-"""
-    _clamp(x)
-
-Clamp a brightness value `x` to reduce extreme brightness by mapping it to the range [0,1].
-"""
 function _clamp(x)
     x / (1 + x)
 end
 
-"""
-    clamp_image!(image::HdrImage)
-
-Adjust the image by clamping the RGB components of each pixel, thereby reducing overly bright spots. The operation is performed in-place.
-"""
+"Handle bright spots applying the transformation Rᵢ → Rᵢ / ( 1 + Rᵢ )"
 function clamp_image!(image::HdrImage)
     for h = 1:image.height
         for w = 1:image.width
             r = _clamp(image.pixels[h, w].r)
             g = _clamp(image.pixels[h, w].g)
             b = _clamp(image.pixels[h, w].b)
-            color = ColorTypes.RGB{Float32}(r, g, b)
+            color = RGB(r, g, b)
             set_pixel!(image, w, h, color)
         end
     end
