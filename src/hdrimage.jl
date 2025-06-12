@@ -68,12 +68,19 @@ function set_pixel!(
     img.pixels[h, w] = new_color
 end
 
+
 # ─────────────────────────────────────────────────────────────
 # Tone Mapping
 #
 # HdrImage can't be displayed. Convert to Low-Dynamic Range (LDR)
 # images that encodes R,G,B components as ..... This conversion
 # is named Tone Mapping.
+#
+# Algorithm
+#   1. Establish an average value for the luminosity measured at
+#      each pixel of the image,
+#   2. Normalize the color of each pixel to this average value,
+#   3. Apply a correction to the brightest spots.
 # ─────────────────────────────────────────────────────────────
 
 "Custom exception for errors encountered during tone mapping"
@@ -86,7 +93,7 @@ Computes the luminosity of an RGB color.
 
 # Arguments
 - `mean_type`: method to compute luminosity (`:max_min`, `:arithmetic`, `:weighted`, or `:distance`).
-- `weights`: Channel weights used only if `mean_type == :weighted` (default: `[1., 1., 1.]`).
+- `weights`: vector of three components, used only if `mean_type == :weighted`.
 
 # Methods
 - `:max_min`: Average of the max and min RGB values.
@@ -97,7 +104,7 @@ Computes the luminosity of an RGB color.
 function luminosity(
     color::ColorTypes.RGB{Float32};
     mean_type = :max_min,
-    weights = [1., 1., 1.],
+    weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
 )
     r, g, b = color.r, color.g, color.b
 
@@ -108,10 +115,13 @@ function luminosity(
         return (r + g + b) / 3
 
     elseif mean_type == :weighted
-        if !isa(weights, AbstractVector) || length(weights) != 3
+        if isnothing(weights)
+            throw(ToneMappingError("provide weights, it must be a vector of length 3"))
+        elseif !isa(weights, AbstractVector) || length(weights) != 3
             throw(ToneMappingError("weights must be a vector of length 3"))
+        else
+            return Float32((r * weights[1] + g * weights[2] + b * weights[3]) / sum(weights))
         end
-        return Float32((r * weights[1] + g * weights[2] + b * weights[3]) / sum(weights))
 
     elseif mean_type == :distance
         return (r^2 + g^2 + b^2)^(0.5)
@@ -119,29 +129,20 @@ function luminosity(
     else
         throw(
             ToneMappingError(
-                "invalid mean_type: $mean_type. Expected one of the following:\n" *
-                ":max_min\n" *
-                ":arithmetic\n" *
-                ":distance\n" *
-                ":weighted (if used, pass weights = [wr, wg, wb], all 1 by default)",
-            ),
+                "expected mean_type to be one of {:max_min, :arithmetic, :distance, :weighted}, found $mean_type."
+            )
         )
     end
 end
 
 """
-    log_average(image::HdrImage; delta=1e-10, mean_type=:max_min, weights=[1,1,1])
-
-Compute the logarithmic average luminosity of an `HdrImage`.
+Compute logarithmic average for the luminosity of the pixels in a HDR image.
 
 # Arguments
-- `image::HdrImage`: The HDR image.
-- `delta`: A small constant added to avoid log of zero (default: 1e-10).
-- `mean_type`: The method for computing luminosity (default: `:max_min`).
-- `weights`: Weights for the luminosity computation (default: `[1,1,1]`).
-
-# Returns
-- The logarithmic (base 10) average luminosity of the image.
+- `image::HdrImage`: HDR image.
+- `delta`: small constant added to avoid log of zero (default: 1e-10).
+- `mean_type`: the method for computing luminosity (default: `:max_min`).
+- `weights`: weights rquired to compute luminosity in the case of `mean_type=:weighted`.
 """
 function log_average(
     image::HdrImage;
