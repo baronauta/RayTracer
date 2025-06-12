@@ -217,8 +217,8 @@ Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma corr
 - `image::HdrImage`: HDR image.
 - `gamma`: gamma value for correction (must be a real number, default: `1.0`).
 """
-function _gamma_correction!(img::HdrImage; gamma::Real=1.0)
-    out_img = Matrix{ColorTypes.RGB{Int8}}
+function _gamma_correction(img::HdrImage; gamma::Real=1.0)
+    LdrImage = Matrix{ColorTypes.RGB{Int8}}
     for h = 1:img.height
         for w = 1:img.width
             pix = get_pixel(img, w, h)
@@ -227,9 +227,10 @@ function _gamma_correction!(img::HdrImage; gamma::Real=1.0)
                 255*pix.g^(1 / gamma),
                 255*pix.b^(1 / gamma),
             )
-            out_img[w, h] = color
+            LdrImage[w, h] = color
         end
     end
+    return LdrImage
 end
 
 """
@@ -277,9 +278,9 @@ function write_ldr_image(
 
     clamp_image!(img)
 
-    _gamma_correction!(img; gamma = gamma)
+    LdrImage = _gamma_correction(img; gamma = gamma)
 
     # from "Images" package:
     # saves the contents of a formatted file, trying to infer the format from filename
-    Images.save(filename, img.pixels)
+    Images.save(filename, LdrImage)
 end
