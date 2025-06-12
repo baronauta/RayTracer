@@ -32,6 +32,22 @@ function Base.show(io::IO, err::CustomException)
     )
 end
 
+struct ExtensionError <: CustomException
+    msg::String
+end
+
+"Check if filename ends with any allowed extension (case-insensitive)"
+function expected_extension(filename::String, exts::Vector{String})
+    allowed = any(endswith(lowercase(filename), lowercase.(exts)))
+    if !allowed
+        expected = join(exts, ", ")
+        throw(
+            ExtensionError("expected extension to be one of {$expected}, but found $(extname(filename))")
+        )
+    end
+end
+
+
 """
     struct WrongPFMformat <: CustomException
 Custom exception for handling incorrect PFM file format errors.
