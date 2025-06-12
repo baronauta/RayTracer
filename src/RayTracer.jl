@@ -68,6 +68,7 @@ const SUPPORTED_EXTS = [".jpg", ".jpeg", ".png", ".tiff", ".tif"]
 
 include("exceptions.jl")
 include("colors.jl")
+include("hdrimage.jl")
 include("io.jl")
 include("geometry.jl")
 include("transformation.jl")
