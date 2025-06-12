@@ -3,7 +3,7 @@
     col1 = RGB(10.0, 3.0, 2.0)
     @test RayTracer.luminosity(col1, mean_type = :max_min) ≈ 6
     @test RayTracer.luminosity(col1, mean_type = :arithmetic) ≈ 5
-    @test RayTracer.luminosity(col1, mean_type = :weighted) ≈ 5
+    @test RayTracer.luminosity(col1, mean_type = :weighted, weights = [1, 1, 1]) ≈ 5
     @test RayTracer.luminosity(col1, mean_type = :weighted, weights = [1, 2, 5]) ≈ 3.25
     @test isapprox(
         RayTracer.luminosity(col1, mean_type = :distance),
@@ -42,5 +42,54 @@
         @test 0 <= pixel.r <= 1
         @test 0 <= pixel.g <= 1
         @test 0 <= pixel.b <= 1
+    end
+end
+
+@testset "ToneMapping - Exceptions" begin
+
+    @testset "Wrong method" begin
+        err_thrown = false
+        col1 = RGB(10.0, 3.0, 2.0)
+        try
+            _ = RayTracer.luminosity(col1, mean_type = :not_a_method)
+        catch e
+            if isa(e, ToneMappingError)
+                err_thrown = true
+            else
+                rethrow(e)
+            end
+        end
+        @test err_thrown
+    end
+
+    @testset "Wrong weigths lenght" begin
+        err_thrown = false
+        col1 = RGB(10.0, 3.0, 2.0)
+        try
+            _ = RayTracer.luminosity(col1, mean_type = :weighted, weights = [1, 1])
+
+        catch e
+            if isa(e, ToneMappingError)
+                err_thrown = true
+            else
+                rethrow(e)
+            end
+        end
+        @test err_thrown
+    end
+
+    @testset "Missing weights" begin
+        err_thrown = false
+        col1 = RGB(10.0, 3.0, 2.0)
+        try
+            _ = RayTracer.luminosity(col1, mean_type = :weighted)
+        catch e
+            if isa(e, ToneMappingError)
+                err_thrown = true
+            else
+                rethrow(e)
+            end
+        end
+        @test err_thrown
     end
 end
