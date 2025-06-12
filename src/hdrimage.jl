@@ -279,16 +279,17 @@ function write_ldr_image(
     end
 
     # Gamma correction
-    for h in 1:img.height, w in 1:img.width
-        pix = get_pixel(img, w, h)
+    img_out = deepcopy(img)
+    for h in 1:img_out.height, w in 1:img_out.width
+        pix = get_pixel(img_out, w, h)
         color = RGB(
             pix.r^(1 / gamma),
             pix.g^(1 / gamma),
             pix.b^(1 / gamma)
         )
-        set_pixel!(img, w, h, color)
+        set_pixel!(img_out, w, h, color)
     end
 
     # Values must be expressed in the range [0, 1]
-    Images.save(filename, img.pixels)
+    Images.save(filename, img_out.pixels)
 end
