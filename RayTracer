@@ -69,7 +69,7 @@ Determines the appropriate file extension to use for output.
 
             # Both extensions are present and they differ → show a warning
             if(!isnothing(ext_in_filename) && (extension != ext_in_filename))
-                @warn "\n⚠️  Warning: extension in output name ('$ext_in_filename') doesn't match the one specified ('$extension'). Using the specified one.\n")
+                @warn "\n⚠️  Warning: extension in output name ('$ext_in_filename') doesn't match the one specified ('$extension'). Using the specified one.\n"
             end
             return extension
         end
@@ -486,62 +486,58 @@ end
 # ─────────────────────────────────────────────────────────────
 
 """
-Performs tone mapping on an HDR (High Dynamic Range) image read from the specified `filename`.
-The function reads a PFM image, normalizes its luminance, and then writes the result
-as an LDR (Low Dynamic Range) image with a specified extension and gamma correction.
+Perform tone mapping on an HDR image loaded from a PFM file, then save it as an LDR image.
 
 # Args
 
-- `filename`: The path to the input HDR image file (e.g., a PFM file).
+- `input_file`: Path to the input HDR image file (must have a `.pfm` extension).
 
 # Options
 
-- `--output-name=<String>`: Optional. The desired name for the output LDR image file.
-                            If empty, the base name of the input `filename` will be used.
-- `--extension=<String>`: The desired file extension for the output LDR image (e.g., ".png", ".jpg").
-                        Defaults to ".png". Must be one of the `SUPPORTED_EXTS`.
+- `--out-ext=<String>`: Desired file extension for the output LDR image (e.g., ".png", ".jpg").
+                        Defaults to ".png".
+- `--mean=<Symbol>`: Method to compute the luminosity mean during normalization. Deafaults use :max_min method
+- `--weights=<Vector{Float64}>`: A vector of weights used for luminosity calculation during normalization.
 - `--factor=<Float64>`: A scaling factor applied during image normalization. Defaults to 1.0.
-- `--mean=<Symbol>`: The type of mean calculation to use during normalization. Defaults to `:`.
-                    (Note: The current `normalize_image!` call explicitly uses `:max_min`.)
 - `--gamma=<Float64>`: The gamma correction value applied when writing the LDR image. Defaults to 1.0.
-- `--weights=<Vector{Float64}>`: A vector of weights used for luminance calculation during normalization.
-                                Defaults to `[1., 1., 1.]` (typically for R, G, B channels).
 """
 Comonicon.@cast function tonemapping(
-    filename;
-    output_name::String="",
-    extension::String = "",
-    factor::Float64=1.,
+    input_file;
+    out_ext::String = "",
     mean::Symbol=:max_min,
+    weights::Vector{Float64} = Float64[],  # default to empty
+    a::Float64=1.,
     gamma::Float64=1.,
-    weights::Vector{Float64}=[1., 1., 1.]
 )
     try
-        hdrimage = read_pfm_image(filename)
-        RayTracer.normalize_image!(
-            hdrimage;
-            factor = factor,
-            lumi = nothing,
-            delta = 1e-10,
-            mean_type = mean,
-            weights = weights,
-            )
-        RayTracer.clamp_image!(hdrimage)
-        # Determine the base output filename
-        base_output_name = if isempty(output_name)
-            splitext(filename)[1] # Get filename without its original extension
-        else
-            splitext(output_name)[1] # Get output_name without its original extension
+
+        RayTracer.expected_extension(input_file, ".pfm")
+
+        if !(out_ext in SUPPORTED_EXTS)
+            throw(ExtensionError("$out_ext is an unsupported output extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
         end
         
-        extension = choose_ext(output_name, extension)
-
-        if !(extension in SUPPORTED_EXTS)
-            throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
+        # Output file is in the same path as the input file, 
+        # it does only change the extension (default .png)
+        path_without_ext = splitext(filename)[1]
+        if isempty(out_ext)
+            output_file = path_without_ext * ".png"
+        else
+            output_file = path_without_ext * out_ext
         end
-        newfilename = base_output_name * extension
-        @info "Saving figure to $newfilename...\n"
-        RayTracer.write_ldr_image(newfilename, hdrimage; gamma=gamma)
+
+        hdrimage = RayTracer.read_pfm_image(input_file)
+        RayTracer.write_ldr_image(
+            output_file, 
+            hdrimage;
+            mean_type = mean,
+            weights = weights,
+            a = a,
+            gamma = gamma,
+        )
+
+        @info "Saved to $output_file"
+
     catch e
         if isa(e, CustomException)
             println(e)
