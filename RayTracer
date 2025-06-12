@@ -511,7 +511,7 @@ Comonicon.@cast function tonemapping(
 )
     try
 
-        RayTracer.expected_extension(input_file, ".pfm")
+        RayTracer.expected_extension(input_file, [".pfm"])
 
         if !(out_ext in SUPPORTED_EXTS)
             throw(ExtensionError("$out_ext is an unsupported output extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
