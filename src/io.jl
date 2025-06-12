@@ -129,32 +129,6 @@ function write(filename::String, image::HdrImage; endianness = HOST_ENDIANNESS)
     end
 end
 
-"""
-    write_ldr_image(filename::String, image::HdrImage; gamma=1.0)
-
-Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma correction, and save it to a file.
-
-# Arguments
-- `filename::String`: The path where the LDR image will be saved (e.g., `"output.png"`).
-- `image::HdrImage`: The input HDR image to convert.
-- `gamma`: Gamma correction factor (default: `1.0`).
-"""
-function write_ldr_image(filename::String, image::HdrImage; gamma = 1.0)
-    for h = 1:image.height
-        for w = 1:image.width
-            pix = get_pixel(image, w, h)
-            color = ColorTypes.RGB{Float32}(
-                pix.r^(1 / gamma),
-                pix.g^(1 / gamma),
-                pix.b^(1 / gamma),
-            )
-            image_copy = deepcopy(image)
-            set_pixel!(image_copy, w, h, color)
-        end
-    end
-    # Using save function from Images packages
-    Images.save(filename, image.pixels)
-end
 
 "Parse image dimension from a PFM file."
 function _parse_img_size(str::String)
