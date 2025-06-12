@@ -212,3 +212,62 @@ function clamp_image!(image::HdrImage)
         end
     end
 end
+
+
+"""
+Applies gamma correction to a HDR image (monitor correction).
+
+# Arguments
+- `image::HdrImage`: HDR image.
+- `gamma`: gamma value for correction (must be a real number, default: `1.0`).
+"""
+function _gamma_correction!(img::HdrImage; gamma=1.0)
+    if !isa(a, Real)
+        throw(ToneMappingError("expected \"gamma\" to be a real number, got $(typeof(a))"))
+    end
+    for h = 1:image.height
+        for w = 1:image.width
+            pix = get_pixel(image, w, h)
+            color = RGB(
+                pix.r^(1 / gamma),
+                pix.g^(1 / gamma),
+                pix.b^(1 / gamma),
+            )
+            set_pixel!(image, w, h, color)
+        end
+    end
+end
+
+"""
+    write_ldr_image(filename::String, image::HdrImage; gamma=1.0)
+
+Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma correction, and save it to a file.
+
+# Arguments
+- `filename::String`: The path where the LDR image will be saved (e.g., `"output.png"`).
+- `image::HdrImage`: The input HDR image to convert.
+- `gamma`: Gamma correction factor (default: `1.0`).
+"""
+function write_ldr_image(
+    filename::String, 
+    img::HdrImage;
+    mean_type = :max_min,
+    weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
+    a = a,
+    gamma = 1.0,
+    )
+
+    normalize_image!(
+        img; 
+        mean_type = mean_type,
+        weights = weights,
+        a = a,
+    )
+
+    clamp_image!(img)
+
+    _gamma_correction(img; gamma = gamma)
+
+    # Using save function from Images packages
+    Images.save(filename, img.pixels)
+end
