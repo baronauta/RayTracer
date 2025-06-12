@@ -166,7 +166,7 @@ and a user-defined normalization factor.
 # Arguments
 - `image::HdrImage`: HDR image to be normalized
 - `lumi`: precomputed average luminosity; if `nothing`, it is computed from the image (default: `nothing`).
-- `factor`: scaling factor applied after normalization (default: `1.0`).
+- `a`: scaling factor applied after normalization (default: `1.0`).
 - `mean_type`: Method for computing pixel luminosity (default: `:max_min`).
 - `weights`: Vector of weights for `:weighted` luminosity method (default: `nothing`).
 """
@@ -211,22 +211,23 @@ end
 
 
 """
-Applies gamma correction to a HDR image (monitor correction).
+Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma correction.
 
 # Arguments
 - `image::HdrImage`: HDR image.
 - `gamma`: gamma value for correction (must be a real number, default: `1.0`).
 """
 function _gamma_correction!(img::HdrImage; gamma::Real=1.0)
+    out_img = Matrix{ColorTypes.RGB{Int8}}
     for h = 1:img.height
         for w = 1:img.width
             pix = get_pixel(img, w, h)
-            color = RGB(
-                pix.r^(1 / gamma),
-                pix.g^(1 / gamma),
-                pix.b^(1 / gamma),
+            color = ColorTypes.RGB{Int8}(
+                255*pix.r^(1 / gamma),
+                255*pix.g^(1 / gamma),
+                255*pix.b^(1 / gamma),
             )
-            set_pixel!(img, w, h, color)
+            out_img[w, h] = color
         end
     end
 end
@@ -238,8 +239,11 @@ Convert an `HdrImage` to an 8-bit Low Dynamic Range (LDR) image using gamma corr
 
 # Arguments
 - `filename::String`: The path where the LDR image will be saved (e.g., `"output.png"`).
-- `image::HdrImage`: The input HDR image to convert.
-- `gamma`: Gamma correction factor (default: `1.0`).
+- `image::HdrImage`:  HDR image to convert.
+- `a`: scaling factor applied after normalization (default: `1.0`).
+- `mean_type`: Method for computing pixel luminosity (default: `:max_min`).
+- `weights`: Vector of weights for `:weighted` luminosity method (default: `nothing`).
+- `gamma`: gamma correction factor (default: `1.0`).
 """
 function write_ldr_image(
     filename::String, 
