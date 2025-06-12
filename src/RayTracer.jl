@@ -56,6 +56,8 @@ export Token, KeywordToken, LiteralNumberToken, StringToken, SymbolToken, Identi
 
 export parse_scene
 
+export print_welcome
+
 export IS_LITTLE_ENDIAN, HOST_ENDIANNESS, SUPPORTED_EXTS
 
 # Determine if the host system uses little endian byte order
@@ -79,5 +81,6 @@ include("world.jl")
 include("render.jl")
 include("lexer.jl")
 include("parser.jl")
+include("welcome.jl")
 
 end
