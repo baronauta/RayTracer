@@ -43,6 +43,7 @@ Comonicon.@main function image2pfm(
     filename::String;
     output_name::String = "",
 )
+    print_welcome()
     println("📂 Preparing to convert the image...")
 
     # If no output name is provided, generate one from the input file name
