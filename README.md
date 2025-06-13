@@ -44,7 +44,7 @@ Pkg.test()
 
 ## Usage Instructions
 
-RayTracer uses a simple text-based scene description format. See the [guidelines.md](https://github.com/baronauta/RayTracer/releases/tag/v1.0.0/guidelines.md) for details on how to define your own scenes.
+RayTracer uses a simple text-based scene description format. See the [guidelines.md](https://github.com/baronauta/RayTracer/blob/master/guidelines.md) for details on how to define your own scenes.
 
 To render a scene, run the following command:
 ```bash
@@ -96,9 +96,21 @@ julia RayTracer tonemapping <input_file>
 ```
 where `<input_file>` is the PFM file you want to convert.
 
+### LDR to HDR Conversion
 
+RayTracer also supports converting **low-dynamic-range (LDR)** images (e.g., `.png`, `.jpg`) into **high-dynamic-range (HDR)** `.pfm` format. This feature is useful for:
 
-### Output Examples:
+- Integrating external images or textures into HDR-based rendering.
+- Testing reverse tone mapping pipelines.
+- Preparing LDR inputs for HDR-aware workflows.
+
+To perform the conversion, run:
+
+```bash
+julia RayTracer image2pfm <input_image>
+```
+
+### Feature Gallery
 <table width="100%">
   <tr>
     <td align="center" width="33%">
