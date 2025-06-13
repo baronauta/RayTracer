@@ -1,5 +1,5 @@
 # RayTracer
-_Photorealistic Image Generator – Developed in Julia_
+_Photorealistic Image Renderer – Built with Julia_
 
 [![GitHub Release](https://img.shields.io/github/v/release/baronauta/RayTracer)](https://github.com/baronauta/RayTracer/releases)
 [![License: EUPL-1.2](https://img.shields.io/badge/license-EUPL%201.2-blue.svg)](https://github.com/baronauta/RayTracer/blob/master/LICENSE.md)
@@ -8,91 +8,95 @@ _Photorealistic Image Generator – Developed in Julia_
 [![Status](https://img.shields.io/badge/status-active--development-yellow.svg)](https://github.com/baronauta/RayTracer)
 [![CI Tests](https://github.com/baronauta/RayTracer/actions/workflows/action.yml/badge.svg)](https://github.com/baronauta/RayTracer/actions/workflows/action.yml)
 
+**RayTracer** is a command-line ray tracing engine built in Julia, designed to render photorealistic images from user-defined 3D scenes. It supports high-dynamic-range rendering and offers flexible output options, including tone-mapped conversions to common image formats.
 
-A command-line ray tracing tool written in Julia, designed to generate photorealistic images and handle high-dynamic-range (PFM) format.
-
-⚠️ **NOTICE**: This tool is under active development and currently supports two main functionalities:
-
-1. **PFM to LDR Image Conversion**  
-   Converts PFM files to standard LDR formats (PNG, JPEG, etc.), with configurable tone mapping.
-
-2. **Ray-Traced Demo Scene Rendering**  
-   Renders a built-in scene using three different types of renderers (see the Demo Examples [section](?tab=readme-ov-file#demo-example)), producing either a single image or a 360° `.mp4` animation.
 
 ## Installation
+
 ### Requirements
-- Julia v1.x (see [Julia official website](https://julialang.org/))
-- A supported operating system (latest stable release of Linux or Windows)
-- FFmpeg (for video generation, see [ffmpeg.org](https://ffmpeg.org/)). Make sure it is available in your system's PATH.
+RayTracer is a Julia-based library that runs on:
 
-### Installation and Environment Setup
+- **Julia v1.x** – [Install Julia](https://julialang.org/downloads/)
+- **Operating Systems**: Linux or Windows
 
-1. Download the [latest release](https://github.com/baronauta/RayTracer/releases/tag/v0.3.0) and extract the archive. Navigate to the extracted directory.
+### Installation
 
-2. Launch Julia from within the project directory and set up the environment:
+You can install RayTracer as a Package.
 
+1. Launch Julia:
 ```bash
 julia
 ```
 
-In the Julia REPL, execute:
-
+2. Install the package directly from GitHub:
 ```julia
 using Pkg
-Pkg.activate(".")
-Pkg.instantiate()
+Pkg.add(url="https://github.com/baronauta/RayTracer/releases/tag/v1.0.0")
 ```
 
-This will:
-- Activate the project environment;
-- Install all required dependencies.
 
 #### (Optional) Run Tests
-To ensure everything works as expected, you can run the test suite with the following command:
-
+To verify your installation is working correctly:
 ```julia
 Pkg.test()
 ```
 
+
 ## Usage Instructions
-To display usage instructions for either tool, run:
+
+RayTracer uses a simple text-based scene description format. See the [guidelines.md](https://github.com/baronauta/RayTracer/releases/tag/v1.0.0/guidelines.md) for details on how to define your own scenes.
+
+To render a scene, run the following command:
+```bash
+julia RayTracer <tracer> <witdth> <height>
 ```
-julia pfm2image
+where `<tracer>` selects the rendering algorithm and and `<width>` and `<height>` specify the image resolution.
+
+### Scene Structure
+A typical scene description consists of two main parts:
+
+- **Shapes**  
+  The geometric objects that make up the scene — such as spheres or planes. 
+- **Camera**  
+ Defines the viewpoint, orientation, and perspective from which the scene is rendered.
+
+RayTracer simulates a camera by casting rays—lines representing paths of light—from the camera’s position through each pixel into the scene. These rays are tested for intersections with the shapes defined in the scene. The rendering algorithm then determines how light interacts at these intersections to compute the final pixel color.
+
+
+### Available Tracers
+
+- **`pathtracer`**  
+  A physically-based renderer that simulates realistic lighting, including global illumination, soft shadows, and reflections.
+
+- **`flattracer`**  
+  A fast, non-photorealistic renderer that returns the surface color and emitted light at the ray intersection. It ignores lighting, shadows, and reflections.  
+  Useful for quick previews, geometry debugging, and visualizing base materials.
+
+- **`onofftracer`**  
+  A minimal tracer that detects ray-object intersections only, without computing lighting or color. 
+  Useful for visibility checks and fast silhouette previews.
+
+
+To display usage instructions and available options for a specific tracer, use the `-h` flag:
+```bash
+julia RayTracer <tracer> -h
 ``` 
-or 
+
+### Tone mapping
+Each run of RayTracer produces a **high-dynamic-range (HDR)** image in the `.pfm` format, which stores detailed lighting and color information from the rendered scene.
+
+Along with the HDR output, a quick preview image in a standard low-dynamic-range (LDR) format (e.g. `.png`) is also generated for easy viewing.
+
+Once you have the `.pfm` file, you can apply **tone mapping**—the process of converting HDR images into LDR ones suitable for standard displays.  
+Because tone mapping is scene-dependent, we encourage you to experiment with different parameters to achieve optimal visual results.
+
+To perform tone mapping, run the following command
+```bash
+julia RayTracer tonemapping <input_file>
 ```
-julia demo
-```
+where `<input_file>` is the PFM file you want to convert.
 
-### Conversion Example:
-```
-julia pfm2image ./examples/reference_earth.pfm 1.0 1.0 output.png
-```
 
-This reads the HDR image `./examples/reference_earth.pfm`, normalizes and clamps the data, and exports it as an LDR file with gamma correction to `output.png`.
-
-Note: This code uses the _images.jl_ package. A list of supported output formats is available [here](https://github.com/JuliaIO/ImageIO.jl).
-
-### Demo Example:
-There are three different renderers:
-- `onoff_tracer`: simply returns a white pixel when there is an object, black otherwise.
-- `flat_tracer`: a more advanced yet still basic renderer. This renderer relies solely on the pigment of each surface to compute the final radiance, ignoring all light contributions.
-- `path_tracer`: the main and most advanced renderer of this project; it is able to produce unbiased rendering equation solutions.
-
-The demo scene for `onoff_tracer` represents a cube made from 8 white spheres, with 2 additional ones placed for visual reference.
-
-The demo scene for `path_tracer` and `flat_tracer` features a checkered plane with a sky background and three spheres: one is a mirror, one is textured using a custom PFM image, and one has a uniform color.
-
-#### To generate a single image (perspective projection, using the `path_tracer` renderer):
-  ```
-  julia demo image 300 300 perspective path_tracer
-  ```
-
-#### To generate an `.mp4` animation (a 360° camera orbit around the scene, using the `flat_tracer` renderer):
-  ```
-  julia demo video 300 300 perspective flat_tracer
-  ```
-  Note: Individual animation frames are saved in `/demo_output/all_video_frames/` and the final video or single image in `/demo_output/`.
 
 ### Output Examples:
 <table width="100%">
@@ -111,8 +115,6 @@ The demo scene for `path_tracer` and `flat_tracer` features a checkered plane wi
     </td>
   </tr>
 </table>
-
-
 
 
 ## History
