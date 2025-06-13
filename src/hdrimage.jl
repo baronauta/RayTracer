@@ -195,7 +195,7 @@ function normalize_image!(
 end
 
 function _clamp(x)
-    x / (1 + x)
+    return x / (1 + x)
 end
 
 "Handle bright spots applying the transformation Rᵢ → Rᵢ / ( 1 + Rᵢ )"
@@ -241,8 +241,6 @@ function tonemapping!(
         a = a,
     )
     clamp_image!(img)
-
-    return img
 end
 
 
