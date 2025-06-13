@@ -36,8 +36,6 @@ A container representing a scene parsed from a scene description file.
 
 - `float_variables::Dict{String, AbstractFloat}`: a dictionary that stores all named float variables used in the scene, mapping variable names to their respective float values.
 
-- `overridden_variables::Set{String}`: names of externally defined variables whose values are preserved when encountered again.
-
 # Note
 - `Material`s can be explicitly declared and named, e.g. `material ground_material(...)`.  
   In contrast, concrete shape types (e.g., `Sphere` and `Plane`) are not assigned to named variables;  
@@ -47,17 +45,14 @@ A container representing a scene parsed from a scene description file.
   so it is initially set to `nothing`.
 """
 mutable struct Scene
-    materials::Dict{String,Material}
+    materials::Dict{String, Material}
     world::World
-    camera::Union{Camera,Nothing}
-    float_variables::Dict{String,AbstractFloat}
-    overridden_variables::Set{String}  #| Names of variables defined externally (e.g., from the CLI).
-    #| If re-encountered in scene.txt, their value is not overridden —
-    #| the external value is preserved.
-
+    camera::Union{Camera, Nothing}
+    float_variables::Dict{String, AbstractFloat}
 end
 
 """
+    Scene(aspect_ratio)
 Create a default, empty `Scene` instance.
 
 # Description
@@ -66,14 +61,12 @@ Initializes a `Scene` with:
 - an empty dictionary of named `Material`s,
 - a new empty `World`,
 - no camera (`nothing`),
-- an empty dictionary for float variables (`Dict{String, Float64}()`),
-- an empty set of overridden variable names.
-
-# Returns
-A `Scene` object with default empty fields, ready to be populated.
+- an dictionary for float variables containing the key "_aspect_ratio"; underscore to denote that is
+meant to be private, use of this identifier by user is discouraged,
 """
-function Scene()
-    Scene(Dict{String,Material}(), World(), nothing, Dict{String,Float64}(), Set{String}())
+function Scene(aspect_ratio::AbstractFloat)
+    float_variables = Dict{String, AbstractFloat}( "_aspect_ratio" => aspect_ratio)
+    Scene(Dict{String,Material}(), World(), nothing, float_variables)
 end
 
 
@@ -401,22 +394,21 @@ end
 """
 Parse a camera:
 
-- `camera(perspective, transformation, aspect_ratio, distance)`
-- `camera(orthogonal, transformation, aspect_ratio)`
+- `camera(perspective, transformation, screen_distance)`
+- `camera(orthogonal, transformation)`
 
 Returns a camera object.
 """
 function parse_camera(instream::InputStream, scene::Scene)
+    aspect_ratio = scene.float_variables["_aspect_ratio"]
     expect_symbol(instream, "(")
     cam = expect_keywords(instream, [PERSPECTIVE, ORTHOGONAL])
     expect_symbol(instream, ",")
     transformation = parse_transformation(instream, scene)
-    expect_symbol(instream, ",")
-    aspect_ratio = expect_number(instream, scene)
     if cam == PERSPECTIVE
         expect_symbol(instream, ",")
-        distance = expect_number(instream, scene)
-        camera = PerspectiveCamera(distance, aspect_ratio, transformation)
+        screen_distance = expect_number(instream, scene)
+        camera = PerspectiveCamera(screen_distance, aspect_ratio, transformation)
     else
         camera = OrthogonalCamera(aspect_ratio, transformation)
     end
@@ -438,28 +430,25 @@ Parses a scene description from the given input stream and constructs a `Scene` 
   - Variables defined internally inside the scene file can only be defined once.
   - Redefinition of an internal variable in the scene file results in a parse error.
 - Only one camera definition is allowed; attempts to define multiple cameras raise an error.
-
-# Returns
-- A `Scene` object representing the parsed scene.
-
-# Throws
-- `GrammarError` if the input contains syntax errors, redefinitions, or unexpected tokens.
 """
-function parse_scene(instream::InputStream; variables = Dict{String,AbstractFloat}())
+function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; external_variables=Dict{String, AbstractFloat}())
     # This function parses scene.txt and builds the world to render.
-    # Some variables can be defined externally (e.g., via CLI) and others directly inside scene.txt
+    # Some variables can be defined externally (e.g., via CLI) and others directly inside scene.txt.
     #
     # Variable resolution rules:
-    # - If a variable is defined externally and redefined in scene.txt, the external value is kept.
+    # - If a variable is defined externally and redefined in scene.txt, 
+    #   the external value is kept and a warning is thrown.
     # - If a variable is not defined externally, it can be defined once inside scene.txt.
-    # - If an internal variable is redefined later in the file, that is an error.
+    # - If an internal variable is redefined later in the file, it is an GrammarError.
 
-    scene = Scene()
+    scene = Scene(aspect_ratio)
 
-    # Copy external variables into the scene
-    scene.float_variables = deepcopy(variables)
-    # Track the names of externally defined variables
-    scene.overridden_variables = Set(keys(variables))
+    if haskey(external_variables, "_aspect_ratio")
+        print_warning("redefinition of \"_aspect_ratio\" is discouraged")
+    end
+
+    # # Copy external variables into scene.float_variables
+    # scene.float_variables = deepcopy(external_variables)
 
     while true
 
@@ -468,33 +457,38 @@ function parse_scene(instream::InputStream; variables = Dict{String,AbstractFloa
         # End of file
         isnothing(token) && break
 
-
-        # The first token of each construct must be a keyword, either a definition of var or a creation of object
-        #       (e.g., FLOAT, MATERIAL, SPHERE, etc.)
-        # Note: using 'expect_keywords' would require first read the token and check if reached end of file, 
-        #       then unread_token and then use expect_keywords; this is simpler and clearer:
+        # The first token of each construct must be a keyword
         if !(isa(token, KeywordToken))
             throw(GrammarError(token.location, "expected a keyword instead of $token"))
         end
 
         if token.keyword == FLOAT
-            # memorize token name and value
             var_name = expect_identifier(instream)
             var_loc = instream.location
             expect_symbol(instream, "(")
             var_val = expect_number(instream, scene)
             expect_symbol(instream, ")")
 
-            # do the previously mentioned check:
-            # Only allow internal variables to be defined once; redefinitions are errors
-            if !(var_name in scene.overridden_variables)
-                if haskey(scene.float_variables, var_name)
-                    throw(GrammarError(var_loc, "variable $var_name cannot be redefined"))
-                end
+            if haskey(external_variables, var_name)
+                # Variable already defined in external_variables:
+                #   - Keep the value in external_variables, 
+                #     copy it into scene.float_variables to make it available in Scene
+                #   - Throw a warning
+                print_warning("variable \"$var_name\" at $var_loc conflicts with an external definition — using the external value")
+                scene.float_variables[var_name] = external_variables[var_name]
+
+            elseif haskey(scene.float_variables, var_name)
+                # Variable already stored in scene.float_variables:
+                #   - Throw a GrammarError
+                throw(GrammarError(var_loc, "variable $var_name cannot be redefined"))
+                
+            else
+                # No conflicts! It is a new variable
                 scene.float_variables[var_name] = var_val
             end
+            
+        # Handle other recognized keywords
 
-            # Handle other recognized keywords
         elseif token.keyword == MATERIAL
             material_name, material = parse_material(instream, scene)
             scene.materials[material_name] = material

@@ -77,7 +77,7 @@ Comonicon.@cast function pathtracer(
     height; 
     output_name::String="",
     extension::String = "", # useful fix-it although without output name (so timestamp.extension)
-    angle::Float64=0.0,
+    angle::Union{Float64, Nothing}=nothing,
     n_rays::Int=5,
     max_depth::Int=5,
     russian_roulette_limit::Int=3,
@@ -101,15 +101,18 @@ Comonicon.@cast function pathtracer(
         img_height = parse(Int, height)
         # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
         aspect_ratio = img_width/img_height
-        variables = Dict(
-            "angle" => angle,
-            "aspect_ratio" => aspect_ratio,
-            )
+        if !isnothing(angle)
+            external_variables = Dict(
+                "angle" => angle,
+                )
+        else
+            external_variables = Dict{String, Float64}()
+        end
 
         # Parse the scene from text file
         scene = open(scene_file, "r") do io
             instream = RayTracer.InputStream(io, scene_file)
-            RayTracer.parse_scene(instream; variables)
+            RayTracer.parse_scene(instream, aspect_ratio; external_variables)
         end
         println("✓ Scene parsing completed.")
 
@@ -203,7 +206,7 @@ Comonicon.@cast function flattracer(
     height; 
     output_name::String="",
     extension::String = "",
-    angle::Float64=0.0,
+    angle::Union{Float64, Nothing}=nothing,
     )
 
     try
@@ -224,15 +227,18 @@ Comonicon.@cast function flattracer(
         img_height = parse(Int, height)
         # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
         aspect_ratio = img_width/img_height
-        variables = Dict(
-            "angle" => angle,
-            "aspect_ratio" => aspect_ratio,
-            )
+        if !isnothing(angle)
+            external_variables = Dict(
+                "angle" => angle,
+                )
+        else
+            external_variables = Dict{String, Float64}()
+        end
 
         # Parse the scene from text file
         scene = open(scene_file, "r") do io
             instream = RayTracer.InputStream(io, scene_file)
-            RayTracer.parse_scene(instream; variables)
+            RayTracer.parse_scene(instream, aspect_ratio; external_variables)
         end
         println("✓ Scene parsing completed.")
 
@@ -318,7 +324,7 @@ Comonicon.@cast function onofftracer(
     height; 
     output_name::String="",
     extension::String = "",
-    angle::Float64=0.0,
+    angle::Union{Float64, Nothing}=nothing,
     )
 
     try
@@ -339,15 +345,18 @@ Comonicon.@cast function onofftracer(
         img_height = parse(Int, height)
         # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
         aspect_ratio = img_width/img_height
-        variables = Dict(
-            "angle" => angle,
-            "aspect_ratio" => aspect_ratio,
-            )
+        if !isnothing(angle)
+            external_variables = Dict(
+                "angle" => angle,
+                )
+        else
+            external_variables = Dict{String, Float64}()
+        end
 
         # Parse the scene from text file
         scene = open(scene_file, "r") do io
             instream = RayTracer.InputStream(io, scene_file)
-            RayTracer.parse_scene(instream; variables)
+            RayTracer.parse_scene(instream, aspect_ratio; external_variables)
         end
         println("✓ Scene parsing completed.")
 

@@ -71,6 +71,17 @@ struct GeometryError <: CustomException
     msg::String
 end
 
+# --- Warning ---
+"Print a warning message to the standard output in yellow text."
+function print_warning(msg)
+    yellow_bold = Crayons.Crayon(foreground=:yellow, bold=true)
+    yellow = Crayons.Crayon(foreground=:yellow, bold=false)
+    
+    print(yellow_bold("Warning: "))
+    println(yellow(msg))
+end
+
+
 # ─────────────────────────────────────────────────────────────
 # NAME CREATION HELPER FUNCTIONS
 # ─────────────────────────────────────────────────────────────
