@@ -28,7 +28,7 @@ Matrix of colors where R,G,B components are floating-point numbers.
 
 # Fields
 - `width::Integer`: image width.
-- `height::Integer`: image heigh
+- `height::Integer`: image height
 - `pixels::Matrix{ColorTypes.RGB{Float32}}`: 2D matrix of RGB pixels with `Float32` components.
 """
 mutable struct HdrImage
@@ -123,6 +123,8 @@ function luminosity(
             throw(ToneMappingError("provide weights, it must be a vector of length 3"))
         elseif !isa(weights, AbstractVector) || length(weights) != 3
             throw(ToneMappingError("\"weights\" must be a vector of length 3"))
+        elseif any(<(0), weights)
+            throw(ToneMappingError("All elements in \"weights\" must be positive numbers"))
         else
             return Float32((r * weights[1] + g * weights[2] + b * weights[3]) / sum(weights))
         end
@@ -216,17 +218,18 @@ Perform tone mapping on a `HdrImage`.
 
 # Arguments
 - `image::HdrImage`:  HDR image to convert.
-- `mean_type`: Method for computing pixel luminosity (default: `:max_min`).
-- `weights`: Vector of weights for `:weighted` luminosity method (default: `nothing`).
+- `mean_type::String`: Method for computing pixel luminosity (default: `max_min`).
+- `weights`: Vector of weights for `weighted` luminosity method (default: `nothing`).
 - `a`: scaling factor applied after normalization (default: `1.0`).
 """
 function tonemapping!(
     img::HdrImage;
-    mean_type = :max_min,
+    mean_type = "max_min",
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
     a = 1.0,
 )
-    
+    # make mean_type a Symbol
+    symbol_mean_type = Symbol(mean_type)
     # Validate `a`
     if !isa(a, Real)
         throw(ToneMappingError("expected a real number for \"a\", got $(typeof(a))"))
@@ -236,7 +239,7 @@ function tonemapping!(
 
     normalize_image!(
         img; 
-        mean_type = mean_type,
+        mean_type = symbol_mean_type,
         weights = weights,
         a = a,
     )

@@ -23,104 +23,14 @@
 #
 #_______________________________________________________________________________________
 
+#❗For name generation logic, see misc.jl
+
 using Pkg
 Pkg.activate(normpath(@__DIR__))
 
 using RayTracer
 using Comonicon
 using Dates
-
-#--- parsing extension functions ---
-
-"""
-Extracts the file extension from a given `filename`.
-
-# Returns
-- The extension string (including the dot), e.g. ".png", or `nothing` if no extension is found.
-"""
-    function get_extension_if_given(filename::String)
-        ext = splitext(filename)[2]
-        return isempty(ext) ? nothing : ext
-    end
-
-"""
-Determines the appropriate file extension to use for output.
-
-# Returns
-- The extension to use (including the dot), giving priority to the explicit `extension`.
-- If no extension specified and none in filename, defaults to ".png".
-
-# Notes
-- If both filename and explicit extension have different extensions, a warning is printed and explicit extension is used.
-"""
-    function choose_ext(filename::String, extension::String)
-        # Extract the extension from the output name, if it has one
-        ext_in_filename = get_extension_if_given(filename)
-
-        # Case 1: No extension was passed via --extension
-        if extension == ""
-            # No extension in output name → use default ".png"
-            isnothing(ext_in_filename) && return ".png"
-
-            # Extension found in output name → use that
-            !isnothing(ext_in_filename) && return ext_in_filename
-            
-        else # Case 2: --extension was explicitly passed
-
-            # Both extensions are present and they differ → show a warning
-            if(!isnothing(ext_in_filename) && (extension != ext_in_filename))
-                @warn "\n⚠️  Warning: extension in output name ('$ext_in_filename') doesn't match the one specified ('$extension'). Using the specified one.\n"
-            end
-            return extension
-        end
-    end
-
-"""
-Constructs output file paths and directories based on input parameters.
-
-# Arguments
-- `output_name::String`: The base name of the output file.
-- `extension::String`: The desired file extension (may be empty).
-- `scene_file::String`: Path to the scene file used for rendering.
-- `tracer::String`: A prefix string indicating the tracer type (used in default naming).
-
-# Returns
-- `extension`: The chosen file extension (including the dot).
-- `ldr_path`: Full path for the tone-mapped output image file.
-- `pfm_path`: Full path for the high dynamic range `.pfm` output file.
-
-# Behavior
-- If no output name is provided, creates a timestamped name inside a directory named after the scene file.
-- Ensures the output directory exists.
-- If output name is provided, uses it to build output paths with correct extensions.
-"""
-function choose_name(output_name::String, extension::String, scene_file::String, tracer::String)
-    # check if an output name is declared, if not use timestamp for default.
-    # For default name i want to create a folder with the scene name.
-    if isempty(output_name)
-        extension = choose_ext(output_name, extension) # here i choose the default or the passed one 
-        scene_name = splitext(basename(scene_file))[1]
-        timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
-        output_name = "$(tracer)_$timestamp"
-        base_path = "render_$(scene_name)"
-
-        # make the path for output images
-        mkpath(base_path)
-        ldr_path = joinpath(base_path, output_name * extension)
-        pfm_path = joinpath(base_path, output_name * ".pfm")
-
-        return extension, ldr_path, pfm_path
-    else
-        extension = choose_ext(output_name, extension)
-
-        # make the path for output images
-        name = splitext(output_name)[1]
-        ldr_path = joinpath(name * extension)
-        pfm_path = joinpath(name * ".pfm")
-
-        return extension, ldr_path, pfm_path
-    end
-end
 
 # ─────────────────────────────────────────────────────────────
 # PATH TRACER
@@ -179,7 +89,7 @@ Comonicon.@cast function pathtracer(
         # Determine the correct output file extension and construct output paths.
         # This handles cases where the user may or may not specify output name and/or extension.
         # If no output name is given, a timestamped name inside a folder named after the scene is created.
-        extension, ldr_path, pfm_path = choose_name(output_name, extension, scene_file, "pthtrc")
+        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scene_file, "pthtrc")
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
@@ -302,7 +212,7 @@ Comonicon.@cast function flattracer(
         # Determine the correct output file extension and construct output paths.
         # This handles cases where the user may or may not specify output name and/or extension.
         # If no output name is given, a timestamped name inside a folder named after the scene is created.
-        extension, ldr_path, pfm_path = choose_name(output_name, extension, scene_file, "flttrc")
+        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scene_file, "flttrc")
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
@@ -417,7 +327,7 @@ Comonicon.@cast function onofftracer(
         # Determine the correct output file extension and construct output paths.
         # This handles cases where the user may or may not specify output name and/or extension.
         # If no output name is given, a timestamped name inside a folder named after the scene is created.
-        extension, ldr_path, pfm_path = choose_name(output_name, extension, scene_file, "onoftrc")
+        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scene_file, "onoftrc")
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
@@ -493,39 +403,32 @@ Perform tone mapping on an HDR image loaded from a PFM file, then save it as an 
 - `input_file`: Path to the input HDR image file (must have a `.pfm` extension).
 
 # Options
-
+- `--output-name=<String>`: Custom name for the output tone-mapped image (default: auto-generated from parameters).
 - `--out-ext=<String>`: Desired file extension for the output LDR image (e.g., ".png", ".jpg").
                         Defaults to ".png".
-- `--mean=<Symbol>`: Method to compute the luminosity mean during normalization. Deafaults use :max_min method
-- `--weights=<Vector{Float64}>`: A vector of weights used for luminosity calculation during normalization.
+- `--mean=<String>`: Method to compute the luminosity mean during normalization. Defaults use "max_min" method.
+- `--weights=<String>`: Weights for luminosity when mean=weighted. Format:< "[w1, w2, w3]" >.
 - `--a=<Float64>`: A scaling factor applied during image normalization. Defaults to 1.0.
 - `--gamma=<Float64>`: The gamma correction value applied when writing the LDR image. Defaults to 1.0.
 """
 Comonicon.@cast function tonemapping(
     input_file;
+    output_name::String="",
     out_ext::String = "",
-    mean::Symbol=:max_min,
-    weights::Vector{Float64} = Float64[],  # default to empty
+    mean::String="max_min",
+    weights::String="[]",  # default to empty
     a::Float64 = 1.,
     gamma::Float64=1.,
 )
     try
         print_welcome()
-
+        # Check extension
+        println("Reading .pfm image...")
         RayTracer.expected_extension(input_file, [".pfm"])
-       
-        # Output file will share the same the same path with the input file, 
-        # it does only change the extension (default .png)
-        path_without_ext = splitext(input_file)[1]
-        if isempty(out_ext)
-            output_file = path_without_ext * ".png"
-        else
-            if !(out_ext in SUPPORTED_EXTS)
-                throw(ExtensionError("$out_ext is an unsupported output extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
-            end
-            output_file = path_without_ext * out_ext
-        end
 
+        (weights=="[]") ? (weights = nothing) : (weights = parse.(Float64, strip.(split(strip(weights, ['[', ']']), ","))))
+        
+        println("🖼️  Applying tone mapping...")
         img = RayTracer.read_pfm_image(input_file)
         RayTracer.tonemapping!(
             img;
@@ -533,10 +436,31 @@ Comonicon.@cast function tonemapping(
             weights = weights,
             a = a
         )
-        RayTracer.write_ldr_image(output_file, img; gamma = gamma)
 
-        @info "Saved to $output_file"
+        # Create the default name (summarizing params, see misc.jl)
+        base_output_name = if isempty(output_name)
+            # Get filename without its original extension
+            RayTracer.tonemapping_name(
+                splitext(input_file)[1],
+                mean,
+                weights,
+                a,
+                gamma,
+            )
+        else
+            splitext(output_name)[1] # Get output_name without its original extension
+        end
+        
+        extension = RayTracer.choose_ext(output_name, out_ext)
 
+        if !(extension in SUPPORTED_EXTS)
+            throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
+        end
+        newfilename = base_output_name * extension
+        @info "Saving image to disk...\n"
+        RayTracer.write_ldr_image(newfilename, img; gamma = gamma)
+        println("\n✅ Tone mapping completed successfully. Output file:")
+        println("  • $newfilename")
     catch e
         if isa(e, CustomException)
             println(e)
