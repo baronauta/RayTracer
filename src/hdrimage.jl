@@ -200,7 +200,19 @@ function _clamp(x)
     x / (1 + x)
 end
 
-"Handle bright spots applying the transformation Rᵢ → Rᵢ / ( 1 + Rᵢ )"
+"""
+Apply soft clamping to the image to handle bright spots.
+Uses the transformation:
+
+    Rᵢ → Rᵢ / (1 + Rᵢ)
+
+This non-linear transformation compresses high dynamic range values into [0, 1),
+preserving detail in bright areas while avoiding bright spots.
+
+# Note: 
+even values already within the [0, 1] range are slightly altered.
+In some cases, this can reduce color saturation and shift the image toward gray tones.
+"""
 function clamp_image!(image::HdrImage)
     for h = 1:image.height
         for w = 1:image.width
@@ -214,16 +226,37 @@ function clamp_image!(image::HdrImage)
 end
 
 """
+Apply hard clamping to the image by restricting each RGB component
+to the [0.0, 1.0] range, setting values below 0 to 0 and above 1 to 1.
+
+This operation forcibly limits all pixel values to the valid displayable range,
+potentially saturating overexposed areas, but it does not alter colors already within range.
+"""
+function hard_clamp_image!(image::HdrImage)
+    for h = 1:image.height
+        for w = 1:image.width
+            r = clamp(image.pixels[h, w].r, 0.0f0, 1.0f0)
+            g = clamp(image.pixels[h, w].g, 0.0f0, 1.0f0)
+            b = clamp(image.pixels[h, w].b, 0.0f0, 1.0f0)
+            color = RGB(r, g, b)
+            set_pixel!(image, w, h, color)
+        end
+    end
+end
+
+"""
 Perform tone mapping on a `HdrImage`.
 
 # Arguments
 - `image::HdrImage`:  HDR image to convert.
+- `clamp::Symbol`: Clamping method: hard or soft.
 - `mean_type::String`: Method for computing pixel luminosity (default: `max_min`).
 - `weights`: Vector of weights for `weighted` luminosity method (default: `nothing`).
 - `a`: scaling factor applied after normalization (default: `1.0`).
 """
 function tonemapping!(
     img::HdrImage;
+    clamp::Symbol,
     mean_type = "max_min",
     weights::Union{Nothing, AbstractVector{<:Real}} = nothing,
     a = 1.0,
@@ -243,8 +276,13 @@ function tonemapping!(
         weights = weights,
         a = a,
     )
-    clamp_image!(img)
-
+    if clamp == :soft
+        clamp_image!(img)
+    elseif clamp == :hard
+        hard_clamp_image!(img)
+    else
+        throw(ToneMappingError("unexpected 'clamping', pleese use 'hard' or 'soft' instead of '$clamp'"))
+    end
     return img
 end
 

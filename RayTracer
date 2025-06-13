@@ -70,6 +70,7 @@ Note: This command uses the path tracing algorithm, that estimates a solution of
 - `--n-rays=<Integer>`: Number of rays per pixel (default: `5`).
 - `--max-depth=<Integer>`: Maximum ray recursion depth (default: `5`).
 - `--russian-roulette-limit=<Integer>`: Depth at which to start Russian roulette termination (default: `3`).
+- `--clamping=<String>`: Clamping method to apply; choose between `hard` and `soft`. (default=`soft`).
 """
 Comonicon.@cast function pathtracer(
     scene_file, 
@@ -81,6 +82,7 @@ Comonicon.@cast function pathtracer(
     n_rays::Int=5,
     max_depth::Int=5,
     russian_roulette_limit::Int=3,
+    clamping::String="soft",
     )
 
     try
@@ -141,8 +143,9 @@ Comonicon.@cast function pathtracer(
         write(pfm_path, img)
         
         # Basic tone mapping
+        clamp = Symbol(clamping)
         println("\n\nApplying basic tone mapping...\n")
-        RayTracer.tonemapping!(img)
+        RayTracer.tonemapping!(img; clamp)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -196,6 +199,7 @@ Note: This algorithm returns the sum of the surface color and
 - `--angle=<float>`: Angle for rotating the camera around the Z axis.  
   The distance from the origin is maintained.  
   Useful for quickly changing the view without modifying the `scene_file` (default: `0.0`).
+- `--clamping=<String>`: Clamping method to apply; choose between `hard` and `soft`. (default=`soft`).
 """
 Comonicon.@cast function flattracer(
     scene_file, 
@@ -204,6 +208,7 @@ Comonicon.@cast function flattracer(
     output_name::String="",
     extension::String = "",
     angle::Float64=0.0,
+    clamping::String="soft",
     )
 
     try
@@ -259,8 +264,9 @@ Comonicon.@cast function flattracer(
         write(pfm_path, img)
         
         # Basic tone mapping
+        clamp = Symbol(clamping)
         println("\n\nApplying basic tone mapping...\n")
-        RayTracer.tonemapping!(img)
+        RayTracer.tonemapping!(img; clamp)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -311,6 +317,7 @@ For higher-quality control, load the `.pfm` file and apply a custom tone mapping
 - `--angle=<float>`: Angle for rotating the camera around the Z axis.  
   The distance from the origin is maintained.  
   Useful for quickly changing the view without modifying the `scene_file` (default: `0.0`).
+- `--clamping=<String>`: Clamping method to apply; choose between `hard` and `soft`. (default=`soft`).
 """
 Comonicon.@cast function onofftracer(
     scene_file, 
@@ -319,6 +326,7 @@ Comonicon.@cast function onofftracer(
     output_name::String="",
     extension::String = "",
     angle::Float64=0.0,
+    clamping::String="soft",
     )
 
     try
@@ -374,8 +382,9 @@ Comonicon.@cast function onofftracer(
         write(pfm_path, img)
         
         # Basic tone mapping
+        clamp = Symbol(clamping)
         println("\n\nApplying basic tone mapping...\n")
-        RayTracer.tonemapping!(img)
+        RayTracer.tonemapping!(img; clamp)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -410,6 +419,7 @@ Perform tone mapping on an HDR image loaded from a PFM file, then save it as an 
 - `--weights=<String>`: Weights for luminosity when mean=weighted. Format:< "[w1, w2, w3]" >.
 - `--a=<Float64>`: A scaling factor applied during image normalization. Defaults to 1.0.
 - `--gamma=<Float64>`: The gamma correction value applied when writing the LDR image. Defaults to 1.0.
+- `--clamping=<String>`: Clamping method to apply; choose between `hard` and `soft`. (default=`soft`).
 """
 Comonicon.@cast function tonemapping(
     input_file;
@@ -419,6 +429,7 @@ Comonicon.@cast function tonemapping(
     weights::String="[]",  # default to empty
     a::Float64 = 1.,
     gamma::Float64=1.,
+    clamping::String="soft",
 )
     try
         print_welcome()
@@ -429,12 +440,14 @@ Comonicon.@cast function tonemapping(
         (weights=="[]") ? (weights = nothing) : (weights = parse.(Float64, strip.(split(strip(weights, ['[', ']']), ","))))
         
         println("🖼️  Applying tone mapping...")
+        clamp = Symbol(clamping)
         img = RayTracer.read_pfm_image(input_file)
         RayTracer.tonemapping!(
             img;
             mean_type = mean,
             weights = weights,
             a = a
+            clamp=clamp,
         )
 
         # Create the default name (summarizing params, see misc.jl)
