@@ -4,6 +4,7 @@
   - `demo` is now limited to the `demo_scene.txt` file in `example/` folder
   - `pfm2image` functionality is now available under `julia RayTracer tonemapping`
 ---
+- Prevent redefinition of `_aspect_ratio` in scene files; external variables now take priority with warning on override [#25](https://github.com/baronauta/RayTracer/pull/25)
 - Added `image2pfm` to generate `.pfm` images from standard LDR formats (see this [commit](https://github.com/baronauta/RayTracer/commit/b99578f2e9ab31780a45ddaefe77ad86a6965c45)).
 - Introduced a modern, extensible CLI using Comonicon.jl [#16](https://github.com/baronauta/RayTracer/pull/16)
 - Added support for custom text-based scene descriptions [#16](https://github.com/baronauta/RayTracer/pull/16)
