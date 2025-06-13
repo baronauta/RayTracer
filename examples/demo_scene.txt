@@ -1,27 +1,3 @@
-# Comments start with #
-
-# Scene file format guide: ---------------------------------------------------------------------
-
-# 1. Float variables:
-#    - You can define float variables.
-#    - Variables defined here can be overridden by external float variables; otherwise, their value is used.
-#    - Variables defined in the file can only be defined once.
-#
-# 1.1 NOTE: <angle> can be defined here and also passed externally (basic change of view around z-axis).
-#           <aspect_ratio> is passed externally to avoid distorsion (not necessary to be defined here).
-#
-# 2. Materials:
-#    - You can declare named materials and use them later.
-#
-# 3. Cannot declare named general variables; use them directly instead.
-#    - You cannot create named Transformations, Spheres, Planes, Colors, vectors, etc.
-#
-# 4. Camera:
-#    - Only one camera can be defined.
-#
-# Follow this structure to create valid scene files.
-#------------------------------------------------------------------------------------------------
-
 # Float Variables
 float angle(0.0)
 
@@ -45,4 +21,4 @@ plane(plane_material, identity)
 
 
 # Camera definition
-camera(perspective, rotation_z(angle) * translation([-3, 0, 1]), aspect_ratio, 1.0)
+camera(perspective, rotation_z(angle) * translation([-3, 0, 1]), 1.0)
