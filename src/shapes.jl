@@ -242,3 +242,11 @@ function ray_intersection(sphere::Sphere, ray::Ray)
 
     return HitRecord(world_point, normal, surface_point, t, ray, sphere)
 end
+
+# ─────────────────────────────────────────────────────────────
+# Cube definition and functions
+# ─────────────────────────────────────────────────────────────
+struct Cube{T<:AbstractFloat} <: Shape{T}
+    transformation::Transformation{T}
+    material::Material
+end
