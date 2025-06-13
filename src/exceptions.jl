@@ -80,6 +80,17 @@ struct ExtensionError <: CustomException
     msg::String
 end
 
+"""
+    struct CsgError <: CustomException
+Custom exception for errors encountered during CSG creation and operations.
+
+# Fields
+- `msg::String`: Error message describing the issue.
+"""
+struct CsgError <: CustomException
+    msg::String
+end
+
 #---
 
 function Base.show(io::IO, err::CustomException)
