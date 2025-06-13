@@ -250,3 +250,66 @@ struct Cube{T<:AbstractFloat} <: Shape{T}
     transformation::Transformation{T}
     material::Material
 end
+
+# ─────────────────────────────────────────────────────────────
+# CSG definition and functions
+# ─────────────────────────────────────────────────────────────
+
+"""
+Enumerated type representing the possible CSG operations:
+- `UNION`: the resulting shape includes the volume of both shapes;
+- `DIFFERENCE`: the resulting shape includes only the volume of the first shape minus the second;
+- `INTERSECTION`: the resulting shape includes only the shared volume between the two shapes.
+"""
+@enum Operation begin
+    UNION
+    DIFFERENCE
+    INTERSECTION
+end
+
+"""
+A Constructive Solid Geometry (CSG) shape defined by applying an operation
+(`UNION`, `DIFFERENCE`, or `INTERSECTION`) between two shapes.
+
+Fields:
+- `obj1::Shape`: the first shape involved in the operation;
+- `obj2::Shape`: the second shape involved in the operation;
+- `operation::Operation`: the CSG operation to apply.
+
+Notes:
+- **Shape order matters**: `obj1 - obj2` is not the same as `obj2 - obj1`.
+- **Shapes can be nested CSGs**: both `obj1` and `obj2` may themselves be `CSG` objects.
+"""
+struct CSG{T<:AbstractFloat} <: Shape{T}
+    obj1::Shape
+    obj2::Shape
+    operation::Operation
+end
+
+"""
+Compares two shapes for equality.
+Returns `true` if the shapes have the same type and same transformations.
+
+Note: Materials are not compared.
+"""
+function ==(obj1::Shape, obj2::Shape)
+    (typeof(obj1) == typeof(obj2)) && (obj1.transformation ≈ obj2.transformation)
+end
+
+"""
+Checks whether a CSG construction is valid.
+
+Not accepted `csg` with 2 identical overlapped objects.
+"""
+function valid_csg(csg::CSG)
+    (csg.obj1==csg.obj2) && throw(CsgError("cannot make csg with two overlapped same objects"))
+end
+
+"""
+CSG costructor.
+validates the csg before returning it.
+"""
+function CSG(obj1::Shape, obj2::Shape, oper::Operation)
+    CSG(obj1, obj2, oper)
+    valid_csg && return csg
+end

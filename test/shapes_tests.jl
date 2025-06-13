@@ -183,6 +183,22 @@ end
     end
 end
 
+@testset "CSG" begin
+    sphere1 = Sphere()
+    sphere1_copy = Sphere(Material(UniformPigment(RED)))
+    sphere2 = Sphere(translation(Vec(0.0, 0.0, 1.0)), Material())
+    
+    # test for shapes comparison
+    @test sphere1 == spere1_copy
+    @test sphere1 != sphere2
+
+    # test check for unvalid and valid CSGs
+    @test_throws CsgError CSG(sphere1, sphere1, UNION)
+    csg = CSG(sphere1, sphere2, UNION)
+    @test typeof(csg) == CSG
+
+end
+
 @testset "World" begin
     # one setup for all tests
     # Shapes
