@@ -36,8 +36,6 @@ A container representing a scene parsed from a scene description file.
 
 - `float_variables::Dict{String, AbstractFloat}`: a dictionary that stores all named float variables used in the scene, mapping variable names to their respective float values.
 
-- `overridden_variables::Set{String}`: names of externally defined variables whose values are preserved when encountered again.
-
 # Note
 - `Material`s can be explicitly declared and named, e.g. `material ground_material(...)`.  
   In contrast, concrete shape types (e.g., `Sphere` and `Plane`) are not assigned to named variables;  
@@ -51,10 +49,6 @@ mutable struct Scene
     world::World
     camera::Union{Camera,Nothing}
     float_variables::Dict{String,AbstractFloat}
-    overridden_variables::Set{String}  #| Names of variables defined externally (e.g., from the CLI).
-    #| If re-encountered in scene.txt, their value is not overridden —
-    #| the external value is preserved.
-
 end
 
 """
@@ -67,13 +61,12 @@ Initializes a `Scene` with:
 - a new empty `World`,
 - no camera (`nothing`),
 - an empty dictionary for float variables (`Dict{String, Float64}()`),
-- an empty set of overridden variable names.
 
 # Returns
 A `Scene` object with default empty fields, ready to be populated.
 """
 function Scene()
-    Scene(Dict{String,Material}(), World(), nothing, Dict{String,Float64}(), Set{String}())
+    Scene(Dict{String,Material}(), World(), nothing, Dict{String,Float64}())
 end
 
 
@@ -458,8 +451,6 @@ function parse_scene(instream::InputStream; variables = Dict{String,AbstractFloa
 
     # Copy external variables into the scene
     scene.float_variables = deepcopy(variables)
-    # Track the names of externally defined variables
-    scene.overridden_variables = Set(keys(variables))
 
     while true
 
@@ -484,15 +475,6 @@ function parse_scene(instream::InputStream; variables = Dict{String,AbstractFloa
             expect_symbol(instream, "(")
             var_val = expect_number(instream, scene)
             expect_symbol(instream, ")")
-
-            # do the previously mentioned check:
-            # Only allow internal variables to be defined once; redefinitions are errors
-            if !(var_name in scene.overridden_variables)
-                if haskey(scene.float_variables, var_name)
-                    throw(GrammarError(var_loc, "variable $var_name cannot be redefined"))
-                end
-                scene.float_variables[var_name] = var_val
-            end
 
             # Handle other recognized keywords
         elseif token.keyword == MATERIAL
