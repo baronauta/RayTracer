@@ -199,7 +199,7 @@ Useful for quick previews, geometry debugging, and visualizing base materials.
     This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.
 """
 Comonicon.@cast function flattracer(
-    scene_file, 
+    scenefile, 
     width, 
     height; 
     output_name::String="",
@@ -346,8 +346,8 @@ Comonicon.@cast function onofftracer(
         end
 
         # Parse the scene from text file
-        scene = open(scene_file, "r") do io
-            instream = RayTracer.InputStream(io, scene_file)
+        scene = open(scenefile, "r") do io
+            instream = RayTracer.InputStream(io, scenefile)
             RayTracer.parse_scene(instream, aspect_ratio; external_variables)
         end
         println("✓ Scene parsing completed.")
