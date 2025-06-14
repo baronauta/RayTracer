@@ -243,6 +243,62 @@ function ray_intersection(sphere::Sphere, ray::Ray)
     return HitRecord(world_point, normal, surface_point, t, ray, sphere)
 end
 
+
+"""
+Checks if a ray intersects the Sphere.
+Return a list of all `HitRecord`s or a list of `nothing` if no intersection is found.
+"""
+function all_ray_intersections(sphere::Sphere, ray::Ray)
+    # Consider the ray into the sphere frame of reference
+    # applying the inverse transformation.
+    inv_ray = transform(ray, inverse(sphere.transformation))
+
+    # the equation for sphere intersection is: t^2∥​d∥^​2+2t(O⋅d)+∥​O∥^​2−1=0
+    # where O is the ray origin, d the ray direction
+    # tangent intersections are not considered, so there are
+    # intersections only if Δ > 0.
+
+    # defining reduced Δ:
+    # delta ≡ Δ/4 = (O ⋅ d)² − ||d||² ⋅ (||O||² − 1) = b² -a*c
+    origin_vec = point_to_vec(inv_ray.origin)
+    a = squared_norm(inv_ray.dir)
+    b = dot(origin_vec, inv_ray.dir)
+    c = squared_norm(origin_vec) - 1.0
+
+    delta = b^2 - a * c
+    if delta ≤ 0.0
+        return[nothing]
+    end
+    # finding the 2 t solutions
+    sqrt_delta = sqrt(delta)
+    tmin = (-b - sqrt_delta) / (a)
+    tmax = (-b + sqrt_delta) / (a)
+    # 
+    if (inv_ray.tmin < tmin < inv_ray.tmax)
+        hit_point1 = at(inv_ray, tmin)
+        hit_point2 = at(inv_ray, tmax)
+        world_point1 = sphere.transformation * hit_point1
+        normal1 = sphere.transformation * _sphere_normal(hit_point1, inv_ray)
+        surface_point1 = _sphere_point_to_uv(hit_point1)
+        world_point2 = sphere.transformation * hit_point2
+        normal2 = sphere.transformation * _sphere_normal(hit_point2, inv_ray)
+        surface_point2 = _sphere_point_to_uv(hit_point2)
+        hit1 = HitRecord(world_point1, normal1, surface_point1, tmin, ray, sphere)
+        hit2 = HitRecord(world_point2, normal2, surface_point2, tmax, ray, sphere)
+    elseif !(inv_ray.tmin < tmin < inv_ray.tmax) && (inv_ray.tmin < tmax < inv_ray.tmax)
+        hit_point2 = at(inv_ray, tmax)
+        world_point2 = sphere.transformation * hit_point2
+        normal2 = sphere.transformation * _sphere_normal(hit_point2, inv_ray)
+        surface_point2 = _sphere_point_to_uv(hit_point2)
+        hit2 = HitRecord(world_point2, normal2, surface_point2, tmax, ray, sphere)
+        hit1 = nothing
+    else
+        return [nothing]
+    end
+
+    return [hit1,hit2]
+end
+
 # ─────────────────────────────────────────────────────────────
 # Cube definition and functions
 # ─────────────────────────────────────────────────────────────
@@ -301,10 +357,10 @@ Compares two CSG shapes for equality.
 Returns `true` if the CSGs have the same obj and operations.
 """
 function ≈(csg1::CSG, csg2::CSG)
-    if (csg1.operation==csg2.operation)
+    if (csg1.operation == csg2.operation)
         if csg1.operation == UNION || csg1.operation == INTERSECTION
             a = ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
-            b = ((csg1.obj2 == csg2.obj1)&&(csg2.obj2 == csg1.obj1))
+            b = ((csg1.obj2 == csg2.obj1) && (csg2.obj2 == csg1.obj1))
             return a || b
         elseif csg1.operation == DIFFERENCE
             return ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
@@ -322,7 +378,8 @@ Checks whether a CSG construction is valid.
 Not accepted `csg` with 2 identical overlapped objects.
 """
 function valid_csg(csg::CSG)
-    (csg.obj1==csg.obj2) && throw(CsgError("cannot make csg with two overlapped same objects"))
+    (csg.obj1 == csg.obj2) &&
+        throw(CsgError("cannot make csg with two overlapped same objects"))
     return true
 end
 
@@ -330,7 +387,7 @@ end
 CSG outer costructor.
 validates the csg before returning it.
 """
-function CSG(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where T<:AbstractFloat
+function CSG(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where {T<:AbstractFloat}
     csg = CSG{T}(obj1, obj2, operation)
     valid_csg(csg)
     return csg
