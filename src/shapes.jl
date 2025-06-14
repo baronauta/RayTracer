@@ -246,7 +246,7 @@ end
 
 """
 Checks if a ray intersects the Sphere.
-Return a list of all `HitRecord`s or a list of `nothing` if no intersection is found.
+Return a sorted list of all `HitRecord`s or a list of `nothing` if no intersection is found.
 """
 function all_ray_intersections(sphere::Sphere, ray::Ray)
     # Consider the ray into the sphere frame of reference
@@ -391,4 +391,27 @@ function CSG(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where {T<:Abs
     csg = CSG{T}(obj1, obj2, operation)
     valid_csg(csg)
     return csg
+end
+
+"""
+Checks if a `Ray` intersects the `CSG`.
+Return a sorted list of all `HitRecord`s or a list of `nothing` if no intersection is found.
+"""
+function all_ray_intersection(csg::CSG, ray::Ray)
+
+    hit_array_1 = all_ray_intersection(csg.obj1, ray)
+    hit_array_2 = all_ray_intersection(csg.obj2, ray)
+    real_hits_1 = filter(!isnothing, hit_array_1)
+    real_hits_2 = filter(!isnothing, hit_array_2)
+
+    if (!isempty(real_hits_1) && !isempty(real_hits_2))
+
+        # merge and sort simultaniously the 2 array manteining only valid HitRecords
+        # ...
+        # result = sort_records(real_hits_1, real_hits_2)
+        # ...
+    else
+        return [nothing]
+    end
+    return # result
 end
