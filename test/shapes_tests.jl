@@ -189,14 +189,21 @@ end
     sphere2 = Sphere(translation(Vec(0.0, 0.0, 1.0)), Material())
     
     # test for shapes comparison
-    @test sphere1 == spere1_copy
-    @test sphere1 != sphere2
+    @test sphere1 ≈ sphere1_copy
+    @test !(sphere1 ≈ sphere2)
 
     # test check for unvalid and valid CSGs
-    @test_throws CsgError CSG(sphere1, sphere1, UNION)
-    csg = CSG(sphere1, sphere2, UNION)
-    @test typeof(csg) == CSG
+    @test_throws CsgError CSG(sphere1, sphere1, RayTracer.UNION)
+    csg = CSG(sphere1, sphere2, RayTracer.UNION)
 
+    # test for csg comparison
+    csg_copy = CSG(sphere1, sphere2, RayTracer.UNION)
+    csg2 = CSG(sphere1, sphere2, RayTracer.DIFFERENCE)
+    csg3 = CSG(sphere2, sphere1, RayTracer.DIFFERENCE)
+    csg = CSG(sphere1, sphere2, RayTracer.UNION)
+    @test csg ≈ csg_copy
+    @test !(csg ≈ csg2)
+    @test !(csg2 ≈ csg3)
 end
 
 @testset "World" begin

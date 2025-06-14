@@ -292,8 +292,28 @@ Returns `true` if the shapes have the same type and same transformations.
 
 Note: Materials are not compared.
 """
-function ==(obj1::Shape, obj2::Shape)
-    (typeof(obj1) == typeof(obj2)) && (obj1.transformation ≈ obj2.transformation)
+function ≈(obj1::Shape, obj2::Shape)
+    return ((typeof(obj1) == typeof(obj2)) && (obj1.transformation ≈ obj2.transformation))
+end
+
+"""
+Compares two CSG shapes for equality.
+Returns `true` if the CSGs have the same obj and operations.
+"""
+function ≈(csg1::CSG, csg2::CSG)
+    if (csg1.operation==csg2.operation)
+        if csg1.operation == UNION || csg1.operation == INTERSECTION
+            a = ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
+            b = ((csg1.obj2 == csg2.obj1)&&(csg2.obj2 == csg1.obj1))
+            return a || b
+        elseif csg1.operation == DIFFERENCE
+            return ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
+        else
+            throw(CsgError("undefined operation $(csg1.operation)"))
+        end
+    else
+        return false
+    end
 end
 
 """
@@ -303,13 +323,15 @@ Not accepted `csg` with 2 identical overlapped objects.
 """
 function valid_csg(csg::CSG)
     (csg.obj1==csg.obj2) && throw(CsgError("cannot make csg with two overlapped same objects"))
+    return true
 end
 
 """
-CSG costructor.
+CSG outer costructor.
 validates the csg before returning it.
 """
-function CSG(obj1::Shape, obj2::Shape, oper::Operation)
-    CSG(obj1, obj2, oper)
-    valid_csg && return csg
+function CSG(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where T<:AbstractFloat
+    csg = CSG{T}(obj1, obj2, operation)
+    valid_csg(csg)
+    return csg
 end

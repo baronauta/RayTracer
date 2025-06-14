@@ -43,7 +43,7 @@ export Transformation, HomMatrix, translation, rotation_x, rotation_y, rotation_
 export Ray
 export OrthogonalCamera, PerspectiveCamera
 export ImageTracer
-export Shape, HitRecord, Plane, Sphere
+export Shape, HitRecord, Plane, Sphere, CSG
 export World, add!
 export UniformPigment, CheckeredPigment, ImagePigment
 export Material
@@ -51,7 +51,7 @@ export DiffuseBRDF, SpecularBRDF
 export PCG
 export onoff_tracer, flat_tracer, path_tracer, my_renderer
 
-export CustomException, WrongPFMformat, ToneMappingError, RuntimeError, GeometryError, GrammarError, ExtensionError
+export CustomException, WrongPFMformat, ToneMappingError, RuntimeError, GeometryError, GrammarError, ExtensionError, CsgError
 export Token, KeywordToken, LiteralNumberToken, StringToken, SymbolToken, IdentifierToken
 
 export parse_scene
