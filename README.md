@@ -8,7 +8,7 @@ _Photorealistic Image Renderer – Built with Julia_
 [![Status](https://img.shields.io/badge/status-active--development-yellow.svg)](https://github.com/baronauta/RayTracer)
 [![CI Tests](https://github.com/baronauta/RayTracer/actions/workflows/action.yml/badge.svg)](https://github.com/baronauta/RayTracer/actions/workflows/action.yml)
 
-**RayTracer** is a command-line ray tracing engine built in Julia, designed to render photorealistic images from user-defined 3D scenes. It supports high-dynamic-range rendering and offers flexible output options, including tone-mapped conversions to common image formats.
+**RayTracer** is a text-based ray tracing engine built in Julia, designed to render photorealistic images from user-defined 3D scenes. It supports high-dynamic-range rendering and offers flexible output options, including tone-mapped conversions to common image formats.
 
 
 ## Installation
@@ -17,34 +17,30 @@ _Photorealistic Image Renderer – Built with Julia_
 RayTracer is a Julia-based library that runs on:
 
 - **Julia v1.x** – [Install Julia](https://julialang.org/downloads/)
-- **Operating Systems**: Linux or Windows
+- **Supported OS**: Linux or Windows
 
-### Installation
-
-You can install RayTracer as a Package.
+### Steps
 
 1. Launch Julia:
-```bash
-julia
-```
+    ```bash
+    julia
+    ```
 
-2. Install the package directly from GitHub:
-```julia
-using Pkg
-Pkg.add(url="https://github.com/baronauta/RayTracer/releases/tag/v1.0.0")
-```
+2. Add RayTracer from GitHub:
+    ```julia
+    using Pkg
+    Pkg.add(url="https://github.com/baronauta/RayTracer/releases/tag/v1.0.0")
+    ```
 
-
-#### (Optional) Run Tests
-To verify your installation is working correctly:
-```julia
-Pkg.test()
-```
+3. *(Optional)* Run tests to verify installation:
+    ```julia
+    Pkg.test()
+    ```
 
 
 ## Usage Instructions
 
-RayTracer uses a simple text-based scene description format. See the [guidelines.md](https://github.com/baronauta/RayTracer/blob/master/guidelines.md) for details on how to define your own scenes.
+RayTracer uses a simple text-based format for scene description. See [guidelines.md](https://github.com/baronauta/RayTracer/blob/master/guidelines.md) for the details on how to define your own scenes.
 
 To render a scene, run the following command:
 ```bash
@@ -73,14 +69,17 @@ RayTracer simulates a camera by casting rays—lines representing paths of light
   Useful for quick previews, geometry debugging, and visualizing base materials.
 
 - **`onofftracer`**  
-  A minimal tracer that detects ray-object intersections only, without computing lighting or color. 
+  A minimal tracer that detects ray-object intersections only, without computing lighting or color.
+  Returns white for hits and black for misses.  
   Useful for visibility checks and fast silhouette previews.
 
 
 To display usage instructions and available options for a specific tracer, use the `-h` flag:
 ```bash
 julia RayTracer <tracer> -h
-``` 
+```
+
+**Note** — Rendering your scene, particularly when using the `pathtracer`, may take a considerable amount of time due to the complexity of realistic light simulations.
 
 ### Tone mapping
 Each run of RayTracer produces a **high-dynamic-range (HDR)** image in the `.pfm` format, which stores detailed lighting and color information from the rendered scene.
