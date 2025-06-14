@@ -265,7 +265,7 @@ Checks if a ray intersects the Sphere.
 Return a sorted list of all `HitRecord`s or a list of `nothing` if no intersection is found.
 """
 function all_ray_intersections(sphere::Sphere, ray::Ray)
-    
+
     # find the 2 intersection point
     intersection = _sphere_ray_intersection(sphere, ray)
     isnothing(intersection) && (return [nothing])
@@ -286,7 +286,7 @@ function all_ray_intersections(sphere::Sphere, ray::Ray)
         hit1 = HitRecord(world_point1, normal1, surface_point1, tmin, ray, sphere)
         hit2 = HitRecord(world_point2, normal2, surface_point2, tmax, ray, sphere)
 
-    # [nothing, hit2]
+        # [nothing, hit2]
     elseif !(inv_ray.tmin < tmin < inv_ray.tmax) && (inv_ray.tmin < tmax < inv_ray.tmax)
         hit_point2 = at(inv_ray, tmax)
         world_point2 = sphere.transformation * hit_point2
@@ -295,12 +295,12 @@ function all_ray_intersections(sphere::Sphere, ray::Ray)
         hit2 = HitRecord(world_point2, normal2, surface_point2, tmax, ray, sphere)
         hit1 = nothing
 
-    # [nothing]
+        # [nothing]
     else
         return [nothing]
     end
 
-    return [hit1,hit2]
+    return [hit1, hit2]
 end
 
 # ─────────────────────────────────────────────────────────────
@@ -401,10 +401,10 @@ end
 Checks if a `Ray` intersects the `CSG`.
 Return a sorted list of all `HitRecord`s or a list of `nothing` if no intersection is found.
 """
-function all_ray_intersection(csg::CSG, ray::Ray)
+function all_ray_intersections(csg::CSG, ray::Ray)
 
-    hit_array_1 = all_ray_intersection(csg.obj1, ray)
-    hit_array_2 = all_ray_intersection(csg.obj2, ray)
+    hit_array_1 = all_ray_intersections(csg.obj1, ray)
+    hit_array_2 = all_ray_intersections(csg.obj2, ray)
     real_hits_1 = filter(!isnothing, hit_array_1)
     real_hits_2 = filter(!isnothing, hit_array_2)
 
