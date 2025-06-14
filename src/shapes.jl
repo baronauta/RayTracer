@@ -193,12 +193,12 @@ function _sphere_normal(point::Point, ray::Ray)
     _adjustnormal(Normal(point.x, point.y, point.z), ray)
 end
 
+"""
+Computes intersection parameters for a ray-sphere intersection.
 
+Returns `t₁`, `t₂`, and the transformed ray if an intersection occurs, or `nothing` otherwise.
 """
-Checks if a ray intersects the Sphere.
-Return a `HitRecord`, or `nothing` if no intersection was found.
-"""
-function ray_intersection(sphere::Sphere, ray::Ray)
+function _sphere_ray_intersection(sphere::Sphere, ray::Ray)
     # Consider the ray into the sphere frame of reference
     # applying the inverse transformation.
     inv_ray = transform(ray, inverse(sphere.transformation))
@@ -214,16 +214,32 @@ function ray_intersection(sphere::Sphere, ray::Ray)
     a = squared_norm(inv_ray.dir)
     b = dot(origin_vec, inv_ray.dir)
     c = squared_norm(origin_vec) - 1.0
-
     delta = b^2 - a * c
+
     if delta ≤ 0.0
         return nothing
     end
+
     # finding the 2 t solutions
     sqrt_delta = sqrt(delta)
     tmin = (-b - sqrt_delta) / (a)
     tmax = (-b + sqrt_delta) / (a)
-    # choosing the closest solution
+    return tmin, tmax, inv_ray
+end
+
+
+"""
+Checks if a ray intersects the Sphere.
+Return a `HitRecord`, or `nothing` if no intersection was found.
+"""
+function ray_intersection(sphere::Sphere, ray::Ray)
+
+    # find the 2 intersection point
+    intersection = _sphere_ray_intersection(sphere, ray)
+    isnothing(intersection) && (return nothing)
+    tmin, tmax, inv_ray = intersection
+
+    # choose the right intersection
     if inv_ray.tmin < tmin < inv_ray.tmax
         t = tmin
     elseif inv_ray.tmin < tmax < inv_ray.tmax
@@ -249,31 +265,15 @@ Checks if a ray intersects the Sphere.
 Return a sorted list of all `HitRecord`s or a list of `nothing` if no intersection is found.
 """
 function all_ray_intersections(sphere::Sphere, ray::Ray)
-    # Consider the ray into the sphere frame of reference
-    # applying the inverse transformation.
-    inv_ray = transform(ray, inverse(sphere.transformation))
+    
+    # find the 2 intersection point
+    intersection = _sphere_ray_intersection(sphere, ray)
+    isnothing(intersection) && (return [nothing])
+    tmin, tmax, inv_ray = intersection
 
-    # the equation for sphere intersection is: t^2∥​d∥^​2+2t(O⋅d)+∥​O∥^​2−1=0
-    # where O is the ray origin, d the ray direction
-    # tangent intersections are not considered, so there are
-    # intersections only if Δ > 0.
+    # evaluate hitrecords and return a valid list
 
-    # defining reduced Δ:
-    # delta ≡ Δ/4 = (O ⋅ d)² − ||d||² ⋅ (||O||² − 1) = b² -a*c
-    origin_vec = point_to_vec(inv_ray.origin)
-    a = squared_norm(inv_ray.dir)
-    b = dot(origin_vec, inv_ray.dir)
-    c = squared_norm(origin_vec) - 1.0
-
-    delta = b^2 - a * c
-    if delta ≤ 0.0
-        return[nothing]
-    end
-    # finding the 2 t solutions
-    sqrt_delta = sqrt(delta)
-    tmin = (-b - sqrt_delta) / (a)
-    tmax = (-b + sqrt_delta) / (a)
-    # 
+    # [hit1, hit2]
     if (inv_ray.tmin < tmin < inv_ray.tmax)
         hit_point1 = at(inv_ray, tmin)
         hit_point2 = at(inv_ray, tmax)
@@ -285,6 +285,8 @@ function all_ray_intersections(sphere::Sphere, ray::Ray)
         surface_point2 = _sphere_point_to_uv(hit_point2)
         hit1 = HitRecord(world_point1, normal1, surface_point1, tmin, ray, sphere)
         hit2 = HitRecord(world_point2, normal2, surface_point2, tmax, ray, sphere)
+
+    # [nothing, hit2]
     elseif !(inv_ray.tmin < tmin < inv_ray.tmax) && (inv_ray.tmin < tmax < inv_ray.tmax)
         hit_point2 = at(inv_ray, tmax)
         world_point2 = sphere.transformation * hit_point2
@@ -292,6 +294,8 @@ function all_ray_intersections(sphere::Sphere, ray::Ray)
         surface_point2 = _sphere_point_to_uv(hit_point2)
         hit2 = HitRecord(world_point2, normal2, surface_point2, tmax, ray, sphere)
         hit1 = nothing
+
+    # [nothing]
     else
         return [nothing]
     end
