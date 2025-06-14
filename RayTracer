@@ -30,7 +30,7 @@ Pkg.activate(normpath(@__DIR__))
 
 using RayTracer
 using Comonicon
-using Dates
+
 
 
 # ─────────────────────────────────────────────────────────────
@@ -166,44 +166,37 @@ Comonicon.@cast function pathtracer(
     end
 end
 
+
+
 # ─────────────────────────────────────────────────────────────
 # FLAT TRACER
 # ─────────────────────────────────────────────────────────────
 
 """
-Flat tracer command to render a 3D scene with a minimal ray tracer algorithm.
-
-This tool generates two output images for each rendering:
-- a high dynamic range `.pfm` file
-- a tone-mapped image (`.png`, `.jpeg`, or `.tif`)
-
-Both images are saved in the `render/` folder. The tone-mapped image is generated using a basic built-in tone mapping, which may not produce optimal results for all scenes.  
-For higher-quality control, load the `.pfm` file and apply a custom tone mapping using the `tonemapping` function.
-
-Note: This algorithm returns the sum of the surface color and
-    emitted radiance at the intersection point of a `ray`.
-    If the ray does not intersect any object, the function returns `bkg_color`.
-
-    This tracer ignores lighting, shadows, and reflections, and is typically used
-    for quick previews, debugging geometry, or visualizing base materials and emissive surfaces.
+A fast, non-photorealistic renderer that returns the surface color and emitted light at the ray intersection. It ignores lighting, shadows, and reflections.  
+Useful for quick previews, geometry debugging, and visualizing base materials.
 
 # Args
 
-- `scene_file`: Path to the scene description file (String).
-- `width`: Width of the output image (Integer).
-- `height`: Height of the output image (Integer).
+- `scenefile`: Path to the scene description file.
+- `width`: Width of the output image in pixels.
+- `height`: Height of the output image in pixels.
 
 # Options
 
-- `--output-name=<String>`: Base name for the output image files.  
-  If not provided, a timestamped name like `flttrc_2025-06-07_135023` will be used.  
-  Output files will be saved as `render_<scene_name>/<name>.<ext>` and `render_<scene_name>/<name>.pfm`.
+- `--output-name=<String>`: 
+    Custom base name for the output files.
+    If omitted, a timestamp-based name is used (e.g., `flttrc_2025-06-07_135023`).
+    All output files are saved inside a folder named `render_<scene_name>/`.
 
-- `--extension=<String>`: File format for the tone-mapped image (`.png`, `.jpeg`, or `.tif`). Default: `.png`.
+- `--extension=<String>`: 
+    Format of the tone-mapped output image: `.png,` `.jpeg`, or `.tif.
+    Default is `.png.`.
 
-- `--angle=<float>`: Angle for rotating the camera around the Z axis.  
-  The distance from the origin is maintained.  
-  Useful for quickly changing the view without modifying the `scene_file` (default: `0.0`).
+- `--angle=<float>`:
+    Overrides the `angle` variable in the scene’s text-based description file if it is present. 
+    If not specified, the value from the scene file is used by default. 
+    This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.
 """
 Comonicon.@cast function flattracer(
     scene_file, 
@@ -220,7 +213,7 @@ Comonicon.@cast function flattracer(
         # Determine the correct output file extension and construct output paths.
         # This handles cases where the user may or may not specify output name and/or extension.
         # If no output name is given, a timestamped name inside a folder named after the scene is created.
-        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scene_file, "flttrc")
+        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scenefile, "flttrc")
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
@@ -228,10 +221,10 @@ Comonicon.@cast function flattracer(
         end
 
         # convert width e height to Int
-        img_width = parse(Int, width)
-        img_height = parse(Int, height)
+        width = parse(Int, width)
+        height = parse(Int, height)
         # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
-        aspect_ratio = img_width/img_height
+        aspect_ratio = width/height
         if !isnothing(angle)
             external_variables = Dict(
                 "angle" => angle,
@@ -241,15 +234,15 @@ Comonicon.@cast function flattracer(
         end
 
         # Parse the scene from text file
-        scene = open(scene_file, "r") do io
-            instream = RayTracer.InputStream(io, scene_file)
+        scene = open(scenefile, "r") do io
+            instream = RayTracer.InputStream(io, scenefile)
             RayTracer.parse_scene(instream, aspect_ratio; external_variables)
         end
         println("✓ Scene parsing completed.")
 
         println("🖼️  Setting up the image canvas and camera...")
         # Prepare the canva to draw on
-        img = HdrImage(img_width, img_height)
+        img = HdrImage(width, height)
         # Prepare the environment made of the canva and the observer
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
@@ -287,46 +280,43 @@ Comonicon.@cast function flattracer(
     end
 end
 
+
+
 # ─────────────────────────────────────────────────────────────
 # ON-OFF TRACER
 # ─────────────────────────────────────────────────────────────
 
 """
-On-Off tracer command to render a 3D scene with a binary ray tracer algorithm
-that returns `WHITE` if the given `ray` intersects
-any object in the `world`, and `bkg_color` otherwise.
-
-This is a basic tracer useful for debugging or silhouette rendering.
-
-This tool generates two output images for each rendering:
-- a high dynamic range `.pfm` file
-- a tone-mapped image (`.png`, `.jpeg`, or `.tif`)
-
-Both images are saved in the `render/` folder. The tone-mapped image is generated using a basic built-in tone mapping, which may not produce optimal results for all scenes.  
-For higher-quality control, load the `.pfm` file and apply a custom tone mapping using the `tonemapping` function.
+A minimal tracer that detects ray-object intersections only, without computing lighting or color.
+Returns white for hits and black for misses. 
+Useful for visibility checks and fast silhouette previews.
 
 # Args
 
-- `scene_file`: Path to the scene description file (String).
-- `width`: Width of the output image (Integer).
-- `height`: Height of the output image (Integer).
+- `scenefile`: Path to the scene description file.
+- `width`: Width of the output image in pixels.
+- `height`: Height of the output image in pixels.
 
 # Options
 
-- `--output-name=<String>`: Base name for the output image files.  
-  If not provided, a timestamped name like `onoftrc_2025-06-07_135023` will be used.  
-  Output files will be saved as `render_<scene_name>/<name>.<ext>` and `render_<scene_name>/<name>.pfm`.
+- `--output-name=<String>`: 
+    Custom base name for the output files.
+    If omitted, a timestamp-based name is used (e.g., `onofftrc_2025-06-07_135023`).
+    All output files are saved inside a folder named `render_<scene_name>/`.
 
-- `--extension=<String>`: File format for the tone-mapped image (`.png`, `.jpeg`, or `.tif`). Default: `.png`.
+- `--extension=<String>`: 
+    Format of the tone-mapped output image: `.png,` `.jpeg`, or `.tif.
+    Default is `.png.`.
 
-- `--angle=<float>`: Angle for rotating the camera around the Z axis.  
-  The distance from the origin is maintained.  
-  Useful for quickly changing the view without modifying the `scene_file` (default: `0.0`).
+- `--angle=<float>`:
+    Overrides the `angle` variable in the scene’s text-based description file if it is present. 
+    If not specified, the value from the scene file is used by default. 
+    This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.   
 """
 Comonicon.@cast function onofftracer(
-    scene_file, 
-    width, 
-    height; 
+    scenefile::String, 
+    width::Int, 
+    height::Int; 
     output_name::String="",
     extension::String = "",
     angle::Union{Float64, Nothing}=nothing,
@@ -338,18 +328,15 @@ Comonicon.@cast function onofftracer(
         # Determine the correct output file extension and construct output paths.
         # This handles cases where the user may or may not specify output name and/or extension.
         # If no output name is given, a timestamped name inside a folder named after the scene is created.
-        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scene_file, "onoftrc")
+        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scenefile, "onofftrc")
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
             throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
         end
 
-        # convert width e height to Int
-        img_width = parse(Int, width)
-        img_height = parse(Int, height)
         # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
-        aspect_ratio = img_width/img_height
+        aspect_ratio = width/height
         if !isnothing(angle)
             external_variables = Dict(
                 "angle" => angle,
@@ -367,7 +354,7 @@ Comonicon.@cast function onofftracer(
 
         println("🖼️  Setting up the image canvas and camera...")
         # Prepare the canva to draw on
-        img = HdrImage(img_width, img_height)
+        img = HdrImage(width, height)
         # Prepare the environment made of the canva and the observer
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
@@ -404,6 +391,8 @@ Comonicon.@cast function onofftracer(
         end
     end
 end
+
+
 
 # ─────────────────────────────────────────────────────────────
 # TONEMAPPING
