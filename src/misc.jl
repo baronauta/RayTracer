@@ -156,7 +156,7 @@ function choose_name(output_name::String, extension::String, scene_file::String,
     if isempty(output_name)
         extension = choose_ext(output_name, extension) # here i choose the default or the passed one 
         scene_name = splitext(basename(scene_file))[1]
-        timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
+        timestamp = Dates.format(Dates.now(), "yyyy-mm-dd_HHMMSS")
         output_name = "$(tracer)_$timestamp"
         base_path = "render_$(scene_name)"
 

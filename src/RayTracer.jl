@@ -24,6 +24,7 @@
 
 module RayTracer
 
+import Dates
 import ColorTypes
 import Images
 import Crayons
