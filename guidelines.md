@@ -2,6 +2,11 @@
 
 RayTracer uses a custom, text-based format to define what will be rendered.
 
+### **Contents**
+1. [Float Variables](#float-variables)
+2. [Materials](#materials)
+3. [Objects](#objects)
+4. [Camera](#camera)
 
 ### 🔢 1. Float Variables
 
@@ -74,7 +79,7 @@ sphere(plane_material, scaling(50, 50, 50) * translation([1, 1, 2]))
 ```
 This creates a `sphere` with the material `plane_material`, a radius of $50$, and origin at $(1,1,2)$.
 
-### 🎥 4. Camera Definition
+### 🎥 4. Camera
 
 The `camera` represents the viewpoint that **sees** the scene. It defines where the observer is located and how the scene is projected onto the image plane. The camera’s position and orientation are set using a **transformation**.
 
