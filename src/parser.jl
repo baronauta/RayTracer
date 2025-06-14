@@ -417,19 +417,16 @@ function parse_camera(instream::InputStream, scene::Scene)
 end
 
 """
-    parse_scene(instream::InputStream; variables::Dict{String, AbstractFloat})
+    parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; external_variables=Dict{String, AbstractFloat}())
 
-Parses a scene description from the given input stream and constructs a `Scene` object.
+Parses a scene description from `instream` and constructs a `Scene` object.
 
-# Behavior
-- Reads tokens from the stream sequentially until EOF.
-- Recognizes keywords.
-- Parses and adds corresponding elements to the scene.
-- Variable handling rules:
-  - External variables provided via `variables` are preserved and cannot be overridden by the scene file.
-  - Variables defined internally inside the scene file can only be defined once.
-  - Redefinition of an internal variable in the scene file results in a parse error.
-- Only one camera definition is allowed; attempts to define multiple cameras raise an error.
+- Uses `aspect_ratio` to initialize the scene.
+- Supports external float variables that cannot be overridden.
+- Internal variables can be defined once; redefinition raises a `GrammarError`.
+- Warns if external and internal variable names conflict.
+- Only one camera definition is allowed.
+- Recognized elements: `FLOAT`, `MATERIAL`, `PLANE`, `SPHERE`, `CAMERA`.
 """
 function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; external_variables=Dict{String, AbstractFloat}())
     # This function parses scene.txt and builds the world to render.
