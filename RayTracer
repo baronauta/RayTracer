@@ -1,6 +1,7 @@
 #!/usr/bin/env julia
 
-#_______________________________________________________________________________________
+#     __________________________________________________________
+#
 #     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
 #     __________________________________________________________
 #
@@ -20,8 +21,7 @@
 #     Unless required by applicable law or agreed to in writing,
 #     this software is provided "AS IS", without warranties or conditions
 #     of any kind, either express or implied.
-#
-#_______________________________________________________________________________________
+
 
 #❗For name generation logic, see misc.jl
 
@@ -32,49 +32,58 @@ using RayTracer
 using Comonicon
 using Dates
 
+
 # ─────────────────────────────────────────────────────────────
 # PATH TRACER
 # ─────────────────────────────────────────────────────────────
 
 """
-Path tracer command to render a scene.
-
-Each execution produces two output images:
-- a high dynamic range `.pfm` file
-- a tone-mapped image (`.png`, `.jpeg`, or `.tif`)
-
-Both images are saved in the `render/` folder. The tone-mapped image is generated using a basic built-in tone mapping, which may not produce optimal results for all scenes.  
-For higher-quality control, load the `.pfm` file and apply a custom tone mapping using the `tonemapping` function.
-
-Note: This command uses the path tracing algorithm, that estimates a solution of the rendering equation via Monte Carlo integration.
-    It allows to obtain an exact solution for the rendering equation, although rendering and producing the `.pfm` file can be time-consuming.
+A physically-based renderer that simulates realistic lighting, including global illumination, 
+soft shadows, and reflections.
 
 # Args
 
-- `scene_file`: Path to the scene description file (String).
-- `width`: Width of the output image (Integer).
-- `height`: Height of the output image (Integer).
+- `scenefile`: Path to the scene description file.
+- `width`: Width of the output image in pixels.
+- `height`: Height of the output image in pixels.
 
 # Options
 
-- `--output-name=<String>`: Base name for the output image files.  
-  If not provided, a timestamped name like `pthtrc_2025-06-07_135023` will be used.  
-  Output files will be saved as `render_<scene_name>/<name>.<ext>` and `render_<scene_name>/<name>.pfm`.
+- `--output-name=<String>`: 
+    Custom base name for the output files.
+    If omitted, a timestamp-based name is used (e.g., `pthtrc_2025-06-07_135023`).
+    All output files are saved inside a folder named `render_<scene_name>/`.
 
-- `--extension=<String>`: File format for the tone-mapped image (`.png`, `.jpeg`, or `.tif`). Default: `.png`.
+- `--extension=<String>`: 
+    Format of the tone-mapped output image: `.png,` `.jpeg`, or `.tif.
+    Default is `.png.`.
 
-- `--angle=<float>`: Angle for rotating the camera around the Z axis.  
-  The distance from the origin is maintained.  
-  Useful for quickly changing the view without modifying the `scene_file` (default: `0.0`).
+- `--angle=<float>`:
+    Overrides the `angle` variable in the scene’s text-based description file if it is present. 
+    If not specified, the value from the scene file is used by default. 
+    This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.
+    
+- `--n-rays=<Integer>`: 
+    Number of rays cast per pixel. 
+    Higher values improve quality but increase render time.
+    Default: `5`.
 
-- `--n-rays=<Integer>`: Number of rays per pixel (default: `5`).
-- `--max-depth=<Integer>`: Maximum ray recursion depth (default: `5`).
-- `--russian-roulette-limit=<Integer>`: Depth at which to start Russian roulette termination (default: `3`).
+- `--max-depth=<Integer>`:
+    Maximum recursion depth for ray bounces (reflections/refractions).
+    Increasing this allows capturing more indirect lighting and reflections, 
+    but causes exponentially longer rendering times.
+    Default: `5`.
+
+- `--russian-roulette-limit=<Integer>`: 
+    Recursion depth after which Russian roulette termination begins to probabilistically end ray paths, 
+    reducing computation while minimizing bias.
+    Default: `3`.
+
 """
 Comonicon.@cast function pathtracer(
-    scene_file, 
-    width, 
-    height; 
+    scenefile::String, 
+    width::Int, 
+    height::Int; 
     output_name::String="",
     extension::String = "", # useful fix-it although without output name (so timestamp.extension)
     angle::Union{Float64, Nothing}=nothing,
@@ -89,18 +98,14 @@ Comonicon.@cast function pathtracer(
         # Determine the correct output file extension and construct output paths.
         # This handles cases where the user may or may not specify output name and/or extension.
         # If no output name is given, a timestamped name inside a folder named after the scene is created.
-        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scene_file, "pthtrc")
+        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scenefile, "pthtrc")
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
             throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
         end
 
-        # convert width e height to Int
-        img_width = parse(Int, width)
-        img_height = parse(Int, height)
-        # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
-        aspect_ratio = img_width/img_height
+        aspect_ratio = width/height
         if !isnothing(angle)
             external_variables = Dict(
                 "angle" => angle,
@@ -110,15 +115,15 @@ Comonicon.@cast function pathtracer(
         end
 
         # Parse the scene from text file
-        scene = open(scene_file, "r") do io
-            instream = RayTracer.InputStream(io, scene_file)
+        scene = open(scenefile, "r") do io
+            instream = RayTracer.InputStream(io, scenefile)
             RayTracer.parse_scene(instream, aspect_ratio; external_variables)
         end
         println("✓ Scene parsing completed.")
 
         println("🖼️  Setting up the image canvas and camera...")
         # Prepare the canva to draw on
-        img = HdrImage(img_width, img_height)
+        img = HdrImage(width, height)
         # Prepare the environment made of the canva and the observer
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
