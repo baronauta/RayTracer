@@ -8,6 +8,17 @@ function test_intersection(
     @test hitrecord ≈ expected_hr
 end
 
+function test_all_intersections(
+    s::Union{Shape,World},
+    r::Ray,
+    expected_hr::AbstractVector{<:Union{HitRecord, Nothing}},
+)
+    hitrecords = RayTracer.all_ray_intersections(s, r)
+    for (hit, exp_hit) in zip(hitrecords, expected_hr)
+        @test hit ≈ exp_hit
+    end
+end
+
 # === Tests ===
 @testset "Shapes" begin
 
@@ -204,6 +215,51 @@ end
     @test csg ≈ csg_copy
     @test !(csg ≈ csg2)
     @test !(csg2 ≈ csg3)
+
+    @testset "CSG Ray Intersection" begin
+        @testset "Sphere - all Rays" begin
+            sphere_unit = Sphere()
+            # centered unit sphere
+            ## ray from above
+            ray_above = Ray(Point(0.0, 0.0, 2.0), -(VEC_Z))
+            hr_above = HitRecord(
+                Point(0.0, 0.0, 1.0),
+                Normal(0.0, 0.0, 1.0),
+                Vec2D(0.0, 0.0),
+                1.0,
+                ray_above,
+                sphere_unit,
+            )
+            hr_under = HitRecord(
+                Point(0.0, 0.0, -1.0),
+                Normal(0.0, 0.0, 1.0),
+                Vec2D(0.0, 1.0),
+                3.0,
+                ray_above,
+                sphere_unit,
+            )
+            test_all_intersections(sphere_unit, ray_above, [hr_above, hr_under])
+            ## ray from Origin towards x
+            ray_x = Ray(Point(0.0, 0.0, 0.0), VEC_X)
+            hr_x = HitRecord(
+                Point(1.0, 0.0, 0.0),
+                Normal(-1.0, 0.0, 0.0),
+                Vec2D(0.0, 0.5),
+                1.0,
+                ray_x,
+                sphere_unit,
+            )
+            test_all_intersections(sphere_unit, ray_x, [nothing, hr_x])
+
+            ## ray from x in opposite direction, no intersection
+            ray = Ray(Point(1.5, 0.0, 0.0), VEC_X)
+            test_all_intersections(sphere_unit, ray, [nothing])
+
+            ## tangent ray, no tangent intersection
+            ray = Ray(Point(1.0, 0.0, -1.0), VEC_Z)
+            test_all_intersections(sphere_unit, ray, [nothing])
+        end
+    end
 end
 
 @testset "World" begin
