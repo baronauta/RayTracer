@@ -303,6 +303,21 @@ function all_ray_intersections(sphere::Sphere, ray::Ray)
     return [hit1, hit2]
 end
 
+"""
+---
+Check whether a `Point p` is inside a `Sphere`.
+(i.e. the antitransformed point's distance from the origin is < 1).
+
+**Note:** if the flag is true, points on the surface are also accepted.
+
+"""
+function is_inside(p::Point, obj::Sphere, flag::Bool)
+    inv_p = inverse(obj.transformation) * p
+    flag ? (return (norm(point_to_vec(inv_p)) ≤ 1.0)) :
+    (return (norm(point_to_vec(inv_p)) < 1.0))
+end
+
+
 # ─────────────────────────────────────────────────────────────
 # Cube definition and functions
 # ─────────────────────────────────────────────────────────────

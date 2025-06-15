@@ -216,6 +216,11 @@ end
     @test !(csg ≈ csg2)
     @test !(csg2 ≈ csg3)
 
+    # test if a point is inside a Sphere
+    @test RayTracer.is_inside(Point(0.,0.,0.), sphere1, true)
+    @test !RayTracer.is_inside(Point(0.,0.,0.), sphere2, false)
+    @test RayTracer.is_inside(Point(0.,0.,0.), sphere2, true)
+
     @testset "CSG Ray Intersection" begin
         @testset "Sphere - all Rays" begin
             sphere_unit = Sphere()
