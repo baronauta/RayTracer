@@ -43,22 +43,33 @@ Comonicon.@main function image2pfm(
     filename::String;
     output_name::String = "",
 )
-    print_welcome()
-    println("📂 Preparing to convert the image...")
+    try
+        print_welcome()
+        println("📂 Preparing to convert the image...")
 
-    # If no output name is provided, generate one from the input file name
-    if isempty(output_name)
-        name = splitext(filename)[1]
-        output_name = "$(name).pfm"
-    # If the output filename does not end with '.pfm', correct it
-    elseif !(endswith(".pfm", lowercase(output_name)))
-        println("\n⚠️  Warning: output file name has a wrong or missing extension — correcting to '.pfm'\n")
-        output_name = "$(splitext(output_name)[1]).pfm"
-    end
+        #check if input filename is valid
+        RayTracer.check_name(filename, SUPPORTED_EXTS)
 
-    println("🖼️  Converting the image to PFM format...")
-    RayTracer.ldr_to_pfm_image(filename, output_name)
+        # If no output name is provided, generate one from the input file name
+        if isempty(output_name)
+            name = splitext(filename)[1]
+            output_name = "$(name).pfm"
+        # If the output filename does not end with '.pfm', correct it
+        elseif !(endswith(".pfm", lowercase(output_name)))
+            println("\n⚠️  Warning: output file name has a wrong or missing extension — correcting to '.pfm'\n")
+            output_name = "$(splitext(output_name)[1]).pfm"
+        end
 
-    println("\n✅ Conversion completed successfully. Output files:")
-    println("  • $(output_name)")
+        println("🖼️  Converting the image to PFM format...")
+        RayTracer.ldr_to_pfm_image(filename, output_name)
+
+        println("\n✅ Conversion completed successfully. Output files:")
+        println("  • $(output_name)")
+    catch e
+        if isa(e, CustomException)
+            println(e)
+        else
+            rethrow()
+        end
+    end   
 end

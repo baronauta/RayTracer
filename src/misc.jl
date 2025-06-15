@@ -89,11 +89,11 @@ end
 #--- parsing extension functions ---
 
 "Check if the input name is a valid file name."
-function check_name(path::String, ext::String)
+function check_name(path::String, ext::Vector{String})
     blue = "\u001b[34m"
     yellow_bold = "\e[1;33m"
-    !isfile(path) && throw(RuntimeError("the file $blue$path$yellow_bold does not exist. Please insert a valid '$ext' scene file."))
-    expected_extension(path, [ext])
+    !isfile(path) && throw(RuntimeError("the file $blue$path$yellow_bold does not exist."))
+    expected_extension(path, ext)
 end
 
 """
