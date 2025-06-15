@@ -232,7 +232,7 @@ function parse_pigment(instream::InputStream, scene::Scene)
             throw(
                 GrammarError(
                     instream.location,
-                    "unexpected image format, plese use .pfm, .jpg, .tif, or .png",
+                    "unexpected image format, please use .pfm, .jpg, .tif, or .png",
                 ),
             )
         end

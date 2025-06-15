@@ -88,6 +88,14 @@ end
 
 #--- parsing extension functions ---
 
+"Check if the input name is a valid scene file name."
+function check_scene_name(path::String)
+    blue = "\u001b[34m"
+    yellow_bold = "\e[1;33m"
+    !isfile(path) && throw(RuntimeError("the file $blue$path$yellow_bold does not exist. Please insert a valid '.txt' scene file."))
+    expected_extension(path, [".txt"])
+end
+
 """
 Extracts the file extension from a given `filename`.
 
