@@ -81,6 +81,14 @@ julia RayTracer <tracer> -h
 
 **Note** — Rendering your scene, particularly when using the `pathtracer`, may take a considerable amount of time due to the complexity of realistic light simulations.
 
+### Available Cameras
+Two types of cameras are available:
+
+- **Perspective Camera** — Simulates a realistic camera with perspective projection, where objects farther away appear smaller. 
+
+- **Orthogonal** — Uses orthographic projection, which preserves object sizes regardless of depth. This is ideal for technical or architectural visualization where true dimensions are important.
+
+
 ### Tone mapping
 Each run of RayTracer produces a **high-dynamic-range (HDR)** image in the `.pfm` format, which stores detailed lighting and color information from the rendered scene.
 
@@ -97,12 +105,7 @@ where `<input_file>` is the PFM file you want to convert.
 
 ### LDR to HDR Conversion
 
-RayTracer also supports converting **low-dynamic-range (LDR)** images (e.g., `.png`, `.jpg`) into **high-dynamic-range (HDR)** `.pfm` format. This feature is useful for:
-
-- Integrating external images or textures into HDR-based rendering.
-- Testing reverse tone mapping pipelines.
-- Preparing LDR inputs for HDR-aware workflows.
-
+RayTracer also supports converting **low-dynamic-range (LDR)** images (e.g., `.png`, `.jpg`) into **high-dynamic-range (HDR)** `.pfm` format. This feature is useful for integrating external images or textures into HDR-based rendering.
 To perform the conversion, run:
 
 ```bash
