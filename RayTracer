@@ -94,7 +94,7 @@ Comonicon.@cast function pathtracer(
 
     try
         print_welcome()
-        RayTracer.check_scene_name(scenefile)
+        RayTracer.check_scene_name(scenefile, ".txt")
         println("📂 Preparing to parse the scene...")
         # Determine the correct output file extension and construct output paths.
         # This handles cases where the user may or may not specify output name and/or extension.
@@ -210,7 +210,7 @@ Comonicon.@cast function flattracer(
 
     try
         print_welcome()
-        RayTracer.check_scene_name(scenefile)
+        RayTracer.check_scene_name(scenefile, ".txt")
         println("📂 Preparing to parse the scene...")
         # Determine the correct output file extension and construct output paths.
         # This handles cases where the user may or may not specify output name and/or extension.
@@ -326,7 +326,7 @@ Comonicon.@cast function onofftracer(
 
     try
         print_welcome()
-        RayTracer.check_scene_name(scenefile)
+        RayTracer.check_scene_name(scenefile, ".txt")
         println("📂 Preparing to parse the scene...")
         # Determine the correct output file extension and construct output paths.
         # This handles cases where the user may or may not specify output name and/or extension.
@@ -430,7 +430,7 @@ Comonicon.@cast function tonemapping(
         print_welcome()
         # Check extension
         println("Reading .pfm image...")
-        RayTracer.expected_extension(input_file, [".pfm"])
+        RayTracer.check_name(input_file, ".pfm")
 
         (weights=="[]") ? (weights = nothing) : (weights = parse.(Float64, strip.(split(strip(weights, ['[', ']']), ","))))
         
