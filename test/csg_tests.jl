@@ -48,9 +48,8 @@ end
             Ray(Point(2.0, 0.0, 0.0), Vec(-1.0, 0.0, 0.0)),
             sphere1,
         )
-    @test RayTracer.is_inside(hit, sphere1, true)
-    @test !RayTracer.is_inside(hit, sphere2, false)
-    @test RayTracer.is_inside(hit, sphere2, true)
+    @test RayTracer.is_inside(hit, sphere1)
+    @test !RayTracer.is_inside(hit, sphere2)
 
 end
 

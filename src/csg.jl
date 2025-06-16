@@ -86,6 +86,25 @@ function CSG(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where {T<:Abs
 end
 
 """
+---
+Check whether a `HitRecord hit` is inside a `CSG` object.
+"""
+function is_inside(hit::HitRecord, csg::CSG)
+    if csg.operation == UNION || csg.operation == FUSION
+        # hit records can be inside one obj or the other
+        return (is_inside(hit, csg.obj1) || (is_inside(hit, csg.obj2)))
+
+    elseif csg.operation == INTERSECTION
+        # hit records must be in obj AND in obj 2
+        return (is_inside(hit, csg.obj1) || (is_inside(hit, csg.obj2)))
+
+    elseif csg.operation == DIFFERENCE
+        # hit records can be on obj1 if not in ob2 and in ob2 if not in on1
+        return (is_inside(hit, csg.obj1) && !is_inside(hit, obj2))
+    end
+end
+
+"""
     valid_hit(hr::HitRecord, obj::Shape, csg::CSG) -> Bool
 
 Determines whether a given `HitRecord` is valid based on the CSG operation between two shapes.
@@ -104,11 +123,11 @@ function valid_hit(hr::HitRecord, obj::Shape, csg::CSG)
     if op == UNION
         return true
     elseif op == INTERSECTION
-        return is_inside(hr, obj, true)
+        return is_inside(hr, obj)
     elseif op == FUSION
-        return !is_inside(hr, obj, false)
+        return !is_inside(hr, obj)
     elseif op == DIFFERENCE
-        return (is_obj1 && !is_inside(hr, obj, false)) || (!is_obj1 && is_inside(hr, obj, false))
+        return (is_obj1 && !is_inside(hr, obj)) || (!is_obj1 && is_inside(hr, obj))
     else
         throw(CsgError("undefined operation $(op)"))
     end

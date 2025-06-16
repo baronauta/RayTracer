@@ -308,11 +308,10 @@ Check whether a `HitRecord hit` is inside a `Sphere`.
 **Note:** if the flag is true, points on the surface are also accepted.
 
 """
-function is_inside(hit::HitRecord, obj::Sphere, flag::Bool)
+function is_inside(hit::HitRecord, obj::Sphere)
     p = hit.world_point
     inv_p = inverse(obj.transformation) * p
-    flag ? (return (norm(point_to_vec(inv_p)) ≤ 1.0)) :
-    (return (norm(point_to_vec(inv_p)) < 1.0))
+    return (norm(point_to_vec(inv_p)) < 1.0)
 end
 
 
