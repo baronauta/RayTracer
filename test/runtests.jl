@@ -1,5 +1,6 @@
 include("setup.jl")
 
+println("\nRunning all tests ...\n")
 @testset "All Tests" begin
     include("colors_tests.jl")
     include("hdrimage_tests.jl")
