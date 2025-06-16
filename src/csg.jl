@@ -100,7 +100,7 @@ function is_inside(hit::HitRecord, csg::CSG)
 
     elseif csg.operation == DIFFERENCE
         # hit records can be on obj1 if not in ob2 and in ob2 if not in on1
-        return (is_inside(hit, csg.obj1) && !is_inside(hit, obj2))
+        return (is_inside(hit, csg.obj1) && !is_inside(hit, csg.obj2))
     end
 end
 
@@ -117,7 +117,7 @@ Arguments:
 Returns `true` if the hit should be included according to the CSG operation (`UNION`, `INTERSECTION`, `FUSION`, or `DIFFERENCE`), `false` otherwise.
 """
 function valid_hit(hr::HitRecord, obj::Shape, csg::CSG)
-    is_obj1 = csg.obj1 ≈ hr.shape
+    is_obj1 = (csg.obj1 ≈ hr.shape)
     op = csg.operation
 
     if op == UNION
