@@ -101,6 +101,7 @@ Two types of cameras are available:
 ```julia
 float angle(90)
 camera(perspective, rotation_z(angle) * translation([-4, -1, 1]), 1.0)
+```
 This defines a perspective camera positioned at $(5, -1, 1)$ (starting from $x = -1$ and translating by $-4$) and rotated around the **z-axis** by `angle` degrees, with a screen distance of $1$. The angle variable can also be overridden via the command line:
 ```shell
 julia RayTracer <tracer> --angle <value>
