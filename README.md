@@ -102,7 +102,7 @@ julia RayTracer <tracer> -h
 <p><em><strong>Figure 1</strong></em>: The same <a href="https://github.com/baronauta/RayTracer/blob/master/examples/demo.txt">scene</a> rendered using the three available tracer algorithms.
 For the <code>onofftracer</code>, the large sphere simulating the sky was commented out to avoid it being treated as a hit surface.</p>
 
-> ⚠️ **Note:** Rendering your scene, particularly when using the `pathtracer`, may take a considerable amount of time due to the complexity of realistic light simulations.
+> ⚠️ **Note:** Rendering your scene when using the `pathtracer`, may take a considerable amount of time due to the complexity of realistic light simulations.
 
 
 #### Try by yourself
