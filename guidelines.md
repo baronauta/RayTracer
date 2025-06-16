@@ -42,13 +42,15 @@ Supported properties for both `<surface>` and `<emittance>`:
 #### **Example**:
 ```julia
 material plane_material(
-    diffuse(checkered(<0.7, 0.9, 0.4>, <1, 0.55, 0.2>, 6)),
+    diffuse(
+        checkered(<1.0, 1.0, 0.2>, <0.1, 0.2, 0.5>, 4)
+    ),
     uniform(<0, 0, 0>)
 )
 ```
 This defines a material named plane_material with the following characteristics:
 
-- A **diffuse surface** that uses a checkered pattern made of two colors: `<0.7, 0.9, 0.4>` (a light green) and `<1, 0.55, 0.2>` (an orange).
+- A **diffuse surface** that uses a checkered pattern made of two colors: `<1.0, 1.0, 0.2>` (britght yellow) and `<0.1, 0.2, 0.5>` (dark blue).
 
 - An **emittance** of `<0, 0, 0>`, which means the material does **not** emit light (black is interpreted as zero light emission).
 
@@ -75,9 +77,9 @@ You can **combine transformations** using the `*` operator. Transformations are 
 
 #### **Example**:
 ```julia
-sphere(plane_material, scaling(50, 50, 50) * translation([1, 1, 2]))
+sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
 ```
-This creates a `sphere` with the material `plane_material`, a radius of $50$, and origin at $(1,1,2)$.
+This creates a `sphere` with the material `sphere_material`, a radius of $0.2$, and origin at $(-2.5, -1, 0.2)$.
 
 ### 🎥 4. Camera
 
@@ -94,12 +96,12 @@ Two types of cameras are available:
     ```julia
     camera(orthogonal, <transformation>)
     ```
+
 #### **Example**:
 ```julia
 float angle(90)
-camera(perspective, rotation_z(angle) * translation([-3, 0, 1]), 1.0)
-```
-This defines a perspective camera positioned at $(-3, 0, 1)$ and rotated around the **z-axis** by angle degrees, with a screen distance of $2$. The angle variable can also be overridden via the command line:
+camera(perspective, rotation_z(angle) * translation([-4, -1, 1]), 1.0)
+This defines a perspective camera positioned at $(5, -1, 1)$ (starting from $x = -1$ and translating by $-4$) and rotated around the **z-axis** by `angle` degrees, with a screen distance of $1$. The angle variable can also be overridden via the command line:
 ```shell
 julia RayTracer <tracer> --angle <value>
 ```
@@ -110,27 +112,29 @@ If `--angle` is not specified, the value from the scene file ($90$) is used. Thi
 *Note* — You can write comment using `#`
 ```julia
 # Float variable (can be overridden via CLI: --angle <value>)
-float angle(90)
+float angle(0.0)
 
 # Materials
 material plane_material(
-    diffuse(checkered(<0.7, 0.9, 0.4>, <1, 0.55, 0.2>, 6)),
+    diffuse(
+        checkered(<1.0, 1.0, 0.2>, <0.1, 0.2, 0.5>, 4)
+    ),
     uniform(<0, 0, 0>)
 )
+material sky_material(diffuse(uniform(<0, 0, 0>)), uniform(<0.5, 0.5, 1>))
+material mirror_material(specular(uniform(<0.5, 0.5, 0.5>)), uniform(<0, 0, 0>))
 material sphere_material(diffuse(uniform(<1, 0.314, 0.314>)), uniform(<0, 0, 0>))
-material mirror_material(specular(uniform(<0.9, 0.9, 0.9>)), uniform(<0, 0, 0>))
-material sky_material(diffuse(uniform(<0, 0, 0>)), uniform(<0.7, 0.8, 1>))
-material earth_material(diffuse(image("./examples/reference_earth.pfm")), uniform(<0, 0, 0>))
+material sphere_sky_material(diffuse(image("./examples/reference_nightsky.jpg")), uniform(<0, 0, 0>))
 
 # Object definitions
-# Earth sphere at position (1, 1, 2)
-sphere(earth_material, translation([1, 1, 2]))
+# Night sky sphere at position (1, 1, 2)
+sphere(sphere_sky_material, translation([-1, -2, 2.5]) * rotation_z(60) * scaling(1.2, 1.2, 1.2))
 
-# Red sphere scaled down and positioned at (-1, -1, 0.2)
-sphere(sphere_material, translation([-1, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
+# Red little sphere
+sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
 
 # Mirror sphere at origin
-sphere(mirror_material, identity)
+sphere(mirror_material, scaling(1.5, 1.5, 1.5))
 
 # Large sky sphere
 sphere(sky_material, scaling(50, 50, 50))
@@ -139,5 +143,5 @@ sphere(sky_material, scaling(50, 50, 50))
 plane(plane_material, identity)
 
 # Camera with CLI-overridable angle and screen distance 2
-camera(perspective, rotation_z(angle) * translation([-3, 0, 1]), 1.0)
+camera(perspective, rotation_z(angle) * translation([-4, -1, 1]), 1.0)
 ```

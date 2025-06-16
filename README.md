@@ -10,7 +10,6 @@ _Photorealistic Image Renderer – Built with Julia_
 
 **RayTracer** is a text-based ray tracing engine built in Julia, designed to render photorealistic images from user-defined 3D scenes. It supports high-dynamic-range rendering and offers flexible output options, including tone-mapped conversions to common image formats.
 
-
 ## Installation
 
 ### Requirements
@@ -79,7 +78,35 @@ To display usage instructions and available options for a specific tracer, use t
 julia RayTracer <tracer> -h
 ```
 
-**Note** — Rendering your scene, particularly when using the `pathtracer`, may take a considerable amount of time due to the complexity of realistic light simulations.
+<table width="100%">
+  <tr>
+    <td align="center" width="33%">
+      <img src="./examples/cf_onofftracer.png" width="100%"><br>
+      <code>onofftracer</code>
+    </td>
+    <td align="center" width="33%">
+      <img src="./examples/cf_flattracer.png" width="100%"><br>
+      <code>flattracer</code>
+    </td>
+    <td align="center" width="33%">
+      <img src="./examples/cf_pathtracer.png"  width="100%"><br>
+      <code>pathtracer</code>
+    </td>
+  </tr>
+</table>
+<p><em><strong>Figure 1</strong></em>: The same <a href="https://github.com/baronauta/RayTracer">scene</a> rendered using the three available tracer algorithms.
+For the <code>onofftracer</code>, the large sphere simulating the sky was commented out to avoid it being treated as a hit surface.</p>
+
+<p style="background-color:#ffe8cc; color:#663300; padding:12px 16px; border-left:6px solid #ff8800; border-radius:4px; font-weight:500;">
+  ⚠️ <strong>Note:</strong> Rendering your scene, particularly when using the <code>pathtracer</code>, may take a considerable amount of time due to the complexity of realistic light simulations.
+</p>
+
+#### Try by yourself
+You can reproduce these results by using the input file `examples/demo.txt` and selecting one of the available tracers:
+
+```bash
+julia RayTracer <tracer> examples/demo.txt
+```
 
 ### Available Cameras
 Two types of cameras are available:
@@ -87,6 +114,20 @@ Two types of cameras are available:
 - **Perspective Camera** — Simulates a realistic camera with perspective projection, where objects farther away appear smaller. 
 
 - **Orthogonal** — Uses orthographic projection, which preserves object sizes regardless of depth. This is ideal for technical or architectural visualization where true dimensions are important.
+
+<table width="100%">
+  <tr>
+    <td align="center" width="50%">
+      <img src="./examples/perspective_cornellbox.png" width="100%"><br>
+      <em>Perspective camera</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="./examples/orthogonal_cornellbox.png" width="100%"><br>
+      <em>Orthogonal camera</em>
+    </td>
+  </tr>
+</table>
+<p><strong>Figure 2:</strong> Perspective and orthogonal camera views. Minor adjustments to camera positions were made for aesthetic presentation.</p>
 
 
 ### Tone mapping
@@ -113,23 +154,15 @@ julia RayTracer image2pfm <input_image>
 ```
 
 ### Feature Gallery
+
 <table width="100%">
   <tr>
-    <td align="center" width="33%">
-      <img src="./examples/reference_demo_onoff.png" alt="onoff_tracer, 20° angle" width="90%"><br>
-      <em><strong>onoff_tracer</strong>, 20° angle</em>
-    </td>
-    <td align="center" width="33%">
-      <img src="./examples/reference_demo_flat_video.gif" alt="flat_tracer, 360° animation" width="90%"><br>
-      <em><strong>flat_tracer</strong>, 360° animation</em>
-    </td>
-    <td align="center" width="33%">
-      <img src="./examples/reference_demo_path.png" alt="path_tracer, static image" width="90%"><br>
-      <em><strong>path_tracer</strong>, static image</em>
+    <td align="center" width="100%">
+      <img src="./examples/mirror_and_spheres.png" width="50%"><br>
+      <em>Two spheres with a mirror</em>
     </td>
   </tr>
 </table>
-
 
 ## History
 See the file [HISTORY.md](https://github.com/baronauta/RayTracer/blob/master/HISTORY.md).
