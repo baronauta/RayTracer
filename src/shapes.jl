@@ -50,7 +50,7 @@ struct HitRecord{T<:AbstractFloat}
     shape::Shape{T}
 end
 
-"Compare two `HitRecord` types. Useful for tests." # ⚠️ how to compare shapes??
+"Compare two `HitRecord` types. Useful for tests."
 function ≈(hr1::Union{HitRecord,Nothing}, hr2::Union{HitRecord,Nothing})
     if isnothing(hr1) || isnothing(hr2)
         return hr1 == hr2
@@ -102,7 +102,7 @@ end
 Checks if a ray intersects the plane.
 Return a `HitRecord`, or `nothing` if no intersection was found.
 """
-function ray_intersection(plane::Plane, ray::Ray)
+function ray_intersection(plane::Plane, ray::Ray; all=false)
     # First, consider the ray in the frame of reference
     # of the plane, i.e. use the inverse transformation
     # associated to the considered shape.
@@ -110,7 +110,7 @@ function ray_intersection(plane::Plane, ray::Ray)
 
     # Ray is parallel to the xy-plane (z=0): no intersection
     if inv_ray.dir.z == 0
-        return nothing
+        (all == false) ? (return nothing) : (return [nothing])
     end
 
     # Given a ray r(t) = O + t ⋅ d,
@@ -120,7 +120,7 @@ function ray_intersection(plane::Plane, ray::Ray)
     t = -inv_ray.origin.z / inv_ray.dir.z
 
     if (t <= inv_ray.tmin) || (t >= inv_ray.tmax)
-        return nothing
+        (all == false) ? (return nothing) : (return [nothing])
     end
 
     hit_point = at(inv_ray, t)
@@ -136,10 +136,19 @@ function ray_intersection(plane::Plane, ray::Ray)
     surface_point =
         Vec2D(hit_point.x - floor(hit_point.x), hit_point.y - floor(hit_point.y))
 
-    return HitRecord(world_point, normal, surface_point, t, ray, plane)
+    (all == false) ? (return HitRecord(world_point, normal, surface_point, t, ray, plane)) : (return [HitRecord(world_point, normal, surface_point, t, ray, plane)])
 end
 
-
+"""
+---
+Check whether a `HitRecord hit` is inside a `Plane`.
+(i.e. the antitransformed point's z-coordinate is < 0).
+"""
+function is_inside(hit::HitRecord, obj::Plane)
+    p = hit.world_point
+    inv_p = inverse(obj.transformation) * p
+    return (inv_p.z < 0)
+end
 # ─────────────────────────────────────────────────────────────
 # Sphere definition and functions
 # ─────────────────────────────────────────────────────────────

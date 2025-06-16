@@ -96,7 +96,7 @@ function is_inside(hit::HitRecord, csg::CSG)
 
     elseif csg.operation == INTERSECTION
         # hit records must be in obj AND in obj 2
-        return (is_inside(hit, csg.obj1) || (is_inside(hit, csg.obj2)))
+        return (is_inside(hit, csg.obj1) && (is_inside(hit, csg.obj2)))
 
     elseif csg.operation == DIFFERENCE
         # hit records can be on obj1 if not in ob2 and in ob2 if not in on1
@@ -194,5 +194,7 @@ function ray_intersection(csg::CSG, ray::Ray; all=false)
     else
         return [nothing]
     end
-    return hit_list
+    
+    (all == true) ? (return hit_list) : return hit_list[1]
+    
 end
