@@ -2,12 +2,6 @@
 
 RayTracer uses a custom, text-based format to define what will be rendered.
 
-### **Contents**
-1. [Float Variables](#float-variables)
-2. [Materials](#materials)
-3. [Objects](#objects)
-4. [Camera](#camera)
-
 ### 🔢 1. Float Variables
 
 You can define float constants to use later:
