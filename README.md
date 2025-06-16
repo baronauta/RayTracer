@@ -20,18 +20,23 @@ RayTracer is a Julia-based library that runs on:
 
 ### Steps
 
-1. Launch Julia:
+1. Download the [v1.0.0 release](https://github.com/baronauta/RayTracer/releases/tag/v1.0.0) and extract the archive.
+
+2. Open a terminal and navigate to the extracted directory.
+
+2. Launch Julia:
     ```bash
     julia
     ```
 
-2. Add RayTracer from GitHub:
+3. Activate the project and install dependencies:
     ```julia
     using Pkg
-    Pkg.add(url="https://github.com/baronauta/RayTracer/releases/tag/v1.0.0")
+    Pkg.activate(".")
+    Pkg.instantiate()
     ```
 
-3. *(Optional)* Run tests to verify installation:
+4. *(Optional)* Run tests to verify installation:
     ```julia
     Pkg.test()
     ```
