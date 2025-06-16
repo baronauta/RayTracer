@@ -59,7 +59,7 @@ To create an object decide its **shape**, assign a **material** and place it int
 
 #### **Transformation**
 - `identity` — No transformation.
-- `translation([x, y, z])` —  Translates the object by the vector $\vec{v} = (x, y, z)$.
+- `translation([x, y, z])` —  Translates the object by the vector $\vec{v} = \left( x, y, z \right)$.
 - `scaling(sx, sy, sz)` — Scales the object along each axis. All values must be non-zero. Use negative values to apply reflections.
 - `rotation_x(deg)` — Rotates the object around the **x-axis** by the given angle in degrees.
 - `rotation_y(deg)` — Rotates the object around the **y-axis** by the given angle in degrees.
