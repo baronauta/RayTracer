@@ -149,6 +149,7 @@ function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, cs
     println("\n")
     while i <= length(a) && j <= length(b)
         if a[i].t <= b[j].t
+            println("-- $(a[i].world_point) belongs to obj1:  $(a[i].shape ≈ csg.obj1)")
             if valid_hit(a[i], csg.obj2, csg)
                 println("- $(a[i].world_point) is inside $(typeof(csg.obj2)):  ", is_inside(a[i], csg.obj2))
                 push!(result, a[i])
@@ -157,6 +158,7 @@ function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, cs
             end
             i += 1
         else
+            println("-- $(b[j].world_point) belongs to obj2:  $(b[j].shape ≈ csg.obj2)")
             if valid_hit(b[j], csg.obj1, csg)
                 println("- $(b[j].world_point) is inside $(typeof(csg.obj1)):  ", is_inside(b[j], csg.obj1))
                 push!(result, b[j])
@@ -168,6 +170,7 @@ function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, cs
 
     # check remaining elements
     while i <= length(a)
+        println("-- $(a[i].world_point) belongs to obj1:  $(a[i].shape ≈ csg.obj1)")
         if valid_hit(a[i], csg.obj2, csg)
             println("- $(a[i].world_point) is inside $(typeof(csg.obj2)):  ", is_inside(a[i], csg.obj2))
             push!(result, a[i])
@@ -176,6 +179,7 @@ function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, cs
         i += 1
     end
     while j <= length(b)
+        println("-- $(b[j].world_point) belongs to obj2:  $(b[j].shape ≈ csg.obj2)")
         if valid_hit(b[j], csg.obj1, csg)
             println("- $(b[j].world_point) is inside $(typeof(csg.obj1)):  ", is_inside(b[j], csg.obj1))
             push!(result, b[j])
