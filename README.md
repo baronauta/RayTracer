@@ -157,7 +157,7 @@ julia RayTracer image2pfm <input_image>
 <table width="100%">
   <tr>
     <td align="center" width="100%">
-      <img src="./examples/mirror_and_spheres.png" width="50%"><br>
+      <img src="./examples/mirror_and_spheres.png" width="100%"><br>
       <em>Two spheres with a mirror</em>
     </td>
   </tr>
