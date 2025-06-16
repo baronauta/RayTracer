@@ -304,7 +304,7 @@ function ray_intersection(sphere::Sphere, ray::Ray; all=false)
         else
             return [nothing]
         end
-
+        println("\n=============\n",hit1,"\n\n",hit2,"\n=============")
         return [hit1, hit2]
     end
 end

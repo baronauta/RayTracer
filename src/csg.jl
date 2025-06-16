@@ -146,16 +146,21 @@ function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, cs
     result = Vector{HitRecord{T}}()
     i = 1
     j = 1
-
+    println("\n")
     while i <= length(a) && j <= length(b)
         if a[i].t <= b[j].t
             if valid_hit(a[i], csg.obj2, csg)
+                println("- $(a[i].world_point) is inside $(typeof(csg.obj2)):  ", is_inside(a[i], csg.obj2))
                 push!(result, a[i])
+                println("PUSHED: a[$i] = $(a[i].world_point)")
+
             end
             i += 1
         else
             if valid_hit(b[j], csg.obj1, csg)
+                println("- $(b[j].world_point) is inside $(typeof(csg.obj1)):  ", is_inside(b[j], csg.obj1))
                 push!(result, b[j])
+                println("PUSHED: b[$j] = $(b[j].world_point)")
             end
             j += 1
         end
@@ -164,13 +169,17 @@ function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, cs
     # check remaining elements
     while i <= length(a)
         if valid_hit(a[i], csg.obj2, csg)
+            println("- $(a[i].world_point) is inside $(typeof(csg.obj2)):  ", is_inside(a[i], csg.obj2))
             push!(result, a[i])
+            println("PUSHED: a[$i] = $(a[i].world_point)")
         end
         i += 1
     end
     while j <= length(b)
         if valid_hit(b[j], csg.obj1, csg)
+            println("- $(b[j].world_point) is inside $(typeof(csg.obj1)):  ", is_inside(b[j], csg.obj1))
             push!(result, b[j])
+            println("PUSHED: b[$j] = $(b[j].world_point)")
         end
         j += 1
     end
@@ -185,12 +194,18 @@ Return a sorted list of all `HitRecord`s or a list of `nothing` if no intersecti
 function ray_intersection(csg::CSG, ray::Ray; all=false)
 
     hit_array_1 = ray_intersection(csg.obj1, ray; all = true)
+    println("\n::::::::::\n",hit_array_1)
     hit_array_2 = ray_intersection(csg.obj2, ray; all = true)
+    println("\n::::::::::\n",hit_array_2)
     real_hits_1 = filter(!isnothing, hit_array_1)
     real_hits_2 = filter(!isnothing, hit_array_2)
 
     if (!isempty(real_hits_1) && !isempty(real_hits_2))
         hit_list = check_sort_records(real_hits_1, real_hits_2, csg)
+        println("chosen:")
+        for hit in hit_list
+            println(hit.world_point)
+        end
     else
         return [nothing]
     end
