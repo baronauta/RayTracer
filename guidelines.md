@@ -143,6 +143,6 @@ sphere(sky_material, scaling(50, 50, 50))
 # Plane with checkered pattern
 plane(plane_material, identity)
 
-# Camera with CLI-overridable angle and screen distance 2
+# Camera with CLI-overridable angle and screen distance 1
 camera(perspective, rotation_z(angle) * translation([-4, -1, 1]), 1.0)
 ```
