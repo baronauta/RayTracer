@@ -41,9 +41,9 @@ jobs:
       - name: Run RayTracer examples (Unix)
         if: runner.os != 'Windows'
         run: |
-          julia RayTracer pathtracer ./examples/demo_scene.txt 5 5 --output-name out.png
-          julia RayTracer onofftracer ./examples/demo_scene.txt 5 5 --output-name out.png
-          julia RayTracer flattracer ./examples/demo_scene.txt 5 5 --output-name out.png
+          julia RayTracer pathtracer ./examples/demo.txt 5 5 --output-name out.png
+          julia RayTracer onofftracer ./examples/demo.txt 5 5 --output-name out.png
+          julia RayTracer flattracer ./examples/demo.txt 5 5 --output-name out.png
           julia RayTracer tonemapping out.pfm
           julia image2pfm out.png
 
