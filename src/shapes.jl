@@ -305,13 +305,14 @@ end
 
 """
 ---
-Check whether a `Point p` is inside a `Sphere`.
+Check whether a `HitRecord hit` is inside a `Sphere`.
 (i.e. the antitransformed point's distance from the origin is < 1).
 
 **Note:** if the flag is true, points on the surface are also accepted.
 
 """
-function is_inside(p::Point, obj::Sphere, flag::Bool)
+function is_inside(hit::HitRecord, obj::Sphere, flag::Bool)
+    p = hit.world_point
     inv_p = inverse(obj.transformation) * p
     flag ? (return (norm(point_to_vec(inv_p)) ≤ 1.0)) :
     (return (norm(point_to_vec(inv_p)) < 1.0))
@@ -340,6 +341,7 @@ Enumerated type representing the possible CSG operations:
     UNION
     DIFFERENCE
     INTERSECTION
+    FUSION
 end
 
 """
@@ -413,6 +415,80 @@ function CSG(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where {T<:Abs
 end
 
 """
+    valid_hit(hr::HitRecord, obj::Shape, csg::CSG) -> Bool
+
+Determines whether a given `HitRecord` is valid based on the CSG operation between two shapes.
+
+Arguments:
+- `hr`: the hit record to evaluate.
+- `obj`: the *other* shape involved in the CSG operation (not the one that generated `hr`).
+- `csg`: the `CSG` object describing the two shapes and the boolean operation.
+
+Returns `true` if the hit should be included according to the CSG operation (`UNION`, `INTERSECTION`, `FUSION`, or `DIFFERENCE`), `false` otherwise.
+"""
+function valid_hit(hr::HitRecord, obj::Shape, csg::CSG)
+    is_obj1 = csg.obj1 ≈ hr.shape
+    op = csg.operation
+
+    if op == UNION
+        return true
+    elseif op == INTERSECTION
+        return is_inside(hr, obj, true)
+    elseif op == FUSION
+        return !is_inside(hr, obj, false)
+    elseif op == DIFFERENCE
+        return (is_obj1 && !is_inside(hr, obj, false)) || (!is_obj1 && is_inside(hr, obj, false))
+    else
+        throw(CsgError("undefined operation $(op)"))
+    end
+end
+
+"""
+    check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, csg::CSG{T}) -> Vector{HitRecord{T}}
+
+Merges two sorted lists of hit records (`a` and `b`) from two shapes involved in a CSG operation.
+
+Each hit is validated using `valid_hit`, based on whether it should be included in the final result according to the operation in `csg`.
+
+Returns a sorted vector of valid `HitRecord`s resulting from the CSG operation.
+"""
+function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, csg::CSG{T}) where T
+    result = Vector{HitRecord{T}}()
+    i = 1
+    j = 1
+
+    while i <= length(a) && j <= length(b)
+        if a[i].t <= b[j].t
+            if valid_hit(a[i], csg.obj2, csg)
+                push!(result, a[i])
+            end
+            i += 1
+        else
+            if valid_hit(b[j], csg.obj1, csg)
+                push!(result, b[j])
+            end
+            j += 1
+        end
+    end
+
+    # check remaining elements
+    while i <= length(a)
+        if valid_hit(a[i], csg.obj2, csg)
+            push!(result, a[i])
+        end
+        i += 1
+    end
+    while j <= length(b)
+        if valid_hit(b[j], csg.obj1, csg)
+            push!(result, b[j])
+        end
+        j += 1
+    end
+
+    return result
+end
+
+"""
 Checks if a `Ray` intersects the `CSG`.
 Return a sorted list of all `HitRecord`s or a list of `nothing` if no intersection is found.
 """
@@ -424,13 +500,9 @@ function all_ray_intersections(csg::CSG, ray::Ray)
     real_hits_2 = filter(!isnothing, hit_array_2)
 
     if (!isempty(real_hits_1) && !isempty(real_hits_2))
-
-        # merge and sort simultaniously the 2 array manteining only valid HitRecords
-        # ...
-        # result = sort_records(real_hits_1, real_hits_2)
-        # ...
+        hit_list = check_sort_records(real_hits_1, real_hits_2, csg)
     else
         return [nothing]
     end
-    return # result
+    return hit_list
 end
