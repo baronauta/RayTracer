@@ -104,7 +104,7 @@ For the <code>onofftracer</code>, the large sphere simulating the sky was commen
 You can reproduce these results by using the input file `examples/demo.txt` and selecting one of the available tracers:
 
 ```bash
-julia RayTracer <tracer> examples/demo.txt
+julia RayTracer <tracer> examples/demo.txt 500 500
 ```
 
 ### Available Cameras
