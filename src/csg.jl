@@ -210,8 +210,8 @@ function ray_intersection(csg::CSG, ray::Ray; all=false)
     # debug: println("\n::::::::::\n",hit_array_1)
     hit_array_2 = ray_intersection(csg.obj2, ray; all = true)
     # debug: println("\n::::::::::\n",hit_array_2)
-    real_hits_1 = filter(!isnothing, hit_array_1)
-    real_hits_2 = filter(!isnothing, hit_array_2)
+    real_hits_1 = [h for h in hit_array_1 if h !== nothing]
+    real_hits_2 = [h for h in hit_array_2 if h !== nothing]
 
     if (!isempty(real_hits_1) && !isempty(real_hits_2))
         hit_list = check_sort_records(real_hits_1, real_hits_2, csg)
@@ -219,11 +219,13 @@ function ray_intersection(csg::CSG, ray::Ray; all=false)
         for hit in hit_list
             # debug: println(hit.world_point)
         end
-        (length(hit_list)==0) && return [nothing]
+        if length(hit_list)==0
+            return all ? [nothing] : nothing
+        end
     else
-        return [nothing]
+        return all ? [nothing] : nothing
     end
     
-    (all == true) ? (return hit_list) : return hit_list[1]
+    return all ? hit_list : hit_list[1]
     
 end
