@@ -255,4 +255,22 @@ end
     end
 end
 
+@testset "World" begin
+    world = World()
+    csg = CSG(sphere2, sphere1, RayTracer.DIFFERENCE)
+    sphere4 = Sphere(translation(Vec(2.,0.,0.)), Material())
+
+    # Add shapes
+    add!(world, csg)
+    add!(world, sphere4)
+
+    # Test direct intersection with single sphere (sphere4)
+    ray_4 = Ray(Point(2.0, 0.0, 3.0), -VEC_Z)
+    hr_sphere_4 = HitRecord(Point(2.0, 0.0, 1.0), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 0.0), 2.0, ray_4, sphere4)
+    test_intersection(world, ray_4, hr_sphere_4)
+
+    # Test intersection with the csg
+    test_intersection(world, ray_z, hr_z_1)
+end
+
 #! format: on
