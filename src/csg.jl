@@ -104,6 +104,15 @@ function is_inside(hit::HitRecord, csg::CSG)
     end
 end
 
+"if a hit belongs to an obj"
+function _belongs(hr::HitRecord, obj::Shape)
+    if obj isa CSG
+        return ((hr.shape ≈ obj.obj1) || (hr.shape ≈ obj.obj2))
+    else
+        return (hr.shape ≈ obj)
+    end
+end
+
 """
     valid_hit(hr::HitRecord, obj::Shape, csg::CSG) -> Bool
 
@@ -117,7 +126,7 @@ Arguments:
 Returns `true` if the hit should be included according to the CSG operation (`UNION`, `INTERSECTION`, `FUSION`, or `DIFFERENCE`), `false` otherwise.
 """
 function valid_hit(hr::HitRecord, obj::Shape, csg::CSG)
-    is_obj1 = (csg.obj1 ≈ hr.shape)
+    is_obj1 = _belongs(hr, csg.obj1)
     op = csg.operation
 
     if op == UNION
@@ -146,23 +155,23 @@ function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, cs
     result = Vector{HitRecord{T}}()
     i = 1
     j = 1
-    println("\n")
+    # debug: println("\n")
     while i <= length(a) && j <= length(b)
         if a[i].t <= b[j].t
-            println("-- $(a[i].world_point) belongs to obj1:  $(a[i].shape ≈ csg.obj1)")
+            # debug: println("-- $(a[i].world_point) belongs to obj1:  $(a[i].shape ≈ csg.obj1)\tshape: $(typeof(a[i].shape)) ; obj1: $(typeof(csg.obj1))")
             if valid_hit(a[i], csg.obj2, csg)
-                println("- $(a[i].world_point) is inside $(typeof(csg.obj2)):  ", is_inside(a[i], csg.obj2))
+                # debug: println("- $(a[i].world_point) is inside $(typeof(csg.obj2)):  ", is_inside(a[i], csg.obj2))
                 push!(result, a[i])
-                println("PUSHED: a[$i] = $(a[i].world_point)")
+                # debug: println("PUSHED: a[$i] = $(a[i].world_point)")
 
             end
             i += 1
         else
-            println("-- $(b[j].world_point) belongs to obj2:  $(b[j].shape ≈ csg.obj2)")
+            # debug: println("-- $(b[j].world_point) belongs to obj2:  $(b[j].shape ≈ csg.obj2)\tshape: $(typeof(b[j].shape)) ; obj2: $(typeof(csg.obj2))")
             if valid_hit(b[j], csg.obj1, csg)
-                println("- $(b[j].world_point) is inside $(typeof(csg.obj1)):  ", is_inside(b[j], csg.obj1))
+                # debug: println("- $(b[j].world_point) is inside $(typeof(csg.obj1)):  ", is_inside(b[j], csg.obj1))
                 push!(result, b[j])
-                println("PUSHED: b[$j] = $(b[j].world_point)")
+                # debug: println("PUSHED: b[$j] = $(b[j].world_point)")
             end
             j += 1
         end
@@ -170,20 +179,20 @@ function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, cs
 
     # check remaining elements
     while i <= length(a)
-        println("-- $(a[i].world_point) belongs to obj1:  $(a[i].shape ≈ csg.obj1)")
+        # debug: println("-- $(a[i].world_point) belongs to obj1:  $(a[i].shape ≈ csg.obj1)\tshape: $(typeof(a[i].shape)) ; obj1: $(typeof(csg.obj1))")
         if valid_hit(a[i], csg.obj2, csg)
-            println("- $(a[i].world_point) is inside $(typeof(csg.obj2)):  ", is_inside(a[i], csg.obj2))
+            # debug: println("- $(a[i].world_point) is inside $(typeof(csg.obj2)):  ", is_inside(a[i], csg.obj2))
             push!(result, a[i])
-            println("PUSHED: a[$i] = $(a[i].world_point)")
+            # debug: println("PUSHED: a[$i] = $(a[i].world_point)")
         end
         i += 1
     end
     while j <= length(b)
-        println("-- $(b[j].world_point) belongs to obj2:  $(b[j].shape ≈ csg.obj2)")
+        # debug: println("-- $(b[j].world_point) belongs to obj2:  $(b[j].shape ≈ csg.obj2)\tshape: $(typeof(b[j].shape)) ; obj2: $(typeof(csg.obj2))")
         if valid_hit(b[j], csg.obj1, csg)
-            println("- $(b[j].world_point) is inside $(typeof(csg.obj1)):  ", is_inside(b[j], csg.obj1))
+            # debug: println("- $(b[j].world_point) is inside $(typeof(csg.obj1)):  ", is_inside(b[j], csg.obj1))
             push!(result, b[j])
-            println("PUSHED: b[$j] = $(b[j].world_point)")
+            # debug: println("PUSHED: b[$j] = $(b[j].world_point)")
         end
         j += 1
     end
@@ -198,17 +207,17 @@ Return a sorted list of all `HitRecord`s or a list of `nothing` if no intersecti
 function ray_intersection(csg::CSG, ray::Ray; all=false)
 
     hit_array_1 = ray_intersection(csg.obj1, ray; all = true)
-    println("\n::::::::::\n",hit_array_1)
+    # debug: println("\n::::::::::\n",hit_array_1)
     hit_array_2 = ray_intersection(csg.obj2, ray; all = true)
-    println("\n::::::::::\n",hit_array_2)
+    # debug: println("\n::::::::::\n",hit_array_2)
     real_hits_1 = filter(!isnothing, hit_array_1)
     real_hits_2 = filter(!isnothing, hit_array_2)
 
     if (!isempty(real_hits_1) && !isempty(real_hits_2))
         hit_list = check_sort_records(real_hits_1, real_hits_2, csg)
-        println("chosen:")
+        # debug: println("chosen:")
         for hit in hit_list
-            println(hit.world_point)
+            # debug: println(hit.world_point)
         end
     else
         return [nothing]
