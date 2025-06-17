@@ -11,6 +11,7 @@ function test_all_intersections(
     end
 end
 
+#! format: off
 # === Scene Definition ===
 # Shapes
 sphere1 = Sphere()
@@ -237,3 +238,5 @@ end
         test_all_intersections(csg_D, ray_z, [hr_z_2, hr_z_3_p])
     end
 end
+
+#! format: on
