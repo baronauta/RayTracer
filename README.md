@@ -10,6 +10,17 @@ _Photorealistic Image Renderer – Built with Julia_
 
 **RayTracer** is a text-based ray tracing engine built in Julia, designed to render photorealistic images from user-defined 3D scenes. It supports high-dynamic-range rendering and offers flexible output options, including tone-mapped conversions to common image formats.
 
+### Core Features
+
+- 🖼️ **Ray Tracing Renderer**  
+  Renders photorealistic images from 3D scenes using multiple ray tracing algorithms ([Scene Rendering](#scene-rendering)).
+
+- 🌈 **Tone Mapping**  
+  Converts high-dynamic-range `.pfm` images into standard low-dynamic-range formats (e.g. `.png`) for display and sharing ([Tone Mapping](#tone-mapping)).
+
+- 🔁 **Image-to-PFM Converter**  
+  Transforms standard LDR images (`.png`, `.jpg`) into HDR `.pfm` format, enabling their use as textures or lighting sources in rendering ([LDR to HDR Conversion](#ldr-to-hdr-conversion)).
+
 ## Installation
 
 ### Requirements
@@ -44,14 +55,18 @@ RayTracer is a Julia-based library that runs on:
 
 ## Usage Instructions
 
+### Scene Rendering
+
 RayTracer uses a simple text-based format for scene description. See [guidelines.md](https://github.com/baronauta/RayTracer/blob/master/guidelines.md) for the details on how to define your own scenes.
 
 To render a scene, run the following command:
 ```bash
-julia RayTracer <tracer> <witdth> <height>
+julia RayTracer <tracer> <scenefile> <witdth> <height>
 ```
-where `<tracer>` selects the rendering algorithm and and `<width>` and `<height>` specify the image resolution.
+where `<scenefile>` is the `.txt` file with the scene to render, `<tracer>` selects the rendering algorithm and and `<width>` and `<height>` specify the image resolution.
 
+Each run produces a **high-dynamic-range (HDR)** image in the `.pfm` format storing detailed lighting and color information, and a quick low-dynamic-range LDR preview (e.g. `.png`) for viewing (basic default tone mapping is used).  
+For more control over the LDR output, apply custom tone mapping — see the [Tone Mapping](#tone-mapping) section.
 ### Scene Structure
 A typical scene description consists of two main parts:
 
@@ -134,10 +149,8 @@ Two types of cameras are available:
 <p><strong>Figure 2:</strong> Perspective and orthogonal camera views. Minor adjustments to camera positions were made for aesthetic presentation.</p>
 
 
-### Tone mapping
-Each run of RayTracer produces a **high-dynamic-range (HDR)** image in the `.pfm` format, which stores detailed lighting and color information from the rendered scene.
-
-Along with the HDR output, a quick preview image in a standard low-dynamic-range (LDR) format (e.g. `.png`) is also generated for easy viewing.
+---
+### Tone Mapping
 
 Once you have the `.pfm` file, you can apply **tone mapping**—the process of converting HDR images into LDR ones suitable for standard displays.  
 Because tone mapping is scene-dependent, we encourage you to experiment with different parameters to achieve optimal visual results.
@@ -148,6 +161,9 @@ julia RayTracer tonemapping <input_file>
 ```
 where `<input_file>` is the PFM file you want to convert.
 
+> ℹ️ **Note**: This software uses the _images.jl_ package. A list of supported output formats is available [here](https://github.com/JuliaIO/ImageIO.jl).
+
+---
 ### LDR to HDR Conversion
 
 RayTracer also supports converting **low-dynamic-range (LDR)** images (e.g., `.png`, `.jpg`) into **high-dynamic-range (HDR)** `.pfm` format. This feature is useful for integrating external images or textures into HDR-based rendering.
@@ -156,7 +172,7 @@ To perform the conversion, run:
 ```bash
 julia RayTracer image2pfm <input_image>
 ```
-
+---
 ### Feature Gallery
 
 <table width="100%">
@@ -170,6 +186,15 @@ julia RayTracer image2pfm <input_image>
 
 ## History
 See the file [HISTORY.md](https://github.com/baronauta/RayTracer/blob/master/HISTORY.md).
+
+## Contributing
+
+Contributions are welcome!  
+If you'd like to report a bug, suggest a feature, or submit code, feel free to open an issue or a pull request.  
+Please include a clear and detailed description of your changes or suggestions.
+
+➡️ Make sure to update tests as appropriate, and check for compatibility with the existing codebase.
+
 
 ## License
 The code is released under the European Union Public Licence (EUPL), version 1.2. See the file [LICENSE.md](./LICENSE.md).
