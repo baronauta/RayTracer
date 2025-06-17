@@ -2,7 +2,7 @@
 function test_all_intersections(
     s::Union{Shape,World},
     r::Ray,
-    expected_hr::AbstractVector{<:Union{HitRecord, Nothing}},
+    expected_hr::AbstractVector{<:Union{HitRecord,Nothing}},
 )
     hitrecords = RayTracer.ray_intersection(s, r; all = true)
     for (hit, exp_hit) in zip(hitrecords, expected_hr)
@@ -15,7 +15,7 @@ end
     sphere1 = Sphere()
     sphere1_copy = Sphere(Material(UniformPigment(RED)))
     sphere2 = Sphere(translation(Vec(0.0, 0.0, 1.0)), Material())
-    
+
     # test for shapes comparison
     @test sphere1 ≈ sphere1_copy
     @test !(sphere1 ≈ sphere2)
@@ -32,7 +32,7 @@ end
     @test csg ≈ csg_copy
     @test !(csg ≈ csg2)
     @test !(csg2 ≈ csg3)
-    
+
 end
 
 @testset "Is inside" begin
@@ -42,13 +42,13 @@ end
         sphere2 = Sphere(translation(Vec(0.0, 0.0, 1.0)), Material())
 
         hit = HitRecord(
-                Point(0.0, 0.0, 0.0),
-                Normal(0.0, 0.5, 0.0),
-                Vec2D(0.25, 0.5),
-                10.0,
-                Ray(Point(2.0, 0.0, 0.0), Vec(-1.0, 0.0, 0.0)),
-                sphere1,
-            )
+            Point(0.0, 0.0, 0.0),
+            Normal(0.0, 0.5, 0.0),
+            Vec2D(0.25, 0.5),
+            10.0,
+            Ray(Point(2.0, 0.0, 0.0), Vec(-1.0, 0.0, 0.0)),
+            sphere1,
+        )
         @test RayTracer.is_inside(hit, sphere1)
         @test !RayTracer.is_inside(hit, sphere2)
     end
@@ -59,13 +59,13 @@ end
         plane2 = Plane(translation(Vec(0.0, 0.0, -1.0)), Material())
 
         hit = HitRecord(
-                Point(0.0, 0.0, -0.5),
-                Normal(0.0, 0.5, 0.0),
-                Vec2D(0.25, 0.5),
-                10.0,
-                Ray(Point(2.0, 0.0, 0.0), Vec(-1.0, 0.0, 0.0)),
-                plane,
-            )
+            Point(0.0, 0.0, -0.5),
+            Normal(0.0, 0.5, 0.0),
+            Vec2D(0.25, 0.5),
+            10.0,
+            Ray(Point(2.0, 0.0, 0.0), Vec(-1.0, 0.0, 0.0)),
+            plane,
+        )
         @test RayTracer.is_inside(hit, plane)
         @test !RayTracer.is_inside(hit, plane2)
     end
@@ -83,7 +83,7 @@ end
         ray_above,
         plane,
     )
-    
+
     test_all_intersections(plane, ray_above, [hr_above])
     ## ray from Origin towards x
     ray_x = Ray(Point(0.0, 0.0, 0.0), VEC_X)
@@ -165,7 +165,7 @@ end
         Point(0.0, 0.0, 2.0),
         Normal(0.0, 0.0, 1.0),
         Vec2D(0.0, 0.0),
-        1.,
+        1.0,
         ray_z,
         sphere2,
     )
@@ -173,7 +173,7 @@ end
         Point(0.0, 0.0, 1.0),
         Normal(0.0, 0.0, 1.0),
         Vec2D(0.0, 0.0),
-        2.,
+        2.0,
         ray_z,
         sphere1,
     )
@@ -181,7 +181,7 @@ end
         Point(0.0, 0.0, 0.0),
         Normal(0.0, 0.0, 1.0),
         Vec2D(0.0, 1.0),
-        3.,
+        3.0,
         ray_z,
         sphere2,
     )
@@ -189,7 +189,7 @@ end
         Point(0.0, 0.0, -1.0),
         Normal(0.0, 0.0, 1.0),
         Vec2D(0.0, 1.0),
-        4.,
+        4.0,
         ray_z,
         sphere1,
     )
@@ -199,10 +199,12 @@ end
     hits_I = [hr_z_2, hr_z_3]
     hits_F = [hr_z_1, hr_z_4]
     hits_D = [hr_z_3, hr_z_4]
-    
-    for (csg, exp_hits) in zip([csg_U, csg_I, csg_F, csg_D], [hits_U, hits_I, hits_F, hits_D])
-        for (exp_hit, hit) in zip(exp_hits, RayTracer.ray_intersection(csg, ray_z; all = true))
-            @test hit ≈ exp_hit  
+
+    for (csg, exp_hits) in
+        zip([csg_U, csg_I, csg_F, csg_D], [hits_U, hits_I, hits_F, hits_D])
+        for (exp_hit, hit) in
+            zip(exp_hits, RayTracer.ray_intersection(csg, ray_z; all = true))
+            @test hit ≈ exp_hit
         end
     end
 end
@@ -210,7 +212,7 @@ end
 @testset "CSG - 2 Planes - all HitRecords" begin
     plane1 = Plane()  # plane at origin (z=0)
     plane2 = Plane(translation(Vec(0.0, 0.0, 1.0)), Material())  # plane translated to z=1
-    
+
     ray_down = Ray(Point(0.0, 0.0, 3.0), -VEC_Z)
 
     csg_union = CSG(plane1, plane2, RayTracer.UNION)
@@ -219,11 +221,11 @@ end
     csg_diff_2_1 = CSG(plane2, plane1, RayTracer.DIFFERENCE)  # plane2 minus plane1
     csg_fusion = CSG(plane1, plane2, RayTracer.FUSION)
 
-    hits_union = RayTracer.ray_intersection(csg_union, ray_down; all=true)
-    hits_inter = RayTracer.ray_intersection(csg_inter, ray_down; all=true)
-    hits_diff_1_2 = RayTracer.ray_intersection(csg_diff_1_2, ray_down; all=true)
-    hits_diff_2_1 = RayTracer.ray_intersection(csg_diff_2_1, ray_down; all=true)
-    hits_fusion = RayTracer.ray_intersection(csg_fusion, ray_down; all=true)
+    hits_union = RayTracer.ray_intersection(csg_union, ray_down; all = true)
+    hits_inter = RayTracer.ray_intersection(csg_inter, ray_down; all = true)
+    hits_diff_1_2 = RayTracer.ray_intersection(csg_diff_1_2, ray_down; all = true)
+    hits_diff_2_1 = RayTracer.ray_intersection(csg_diff_2_1, ray_down; all = true)
+    hits_fusion = RayTracer.ray_intersection(csg_fusion, ray_down; all = true)
 
     @test length(hits_union) == 2  # both planes are intersected
     @test length(hits_inter) == 1  # only the lower plane (plane1) remains
@@ -235,7 +237,7 @@ end
     @test hits_union[2].world_point ≈ Point(0.0, 0.0, 0.0)
 
     @test hits_inter[1].world_point ≈ Point(0.0, 0.0, 0.0)
-    
+
     @test hits_diff_2_1[1].world_point ≈ Point(0.0, 0.0, 1.0)
     @test hits_diff_2_1[2].world_point ≈ Point(0.0, 0.0, 0.0)
 
@@ -245,7 +247,7 @@ end
 @testset "CSG - Sphere and Plane - all HitRecords" begin
     sphere = Sphere()
     plane = Plane(translation(Vec(0.0, 0.0, 0.0)), Material())
-    
+
     ray_down = Ray(Point(0.0, 0.0, 3.0), -VEC_Z)
 
     csg_union = CSG(sphere, plane, RayTracer.UNION)
@@ -254,11 +256,13 @@ end
     csg_diff_plane_sphere = CSG(plane, sphere, RayTracer.DIFFERENCE)  # plane minus sphere
     csg_fusion = CSG(sphere, plane, RayTracer.FUSION)
 
-    hits_union = RayTracer.ray_intersection(csg_union, ray_down; all=true)
-    hits_inter = RayTracer.ray_intersection(csg_inter, ray_down; all=true)
-    hits_diff_sphere_plane = RayTracer.ray_intersection(csg_diff_sphere_plane, ray_down; all=true)
-    hits_diff_plane_sphere = RayTracer.ray_intersection(csg_diff_plane_sphere, ray_down; all=true)
-    hits_fusion = RayTracer.ray_intersection(csg_fusion, ray_down; all=true)
+    hits_union = RayTracer.ray_intersection(csg_union, ray_down; all = true)
+    hits_inter = RayTracer.ray_intersection(csg_inter, ray_down; all = true)
+    hits_diff_sphere_plane =
+        RayTracer.ray_intersection(csg_diff_sphere_plane, ray_down; all = true)
+    hits_diff_plane_sphere =
+        RayTracer.ray_intersection(csg_diff_plane_sphere, ray_down; all = true)
+    hits_fusion = RayTracer.ray_intersection(csg_fusion, ray_down; all = true)
 
     @test length(hits_union) == 3
     @test length(hits_inter) == 2
@@ -272,7 +276,7 @@ end
 
     @test hits_inter[1].world_point ≈ Point(0.0, 0.0, 0.0)
     @test hits_inter[2].world_point ≈ Point(0.0, 0.0, -1.0)
-    
+
     @test hits_diff_sphere_plane[1].world_point ≈ Point(0.0, 0.0, 1.0)
     @test hits_diff_sphere_plane[2].world_point ≈ Point(0.0, 0.0, 0.0)
 
@@ -290,8 +294,22 @@ end
     csg_D = CSG(CSG(sphere1, sphere3, RayTracer.DIFFERENCE), sphere2, RayTracer.DIFFERENCE)
 
     ray_z = Ray(Point(0.0, 0.0, 3.0), -VEC_Z)
-    hr_z_1 = HitRecord(Point(0.0, 0.0, 2.0), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 0.0), 1., ray_z, sphere2)
-    hr_z_2 = HitRecord(Point(0.0, 0.0, 1.0), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 0.0), 2., ray_z, sphere1)
+    hr_z_1 = HitRecord(
+        Point(0.0, 0.0, 2.0),
+        Normal(0.0, 0.0, 1.0),
+        Vec2D(0.0, 0.0),
+        1.0,
+        ray_z,
+        sphere2,
+    )
+    hr_z_2 = HitRecord(
+        Point(0.0, 0.0, 1.0),
+        Normal(0.0, 0.0, 1.0),
+        Vec2D(0.0, 0.0),
+        2.0,
+        ray_z,
+        sphere1,
+    )
 
     @test !RayTracer._belongs(hr_z_1, csg_D.obj1)
     @test RayTracer._belongs(hr_z_2, csg_D.obj1)
@@ -303,29 +321,81 @@ end
         sphere3 = Sphere(translation(Vec(0.0, 0.0, -0.5)), Material())
 
         csg_U = CSG(CSG(sphere1, sphere2, RayTracer.UNION), sphere3, RayTracer.UNION)
-        csg_I = CSG(CSG(sphere1, sphere2, RayTracer.INTERSECTION), sphere3, RayTracer.INTERSECTION)
-        csg_F = CSG(CSG(sphere1, sphere2, RayTracer.INTERSECTION), sphere3, RayTracer.FUSION)
-        csg_D = CSG(CSG(sphere1, sphere2, RayTracer.INTERSECTION), sphere3, RayTracer.DIFFERENCE)
+        csg_I = CSG(
+            CSG(sphere1, sphere2, RayTracer.INTERSECTION),
+            sphere3,
+            RayTracer.INTERSECTION,
+        )
+        csg_F =
+            CSG(CSG(sphere1, sphere2, RayTracer.INTERSECTION), sphere3, RayTracer.FUSION)
+        csg_D = CSG(
+            CSG(sphere1, sphere2, RayTracer.INTERSECTION),
+            sphere3,
+            RayTracer.DIFFERENCE,
+        )
 
         ray_z = Ray(Point(0.0, 0.0, 3.0), -VEC_Z)
 
-        hr_z_1 = HitRecord(Point(0.0, 0.0, 2.0), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 0.0), 1., ray_z, sphere2)
-        hr_z_2 = HitRecord(Point(0.0, 0.0, 1.0), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 0.0), 2., ray_z, sphere1)
-        hr_z_3 = HitRecord(Point(0.0, 0.0, 0.5), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 0.0), 2.5, ray_z, sphere3)
-        hr_z_4 = HitRecord(Point(0.0, 0.0, 0.0), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 1.0), 3., ray_z, sphere2)
-        hr_z_5 = HitRecord(Point(0.0, 0.0, -1.0), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 1.0), 4., ray_z, sphere1)
-        hr_z_6 = HitRecord(Point(0.0, 0.0, -1.5), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 1.0), 4.5, ray_z, sphere3)
+        hr_z_1 = HitRecord(
+            Point(0.0, 0.0, 2.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            1.0,
+            ray_z,
+            sphere2,
+        )
+        hr_z_2 = HitRecord(
+            Point(0.0, 0.0, 1.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            2.0,
+            ray_z,
+            sphere1,
+        )
+        hr_z_3 = HitRecord(
+            Point(0.0, 0.0, 0.5),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 0.0),
+            2.5,
+            ray_z,
+            sphere3,
+        )
+        hr_z_4 = HitRecord(
+            Point(0.0, 0.0, 0.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 1.0),
+            3.0,
+            ray_z,
+            sphere2,
+        )
+        hr_z_5 = HitRecord(
+            Point(0.0, 0.0, -1.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 1.0),
+            4.0,
+            ray_z,
+            sphere1,
+        )
+        hr_z_6 = HitRecord(
+            Point(0.0, 0.0, -1.5),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(0.0, 1.0),
+            4.5,
+            ray_z,
+            sphere3,
+        )
 
         hits_U = [hr_z_1, hr_z_2, hr_z_3, hr_z_4, hr_z_5, hr_z_6]
         hits_I = [hr_z_3, hr_z_4]
         hits_F = [hr_z_2, hr_z_6]
         hits_D = [hr_z_2, hr_z_3]
 
-        for (csg, exp_hits) in zip([csg_U, csg_I, csg_F, csg_D], [hits_U, hits_I, hits_F, hits_D])
+        for (csg, exp_hits) in
+            zip([csg_U, csg_I, csg_F, csg_D], [hits_U, hits_I, hits_F, hits_D])
             hits = RayTracer.ray_intersection(csg, ray_z; all = true)
             @test length(exp_hits) == length(hits)
             for (exp_hit, hit) in zip(exp_hits, hits)
-                @test hit ≈ exp_hit  
+                @test hit ≈ exp_hit
             end
         end
 
@@ -333,9 +403,14 @@ end
         plane = Plane(translation(Vec(0.0, 0.0, 0.5)), Material())
         # hr_plane will be hr_z_3
         csg_U = CSG(CSG(sphere1, sphere2, RayTracer.UNION), plane, RayTracer.UNION)
-        csg_I = CSG(CSG(sphere1, sphere2, RayTracer.INTERSECTION), plane, RayTracer.INTERSECTION)
-        csg_D = CSG(CSG(sphere1, sphere2, RayTracer.INTERSECTION), plane, RayTracer.DIFFERENCE)
-        
+        csg_I = CSG(
+            CSG(sphere1, sphere2, RayTracer.INTERSECTION),
+            plane,
+            RayTracer.INTERSECTION,
+        )
+        csg_D =
+            CSG(CSG(sphere1, sphere2, RayTracer.INTERSECTION), plane, RayTracer.DIFFERENCE)
+
         hits_U = [hr_z_1, hr_z_2, hr_z_3, hr_z_4, hr_z_5]
         hits_I = [hr_z_3, hr_z_4]
         hits_D = [hr_z_2, hr_z_3]
@@ -343,7 +418,7 @@ end
             hits = RayTracer.ray_intersection(csg, ray_z; all = true)
             @test length(exp_hits) == length(hits)
             for (exp_hit, hit) in zip(exp_hits, hits)
-                @test hit ≈ exp_hit  
+                @test hit ≈ exp_hit
             end
         end
     end
