@@ -33,7 +33,7 @@ Supported properties for both `<surface>` and `<emittance>`:
     - `checkered(<color1>, <color2>, squares_per_unit)` — checkerboard pattern.
     - `image("path/to/image.pfm")` — image-based texture.
 
-       > ℹ️ **Note**: both HDR (`.pfm`) and LDR (see this [list](https://github.com/JuliaIO/ImageIO.jl)) image formats are supported for uploading as pigments.
+       > ℹ️ **Note**: both HDR (`.pfm`) and LDR (`.jpg`, `.png`, `.tif`) image formats are supported for uploading as pigments.
 
 #### **Example**:
 ```julia

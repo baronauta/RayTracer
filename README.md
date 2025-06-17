@@ -54,6 +54,7 @@ RayTracer is a Julia-based library that runs on:
 
 
 ## Usage Instructions
+> ℹ️ **Tip:** To see a brief overview of available options and usage info for *any* command or tool, you can use the `-h` flag with that command. For example:  ```julia RayTracer <command> -h``` or ```julia image2pfm -h```
 
 ### Scene Rendering
 
@@ -161,6 +162,7 @@ julia RayTracer tonemapping <input_file>
 ```
 where `<input_file>` is the PFM file you want to convert.
 
+> ℹ️ **Note**: The LDR formats supported are `.jpg`, `.png`, `.tif`.
 ---
 ### LDR to HDR Conversion
 
