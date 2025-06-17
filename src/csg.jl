@@ -219,6 +219,7 @@ function ray_intersection(csg::CSG, ray::Ray; all=false)
         for hit in hit_list
             # debug: println(hit.world_point)
         end
+        (length(hit_list)==0) && return [nothing]
     else
         return [nothing]
     end
