@@ -161,8 +161,6 @@ julia RayTracer tonemapping <input_file>
 ```
 where `<input_file>` is the PFM file you want to convert.
 
-> ℹ️ **Note**: This software uses the _images.jl_ package. A list of supported output formats is available [here](https://github.com/JuliaIO/ImageIO.jl).
-
 ---
 ### LDR to HDR Conversion
 
@@ -170,7 +168,7 @@ RayTracer also supports converting **low-dynamic-range (LDR)** images (e.g., `.p
 To perform the conversion, run:
 
 ```bash
-julia RayTracer image2pfm <input_image>
+julia image2pfm <input_image>
 ```
 ---
 ### Feature Gallery
