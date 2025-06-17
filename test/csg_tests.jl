@@ -11,8 +11,20 @@ function test_all_intersections(
     end
 end
 
-#! format: off
+function test_intersection(
+    s::Union{Shape,World},
+    r::Ray,
+    expected_hr::Union{HitRecord,Nothing},
+)
+    hitrecord = RayTracer.ray_intersection(s, r)
+    @test hitrecord ≈ expected_hr
+end
+
+
 # === Scene Definition ===
+
+#! format: off
+
 # Shapes
 sphere1 = Sphere()
 sphere2 = Sphere(translation(Vec(0.0, 0.0, 1.0)), Material())
@@ -217,10 +229,14 @@ end
             sphere3,
             RayTracer.DIFFERENCE,
         )
+        # test all intersections
         test_all_intersections(csg_U, ray_z, [hr_z_1, hr_z_2, hr_z_3, hr_z_4, hr_z_5, hr_z_6])
         test_all_intersections(csg_I, ray_z, [hr_z_3, hr_z_4])
         test_all_intersections(csg_F, ray_z, [hr_z_2, hr_z_6])
         test_all_intersections(csg_D, ray_z, [hr_z_2, hr_z_3])
+
+        # test the last intersection, used in renderer
+        test_intersection(csg_I, ray_z, hr_z_3)
 
         # 2 Spheres, 1 Plane
         # hr_plane will be hr_z_3_p
