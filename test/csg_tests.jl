@@ -5,6 +5,7 @@ function test_all_intersections(
     expected_hr::AbstractVector{<:Union{HitRecord,Nothing}},
 )
     hitrecords = RayTracer.ray_intersection(s, r; all = true)
+    @test length(expected_hr) == length(hitrecords)
     for (hit, exp_hit) in zip(hitrecords, expected_hr)
         @test hit ≈ exp_hit
     end
@@ -155,10 +156,10 @@ end
     # ⚠️ Do NOT use a tolerance: it would include correct zero-measure cases,
     # but also wrongly accept non-zero measure regions.
 
-    hr_x = RayTracer.ray_intersection(sphere1, ray_x)
-    for csg in [csg_U, csg_I, csg_F, csg_D]
-        # @test RayTracer.valid_hit(hr_x, sphere2, csg)
-    end
+    # hr_x = RayTracer.ray_intersection(sphere1, ray_x)
+    # for csg in [csg_U, csg_I, csg_F, csg_D]
+    #     @test RayTracer.valid_hit(hr_x, sphere2, csg)
+    # end
 
     # z
     hr_z_1 = HitRecord(
@@ -202,10 +203,7 @@ end
 
     for (csg, exp_hits) in
         zip([csg_U, csg_I, csg_F, csg_D], [hits_U, hits_I, hits_F, hits_D])
-        for (exp_hit, hit) in
-            zip(exp_hits, RayTracer.ray_intersection(csg, ray_z; all = true))
-            @test hit ≈ exp_hit
-        end
+        test_all_intersections(csg, ray_z, exp_hits)
     end
 end
 
@@ -392,11 +390,7 @@ end
 
         for (csg, exp_hits) in
             zip([csg_U, csg_I, csg_F, csg_D], [hits_U, hits_I, hits_F, hits_D])
-            hits = RayTracer.ray_intersection(csg, ray_z; all = true)
-            @test length(exp_hits) == length(hits)
-            for (exp_hit, hit) in zip(exp_hits, hits)
-                @test hit ≈ exp_hit
-            end
+            test_all_intersections(csg, ray_z, exp_hits)
         end
 
         # 2 Spheres, 1 Plane
@@ -415,11 +409,7 @@ end
         hits_I = [hr_z_3, hr_z_4]
         hits_D = [hr_z_2, hr_z_3]
         for (csg, exp_hits) in zip([csg_U, csg_I, csg_D], [hits_U, hits_I, hits_D])
-            hits = RayTracer.ray_intersection(csg, ray_z; all = true)
-            @test length(exp_hits) == length(hits)
-            for (exp_hit, hit) in zip(exp_hits, hits)
-                @test hit ≈ exp_hit
-            end
+            test_all_intersections(csg, ray_z, exp_hits)
         end
     end
 
