@@ -28,7 +28,7 @@ import Dates
 import ColorTypes
 import Images
 import Crayons
-
+import Base.Threads
 # Import the Base functions to extend them with new methods.
 # Since these functions are part of Base (which is always loaded),
 # there is no need to export them from this package.
