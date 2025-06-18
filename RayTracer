@@ -147,10 +147,12 @@ Comonicon.@cast function pathtracer(
                 russian_roulette_limit = russian_roulette_limit,
             )
 
-
+        start_time = time_ns()
         RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
+        end_time = time_ns()
+        elapsed = end_time - start_time
+        println("\n Time for tracing: $(elapsed / 1e9) seconds")  # convert ns to seconds
         
-
         write(pfm_path, img)
         
         # Basic tone mapping

@@ -242,29 +242,88 @@ function simple_progress_bar(i, total; item = "row", width = 40)
 end
 
 
+# ==== ImageTracer - fire_all_rays! ====
+
+# Multi-threading is applied within `fire_all_rays!` to parallelize the pixel row computations.
+# An asynchronous listener tracks progress by receiving completion events from worker threads.
+
+"""
+    progress_listener(total; label="item", width=40)
+
+Spawns an asynchronous task that listens on a channel for task completion signals and updates `simple_progress_bar`. 
+    
+Returns the channel object to allow external threads or tasks to send progress events.
+"""
+function progress_listener(total; label="item", width=40)
+    # This function creates a progress bar "listener" that updates the display 
+    # based on messages it receives from a Channel.
+    # The listener runs as an independent asynchronous task concurrently with 
+    # the main program and worker threads.
+    count = 0
+    # Instantiate a Channel{Bool} with buffer size 32.
+    # Channels in Julia are thread-safe queues enabling synchronized communication
+    # between producer and consumer tasks or threads.
+    # This buffered channel can store up to 32 boolean values; once full, any 
+    # producer trying to put! will block until space is available.
+    chan = Channel{Bool}(32)
+
+    # Launch a lightweight asynchronous task (@async) that continuously waits 
+    # for messages on the channel without blocking the main thread.
+    @async begin
+        # Loop until the number of received completion signals equals 'total'.
+        while count < total
+            # take!(chan) suspends this task until a value is available in the channel.
+            take!(chan)
+            count += 1  # Increment the internal counter tracking completed units of work.
+
+            # Call the progress bar rendering function with the updated count.
+            simple_progress_bar(count, total; item=label, width=width)
+        end
+        # Ensure subsequent terminal output does not overwrite the progress bar line.
+        println()
+    end
+
+    # Return the channel object so external threads or tasks can send completion notifications.
+    return chan
+end
+
 """
     fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
 
-Calculate the solution to the rendering equation with a specified method for all pixels in an image
-
-Set all images pixels to calculated colors
+Calculate the solution to the rendering equation with a specified method for all pixels in an image.
+    
+This function performs parallel row-wise computation using multi-threading to accelerate rendering.
+If `progress_flag` is enabled, an asynchronous listener tracks and displays progress in the terminal.
 
 # Arguments
 - `tracer::ImageTracer`: An object containing the camera and the image.
-- `func`: The function that resolve the rendering equation for one pixel
+- `func`: The function that resolve the rendering equation for one pixel.
 - `progress_flag::Bool`: If `true`, display a progress bar during rendering (default: true).
 
 The function set all the pixels of the passed `HdrImage` to calculated colors.
 """
 function fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
-    for row = 1:tracer.image.height
+    # If progress tracking is enabled, create a listener task and channel
+    chan = progress_flag ? progress_listener(tracer.image.height; label="row", width=40) : nothing
+
+    # Parallelize the work across image rows using available threads
+    Threads.@threads for row = 1:tracer.image.height
         for col = 1:tracer.image.width
             ray = fire_ray(tracer, col, row) # if i want i can pass u_pixel and v_pixel ≠ 0.5 (default value)
             color = func(ray)
             set_pixel!(tracer.image, col, row, color)
         end
-        # for video i dont want a progress bar for all rows of all images, only for frames.
-        # so i need  the progress_flag, if is an image the progress_flag is true, if video is false
-        (progress_flag == true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
+
+        # For video i dont want a progress bar for all rows of all images, only for frames.
+        # So i need  the progress_flag, if is an image the progress_flag is true, if video is false.
+
+        # Notify the progress bar listener that a row has been completed
+        if progress_flag
+            put!(chan, true)
+        end
+
     end
+    # Wait briefly to ensure the final progress bar update completes.
+    progress_flag && sleep(0.1)
+
 end
