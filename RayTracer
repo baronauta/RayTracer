@@ -129,7 +129,11 @@ Comonicon.@cast function pathtracer(
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
         
-        println("🚀 Starting ray tracing (this may take a while)...\n")
+        println("🚀 Starting ray tracing (this may take a while)...")
+        if (Threads.nthreads()!=1)
+            @info "🧵 Using $(Threads.nthreads()) threads\n"
+        end
+        println()
         # RayTracing algorithm that need as input ...
         pcg = PCG()
         f =
@@ -249,7 +253,11 @@ Comonicon.@cast function flattracer(
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
         
-        println("🚀 Starting ray tracing (this may take a while)...\n")
+        println("🚀 Starting ray tracing (this may take a while)...")
+        if (Threads.nthreads()!=1)
+            @info "🧵 Using $(Threads.nthreads()) threads\n"
+        end
+        println()
         # RayTracing algorithm that need as input ...
         f =
             ray -> flat_tracer(
@@ -362,7 +370,11 @@ Comonicon.@cast function onofftracer(
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
         
-        println("🚀 Starting ray tracing (this may take a while)...\n")
+        println("🚀 Starting ray tracing (this may take a while)...")
+        if (Threads.nthreads()!=1)
+            @info "🧵 Using $(Threads.nthreads()) threads\n"
+        end
+        println()
         # RayTracing algorithm that need as input ...
         f =
             ray -> onoff_tracer(
