@@ -4,6 +4,8 @@ on:
   # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
     branches: [ "master" ]
+    paths-ignore:
+      - '**.md'
   pull_request:
     # We are developing our package, we prefer to wait before enabling this
     # branches: [ "master" ]
@@ -36,3 +38,32 @@ jobs:
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
+
+      # test if all commands work properly, then clean up outputs.
+      - name: Run RayTracer examples (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          julia RayTracer pathtracer ./examples/demo.txt 5 5 --output-name out.png
+          julia RayTracer onofftracer ./examples/demo.txt 5 5 --output-name out.png
+          julia RayTracer flattracer ./examples/demo.txt 5 5 --output-name out.png
+          julia RayTracer tonemapping out.pfm
+          julia image2pfm out.png
+
+      - name: Clean up generated files (Unix)
+        if: runner.os != 'Windows'
+        run: rm -f out.png out.pfm
+
+      - name: Run RayTracer examples (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          julia RayTracer pathtracer .\examples\demo.txt 5 5 --output-name out.png
+          julia RayTracer onofftracer .\examples\demo.txt 5 5 --output-name out.png
+          julia RayTracer flattracer .\examples\demo.txt 5 5 --output-name out.png
+          julia RayTracer tonemapping out.pfm
+          julia image2pfm out.png
+
+      - name: Clean up generated files (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Remove-Item -Force out.png, out.pfm

@@ -29,15 +29,20 @@
 
         sphere(sphere_material, translation([0, 0, 1]))
 
-        camera(perspective, rotation_z(30) * translation([-4, 0, 1]), 1.0, 2.0)
+        camera(perspective, rotation_z(30) * translation([-4, 0, 1]), 2.0)
         """
     )
 
+    aspect_ratio = 1.
     instream = RayTracer.InputStream(stream, "test")
-    scene = RayTracer.parse_scene(instream)
+    scene = RayTracer.parse_scene(instream, aspect_ratio)
+
+    # Check that aspect_ratio is correctly stored in scene.float_variables
+    @test haskey(scene.float_variables, "_aspect_ratio")
+    @test scene.float_variables["_aspect_ratio"] == aspect_ratio
 
     # Check that `float clock(150)` is stored in scene.float_variables
-    @test length(scene.float_variables) == 1
+    @test length(scene.float_variables) == 2   # _aspect_ratio and clock
     @test haskey(scene.float_variables, "clock")
     @test scene.float_variables["clock"] == 150.0
 
@@ -85,7 +90,7 @@
     # Check camera
     @test isa(scene.camera, PerspectiveCamera)
     @test scene.camera.transformation ≈ rotation_z(30) * translation(Vec(-4., 0., 1.))
-    @test scene.camera.aspect_ratio ≈ 1.0
+    @test scene.camera.aspect_ratio ≈ aspect_ratio    # Parsed from scene.float_variables["_aspect_ratio"]
     @test scene.camera.distance ≈ 2.0
 end
 
@@ -100,7 +105,7 @@ end
 
         err_thrown = false
         try
-            _ = RayTracer.parse_scene(instream)
+            _ = RayTracer.parse_scene(instream, 1.0)
         catch e
             if isa(e, GrammarError)
                 err_thrown = true
@@ -130,7 +135,7 @@ end
 
         err_thrown = false
         try
-            _ = RayTracer.parse_scene(instream)
+            _ = RayTracer.parse_scene(instream, 1.0)
         catch e
             if isa(e, GrammarError)
                 err_thrown = true
@@ -144,8 +149,8 @@ end
     @testset "Double camera" begin
         stream = IOBuffer(
             """
-            camera(perspective, rotation_z(30) * translation([-4, 0, 1]), 1.0, 1.0)
-            camera(orthogonal, identity, 1.0, 1.0)
+            camera(perspective, rotation_z(30) * translation([-4, 0, 1]), 1.0)
+            camera(orthogonal, identity, 1.0)
             """
         )
 
@@ -153,7 +158,7 @@ end
 
         err_thrown = false
         try
-            _ = RayTracer.parse_scene(instream)
+            _ = RayTracer.parse_scene(instream, 1.0)
         catch e
             if isa(e, GrammarError)
                 err_thrown = true
@@ -168,7 +173,7 @@ end
 
         stream = IOBuffer(
             """
-            camera(rullo, rotation_z(30) * translation([-4, 0, 1]), 1.0, 1.0)
+            camera(rullo, rotation_z(30) * translation([-4, 0, 1]), 1.0)
             """
         )
 
@@ -176,7 +181,7 @@ end
 
         err_thrown = false
         try
-            _ = RayTracer.parse_scene(instream)
+            _ = RayTracer.parse_scene(instream, 1.0)
         catch e
             if isa(e, GrammarError)
                 err_thrown = true
@@ -191,7 +196,7 @@ end
 
         stream = IOBuffer(
             """
-            camera(identity, rotation_z(30) * translation([-4, 0, 1]), 1.0, 1.0)
+            camera(identity, rotation_z(30) * translation([-4, 0, 1]), 1.0)
             """
         )
 
@@ -199,7 +204,7 @@ end
 
         err_thrown = false
         try
-            _ = RayTracer.parse_scene(instream)
+            _ = RayTracer.parse_scene(instream, 1.0)
         catch e
             if isa(e, GrammarError)
                 err_thrown = true
@@ -209,6 +214,4 @@ end
         end
         @test err_thrown
     end
-
-
 end
