@@ -20,6 +20,7 @@ function test_intersection(
     @test hitrecord ≈ expected_hr
 end
 
+t_identity = Transformation(HomMatrix(RayTracer.IDENTITY_MATR4x4), HomMatrix(RayTracer.IDENTITY_MATR4x4))
 
 # === Scene Definition ===
 
@@ -115,8 +116,8 @@ end
         
         # hit in the origin is inside sphere1 and outside sphere2
         
-        @test RayTracer.is_inside(hr_z_4_p, sphere1)
-        @test !RayTracer.is_inside(hr_z_4_p, sphere2)
+        @test RayTracer.is_inside(hr_z_4_p, sphere1, t_identity)
+        @test !RayTracer.is_inside(hr_z_4_p, sphere2, t_identity)
     end
 
     @testset "Plane" begin
@@ -124,8 +125,8 @@ end
 
         # hit in the origin is inside plane 2 and outside plane1
 
-        @test RayTracer.is_inside(hr_z_4, plane2)
-        @test !RayTracer.is_inside(hr_z_4_p, plane1)
+        @test RayTracer.is_inside(hr_z_4, plane2, t_identity)
+        @test !RayTracer.is_inside(hr_z_4_p, plane1, t_identity)
     end
 
     @testset "Cube" begin
@@ -133,8 +134,8 @@ end
 
         # hit in the origin is inside cube2 and outside cube1
         
-        @test RayTracer.is_inside(hr_z_4, cube2)
-        @test !RayTracer.is_inside(hr_z_4_p, cube1)
+        @test RayTracer.is_inside(hr_z_4, cube2, t_identity)
+        @test !RayTracer.is_inside(hr_z_4_p, cube1, t_identity)
     end
 
 end

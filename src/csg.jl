@@ -22,7 +22,8 @@ A Constructive Solid Geometry (CSG) shape defined by applying an operation
 Fields:
 - `obj1::Shape`: the first shape involved in the operation;
 - `obj2::Shape`: the second shape involved in the operation;
-- `operation::Operation`: the CSG operation to apply.
+- `operation::Operation`: the CSG operation to apply;
+- `transformation::Transformation`: the general transformation of objects ensemble.
 
 Notes:
 - **Shape order matters**: `obj1 - obj2` is not the same as `obj2 - obj1`.
@@ -32,6 +33,7 @@ struct Csg{T<:AbstractFloat} <: Shape{T}
     obj1::Shape
     obj2::Shape
     operation::Operation
+    transformation::Transformation
 end
 
 """
@@ -50,14 +52,18 @@ Returns `true` if the CSGs have the same obj and operations.
 """
 function ≈(csg1::Csg, csg2::Csg)
     if (csg1.operation == csg2.operation)
-        if csg1.operation == UNION || csg1.operation == INTERSECTION
-            a = ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
-            b = ((csg1.obj2 == csg2.obj1) && (csg2.obj2 == csg1.obj1))
-            return a || b
-        elseif csg1.operation == DIFFERENCE
-            return ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
+        if csg1.transformation ≈ csg2.transformation
+            if csg1.operation == UNION || csg1.operation == INTERSECTION || csg1.operation == FUSION
+                a = ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
+                b = ((csg1.obj2 == csg2.obj1) && (csg2.obj2 == csg1.obj1))
+                return a || b
+            elseif csg1.operation == DIFFERENCE
+                return ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
+            else
+                throw(CsgError("undefined operation $(csg1.operation)"))
+            end
         else
-            throw(CsgError("undefined operation $(csg1.operation)"))
+            return false
         end
     else
         return false
@@ -70,17 +76,29 @@ Checks whether a Csg construction is valid.
 Not accepted `csg` with 2 identical overlapped objects.
 """
 function valid_csg(csg::Csg)
-    (csg.obj1 == csg.obj2) &&
+    (csg.obj1 ≈ csg.obj2) &&
         throw(CsgError("cannot make csg with two overlapped same objects"))
     return true
 end
 
 """
-Csg outer costructor.
+Csg outer default costructor, transformation is set to Identity.
 validates the csg before returning it.
 """
 function Csg(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where {T<:AbstractFloat}
-    csg = Csg{T}(obj1, obj2, operation)
+    transformation =
+        Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+    csg = Csg{T}(obj1, obj2, operation, transformation)
+    valid_csg(csg)
+    return csg
+end
+
+"""
+Csg outer costructor, with specified transformation.
+validates the csg before returning it.
+"""
+function Csg(obj1::Shape{T}, obj2::Shape{T}, operation::Operation, transformation::Transformation) where {T<:AbstractFloat}
+    csg = Csg{T}(obj1, obj2, operation, transformation)
     valid_csg(csg)
     return csg
 end
@@ -88,19 +106,22 @@ end
 """
 ---
 Check whether a `HitRecord hit` is inside a `Csg` object.
+
+Note: this can be a nested csg, it consider the overall parent CSG transformation as an external parameter to be passed.
 """
-function is_inside(hit::HitRecord, csg::Csg)
+function is_inside(hit::HitRecord, csg::Csg, t::Transformation)
+    transformation = t * csg.transformation
     if csg.operation == UNION || csg.operation == FUSION
         # hit records can be inside one obj or the other
-        return (is_inside(hit, csg.obj1) || (is_inside(hit, csg.obj2)))
+        return (is_inside(hit, csg.obj1, transformation) || (is_inside(hit, csg.obj2, transformation)))
 
     elseif csg.operation == INTERSECTION
         # hit records must be in obj AND in obj 2
-        return (is_inside(hit, csg.obj1) && (is_inside(hit, csg.obj2)))
+        return (is_inside(hit, csg.obj1, transformation) && (is_inside(hit, csg.obj2, transformation)))
 
     elseif csg.operation == DIFFERENCE
         # hit records can be on obj1 if not in ob2 and in ob2 if not in on1
-        return (is_inside(hit, csg.obj1) && !is_inside(hit, csg.obj2))
+        return (is_inside(hit, csg.obj1, transformation) && !is_inside(hit, csg.obj2, transformation))
     end
 end
 
@@ -132,11 +153,11 @@ function valid_hit(hr::HitRecord, obj::Shape, csg::Csg)
     if op == UNION
         return true
     elseif op == INTERSECTION
-        return is_inside(hr, obj)
+        return is_inside(hr, obj, csg.transformation)
     elseif op == FUSION
-        return !is_inside(hr, obj)
+        return !is_inside(hr, obj, csg.transformation)
     elseif op == DIFFERENCE
-        return (is_obj1 && !is_inside(hr, obj)) || (!is_obj1 && is_inside(hr, obj))
+        return (is_obj1 && !is_inside(hr, obj, csg.transformation)) || (!is_obj1 && is_inside(hr, obj, csg.transformation))
     else
         throw(CsgError("undefined operation $(op)"))
     end
