@@ -256,7 +256,7 @@ end
 
 
 "Check that a number is a perfect square"
-function is_square(n::Integer) 
+function is_square(n::Integer)
     # `isqrt(n)`: returns the largest integer m such that m*m <= n
     # Ex: isqrt(12) = 3
     return isqrt(n)^2 == n
@@ -290,20 +290,25 @@ and sets the pixel color to the computed result.
 """
 function fire_all_rays!(
     tracer::ImageTracer,
-    func; samples_per_pixel::Integer=1,
-    pcg::Union{PCG, Nothing}=nothing,
-    progress_flag::Bool = true
+    func;
+    samples_per_pixel::Integer = 1,
+    pcg::Union{PCG,Nothing} = nothing,
+    progress_flag::Bool = true,
 )
 
     sqrt_samples = round(Int, sqrt(samples_per_pixel))
     if !is_square(samples_per_pixel)
-        throw(AntialiasingError("'samples_per_pixel' must be a perfect square (e.g., 1, 4, 9, 16, ...)"))
+        throw(
+            AntialiasingError(
+                "'samples_per_pixel' must be a perfect square (e.g., 1, 4, 9, 16, ...)",
+            ),
+        )
     end
 
     for row = 1:tracer.image.height
         for col = 1:tracer.image.width
 
-            if samples_per_pixel==1
+            if samples_per_pixel == 1
                 ray = fire_ray(tracer, col, row) # if i want i can pass u_pixel and v_pixel ≠ 0.5 (default value)
                 color = func(ray)
                 set_pixel!(tracer.image, col, row, color)
@@ -314,7 +319,7 @@ function fire_all_rays!(
                         # Jittered offset within the subpixel
                         du = (i - random_float!(pcg)) / sqrt_samples
                         dv = (j - random_float!(pcg)) / sqrt_samples
-                        ray = fire_ray(tracer, col, row; u_pixel=du, v_pixel=dv)
+                        ray = fire_ray(tracer, col, row; u_pixel = du, v_pixel = dv)
                         accumulated_color += func(ray)
                         averaged_color = accumulated_color * inv_samples
                         set_pixel!(tracer.image, col, row, averaged_color)
