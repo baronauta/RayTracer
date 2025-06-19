@@ -295,36 +295,48 @@ function fire_all_rays!(
     pcg::Union{PCG,Nothing} = nothing,
     progress_flag::Bool = true,
 )
-
-    sqrt_samples = round(Int, sqrt(samples_per_pixel))
-    if !is_square(samples_per_pixel)
-        throw(
-            AntialiasingError(
-                "'samples_per_pixel' must be a perfect square (e.g., 1, 4, 9, 16, ...)",
-            ),
-        )
-    end
-
     for row = 1:tracer.image.height
         for col = 1:tracer.image.width
 
             if samples_per_pixel == 1
-                ray = fire_ray(tracer, col, row) # if i want i can pass u_pixel and v_pixel ≠ 0.5 (default value)
+                # Cast a single ray through the center of each pixel
+                # fire_ray default: u=0.5, v=0.5
+                ray = fire_ray(tracer, col, row)
                 color = func(ray)
                 set_pixel!(tracer.image, col, row, color)
+
             else
+                # Antialiasing!
+                if !is_square(samples_per_pixel)
+                    throw(
+                        AntialiasingError(
+                            "'samples_per_pixel' must be a perfect square (e.g., 1, 4, 9, 16, ...)",
+                        ),
+                    )
+                end
+                if isnothing(pcg)
+                    throw(
+                        AntialiasingError(
+                            "a random number generator is required for jittered antialiasing"
+                        ),
+                    )
+                end
+                # Divide each pixel into `samples_per_pixel` sub-squares of size 1/√samples_per_pixel,
+                # and cast a ray through a random position inside each sub-square
+                sqrt_samples = round(Int, sqrt(samples_per_pixel))
+ 
                 accumulated_color = RGB(0, 0, 0)
                 for i = 1:sqrt_samples
                     for j = 1:sqrt_samples
                         # Jittered offset within the subpixel
                         du = (i - random_float!(pcg)) / sqrt_samples
-                        dv = (j - random_float!(pcg)) / sqrt_samples
+                        dv = 1 - (j - random_float!(pcg)) / sqrt_samples
                         ray = fire_ray(tracer, col, row; u_pixel = du, v_pixel = dv)
                         accumulated_color += func(ray)
-                        averaged_color = accumulated_color * inv_samples
-                        set_pixel!(tracer.image, col, row, averaged_color)
                     end
                 end
+                averaged_color = accumulated_color / samples_per_pixel
+                set_pixel!(tracer.image, col, row, averaged_color)
             end
         end
 
