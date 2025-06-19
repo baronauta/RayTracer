@@ -339,7 +339,6 @@ function fire_all_rays!(
                 set_pixel!(tracer.image, col, row, averaged_color)
             end
         end
-
+        progress_flag && simple_progress_bar(row, tracer.image.height)
     end
-    progress_flag && simple_progress_bar(row, tracer.image.height)
 end
