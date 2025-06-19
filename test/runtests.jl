@@ -15,4 +15,8 @@ include("setup.jl")
     include("render_tests.jl")
     include("lexer_tests.jl")
     include("parser_tests.jl")
+
 end
+
+# not make a long expression of all tests passed.
+nothing 

@@ -138,6 +138,30 @@ end
         @test !RayTracer.is_inside(hr_z_4_p, cube1, t_identity)
     end
 
+    @testset "Csg - transformation" begin
+        # test for general csg transformation and their composition with others
+        s = Sphere()
+        p = Plane()
+        c = Cube()
+
+        # simple is_inside of a csg
+        csg1 = Csg(s, p, RayTracer.DIFFERENCE)
+        @test RayTracer.is_inside(hr_z_3, csg1, t_identity)
+        @test !RayTracer.is_inside(hr_z_2, csg1, t_identity)
+
+        # simple translation
+        csg2 = Csg(s, p, RayTracer.DIFFERENCE, translation(Vec(0.,0.,-0.7)))
+        @test !RayTracer.is_inside(hr_z_3, csg2, t_identity)
+        @test RayTracer.is_inside(hr_z_4, csg2, t_identity)
+
+        # composition of csg, test order of transformation composition
+        # must not be in csg3 but in csg4
+        csg3 = Csg(csg2, c, RayTracer.UNION)
+        @test !RayTracer.is_inside(hr_x, csg3, t_identity)
+
+        csg4 = Csg(csg2, c, RayTracer.UNION, rotation_z(-45.))
+        @test !RayTracer.is_inside(hr_x, csg4, t_identity)
+    end
 end
 
 @testset "Plane - all HitRecords" begin
