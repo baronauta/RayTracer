@@ -24,10 +24,17 @@
             uniform(<0, 0, 0>)
         )
 
+        material cube_material(
+            diffuse(uniform(<0.5, 0.5, 0.5>)),
+            uniform(<0, 0, 0>)
+        )
+
         plane (sky_material, translation([0, 0, 100]) * rotation_y(clock))
         plane (ground_material, identity)
 
         sphere(sphere_material, translation([0, 0, 1]))
+
+        cube(cube_material, scaling(1.,2.,3.))
 
         camera(perspective, rotation_z(30) * translation([-4, 0, 1]), 2.0)
         """
@@ -46,15 +53,17 @@
     @test haskey(scene.float_variables, "clock")
     @test scene.float_variables["clock"] == 150.0
 
-    # Check materials, i.e. `sphere_material`, `sky_material`, `ground_material`
-    @test length(scene.materials) == 3
+    # Check materials, i.e. `sphere_material`, `sky_material`, `ground_material`, `cube_material`
+    @test length(scene.materials) == 4
     @test haskey(scene.materials, "sphere_material")
     @test haskey(scene.materials, "sky_material")
     @test haskey(scene.materials, "ground_material")
+    @test haskey(scene.materials, "cube_material")
 
     sphere_material = scene.materials["sphere_material"]
     sky_material = scene.materials["sky_material"]
     ground_material = scene.materials["ground_material"]
+    cube_material = scene.materials["cube_material"]
 
     @test isa(sky_material.brdf, DiffuseBRDF)
     @test isa(sky_material.brdf.pigm, UniformPigment)
@@ -69,6 +78,10 @@
     @test isa(sphere_material.brdf, SpecularBRDF)
     @test isa(sphere_material.brdf.pigm, UniformPigment)
     @test sphere_material.brdf.pigm.color ≈ RGB(0.5, 0.5, 0.5)
+    
+    @test isa(cube_material.brdf, DiffuseBRDF)
+    @test isa(cube_material.brdf.pigm, UniformPigment)
+    @test cube_material.brdf.pigm.color ≈ RGB(0.5, 0.5, 0.5)
 
     @test isa(sky_material.emitted_radiance, UniformPigment)
     @test sky_material.emitted_radiance.color ≈ RGB(0.7, 0.5, 1.0)
@@ -76,9 +89,11 @@
     @test ground_material.emitted_radiance.color ≈ RGB(0., 0., 0.)
     @test isa(sphere_material.emitted_radiance, UniformPigment)
     @test sphere_material.emitted_radiance.color ≈ RGB(0., 0., 0.)
+    @test isa(cube_material.emitted_radiance, UniformPigment)
+    @test cube_material.emitted_radiance.color ≈ RGB(0., 0., 0.)
 
     # Check shapes
-    @test length(scene.world.shapes) == 3
+    @test length(scene.world.shapes) == 4
     @test isa(scene.world.shapes[1], Plane)
     @test scene.world.shapes[1].transformation ≈ translation(Vec(0., 0., 100.)) * rotation_y(150.0)
     
@@ -86,6 +101,8 @@
     @test scene.world.shapes[2].transformation ≈ Transformation()
     @test isa(scene.world.shapes[3], Sphere)
     @test scene.world.shapes[3].transformation ≈ translation(Vec(0., 0., 1.))
+    @test isa(scene.world.shapes[4], Cube)
+    @test scene.world.shapes[4].transformation ≈ scaling(1., 2., 3.)
 
     # Check camera
     @test isa(scene.camera, PerspectiveCamera)
