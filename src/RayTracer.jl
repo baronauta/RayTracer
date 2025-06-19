@@ -43,7 +43,7 @@ export Transformation, HomMatrix, translation, rotation_x, rotation_y, rotation_
 export Ray
 export OrthogonalCamera, PerspectiveCamera
 export ImageTracer
-export Shape, HitRecord, Plane, Sphere, CSG
+export Shape, HitRecord, Plane, Sphere, Cube, CSG
 export World, add!
 export UniformPigment, CheckeredPigment, ImagePigment
 export Material

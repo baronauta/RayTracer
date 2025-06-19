@@ -110,7 +110,7 @@ function ray_intersection(plane::Plane, ray::Ray; all=false)
 
     # Ray is parallel to the xy-plane (z=0): no intersection
     if inv_ray.dir.z == 0
-        (all == false) ? (return nothing) : (return [nothing])
+        return (!all) ? nothing : [nothing]
     end
 
     # Given a ray r(t) = O + t ⋅ d,
@@ -120,7 +120,7 @@ function ray_intersection(plane::Plane, ray::Ray; all=false)
     t = -inv_ray.origin.z / inv_ray.dir.z
 
     if (t <= inv_ray.tmin) || (t >= inv_ray.tmax)
-        (all == false) ? (return nothing) : (return [nothing])
+        return (!all) ? nothing : [nothing]
     end
 
     hit_point = at(inv_ray, t)
@@ -332,3 +332,133 @@ struct Cube{T<:AbstractFloat} <: Shape{T}
     material::Material
 end
 
+"Define a cube [0,1]³. Associated transformation is identity, material is default material."
+function Cube()
+    transformation =
+        Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+    material = Material()
+    Cube(transformation, material)
+end
+
+function Cube(material::Material)
+    transformation =
+        Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
+    Cube(transformation, material)
+end
+
+function centeredCube()
+    Cube(translation(Vec(-0.5, -0.5, -0.5)), Material())
+end
+"""
+function to calculate surface u_v coordinates and the normal of a point on a cube
+"""
+function _cube_norm_and_uv(point::Point, cube::Cube, inv_ray::Ray)
+    x,y,z = point.x, point.y, point.z
+        # The cube is parameterized with:                 
+    #   ▲ v (also y)              
+    #   │  ┌─┐               |y=1|
+    #   │┌─┼─┼─┬─┐  <==> |z=0|x=1|z=1|x=0|    
+    #   │└─┼─┼─┴─┘           |y=0|
+    #   │  └─┘          
+    #   └───────────► u (also x)
+    # Normal depends on faces, compute surface point
+    if ((x + 1 ≈ 1) || (x ≈ 1))
+        u_v = (x + 1 ≈ 1) ? Vec2D(3/4 + (1-z)/4, y/3 + 1/3) : Vec2D(1/4 + z/4, y/3 + 1/3)
+        normal = cube.transformation * _adjustnormal(Normal(1.0, 0.0, 0.0), inv_ray)
+    elseif ((y + 1 ≈ 1) || (y ≈ 1))
+        u_v = (y + 1 ≈ 1) ? Vec2D(1/4 + z/4, x/3) : Vec2D(1/4 + z/4, (1-x)/3 + 2/3)
+        normal = cube.transformation * _adjustnormal(Normal(0.0, 1.0, 0.0), inv_ray)
+    elseif ((z + 1 ≈ 1) || (z ≈ 1))
+        u_v = (z + 1 ≈ 1) ? Vec2D(x/4, y/3 + 1/3) : Vec2D(1/2 + (1-x)/4, y/3 + 1/3)
+        normal = cube.transformation * _adjustnormal(Normal(0.0, 0.0, 1.0), inv_ray)
+    end
+    return normal, u_v
+end
+
+
+"""
+Checks if a ray intersects the cube.
+Return a `HitRecord`, or `nothing` if no intersection was found.
+"""
+function ray_intersection(cube::Cube, ray::Ray; all=false)
+    tmin = -Inf
+    tmax = Inf
+    # Consider the ray in the frame of reference of the cube
+    inv_ray = transform(ray, inverse(cube.transformation))
+  
+    # - Using Slab Method -
+    # if the direction of ray is // to an axis => the origin need to be inside [0-1] interval on that axis
+    # if direction is (0,y,z) that means that only possible solution are when the point has x in [0-1].
+    for axis in (:x, :y, :z)
+        origin = getproperty(inv_ray.origin, axis)
+        dir = getproperty(inv_ray.dir, axis)
+        if dir == 0
+            if origin < 0 || origin > 1
+                return (!all) ? nothing : [nothing]
+            end
+        # else pick the max near intersection and the min far intersection every time for every axis.
+        # if intersections are inside the box, the farest near point will have t < of the nearest far point.
+        else
+            t0 = (0 - origin) / dir
+            t1 = (1 - origin) / dir
+            t_near = min(t0, t1)
+            t_far  = max(t0, t1)
+            tmin = max(tmin, t_near)
+            tmax = min(tmax, t_far)
+
+            # no intersection
+            if tmin > tmax
+                return (!all) ? nothing : [nothing]
+            end
+        end
+    end
+    # cube is behind or too away
+    if (tmax <= inv_ray.tmin) || (tmin >= inv_ray.tmax)
+        (all == false) ? (return nothing) : (return [nothing])
+    end
+    
+    # only the closest intersection
+    if all == false
+        t = (tmin <= inv_ray.tmin) ? tmax : tmin
+        hit_point = at(inv_ray, t)
+        
+        # retransform the point.
+        world_point = cube.transformation * hit_point
+
+        # Normal depends on faces, compute surface point
+        normal, u_v = _cube_norm_and_uv(hit_point, cube, inv_ray)
+
+        return HitRecord(world_point, normal, u_v, t, ray, cube)
+
+    # return all intersections
+    else
+        hit_max = at(inv_ray, tmax)
+        max_point = cube.transformation * hit_max
+        # Normal and surface point
+        max_norm, max_u_v = _cube_norm_and_uv(hit_max, cube, inv_ray)
+        hr_max = HitRecord(max_point, max_norm, max_u_v, tmax, ray, cube)
+
+        if tmin <= inv_ray.tmin
+            hr_min = nothing
+        else
+            hit_min = at(inv_ray, tmin)
+            min_point = cube.transformation * hit_min
+            # Normal and surface point
+            min_norm, min_u_v = _cube_norm_and_uv(hit_min, cube, inv_ray)
+            hr_min = HitRecord(min_point, min_norm, min_u_v, tmin, ray, cube)
+        end
+        return [hr_min, hr_max]
+    end
+
+end
+
+"""
+---
+Check whether a `HitRecord hit` is inside a `Cube`.
+(i.e. the antitransformed point's x,y,z-coordinates are > 0 and < 1).
+"""
+function is_inside(hit::HitRecord, obj::Cube)
+    p = hit.world_point
+    inv_p = inverse(obj.transformation) * p
+    return ((0 < inv_p.x < 1) && (0 < inv_p.y < 1) && (0 < inv_p.z < 1))
+end
