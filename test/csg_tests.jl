@@ -78,6 +78,14 @@ ASCII Diagram Legend:
                                          │int6
 =#
 
+# Cubes:
+cube1 = Cube()
+cube2 = Cube(translation(Vec(-1.,-1.,-1.)) * scaling(2.,2.,2.), Material())
+hr_z_2_c = HitRecord(Point(0.0, 0.0, 1.0), Normal(0.0, 0.0, 0.5), Vec2D(5/8, 0.5), 2.0, ray_z, cube2)
+hr_z_5_c = HitRecord(Point(0.0, 0.0, -1.0), Normal(0.0, 0.0, 0.5), Vec2D(1/8, 0.5), 4.0, ray_z, cube2)
+hr_x_c = HitRecord(Point(1.0, 0.0, 0.0), Normal(-0.5, 0.0, 0.0), Vec2D(3/8, 0.5), 1.0, ray_origin_x, cube2)
+
+
 # === Tests ===
 @testset "Generic CSG and Shapes" begin
     sphere1_copy = Sphere(Material(UniformPigment(RED)))
@@ -120,6 +128,15 @@ end
         @test !RayTracer.is_inside(hr_z_4_p, plane1)
     end
 
+    @testset "Cube" begin
+        # test if a HitRecord is inside a cube
+
+        # hit in the origin is inside cube2 and outside cube1
+        
+        @test RayTracer.is_inside(hr_z_4, cube2)
+        @test !RayTracer.is_inside(hr_z_4_p, cube1)
+    end
+
 end
 
 @testset "Plane - all HitRecords" begin
@@ -147,6 +164,19 @@ end
     test_all_intersections(sphere1, Ray(Point(1.0, 0.0, -1.0), VEC_Z), [nothing])
 end
 
+@testset "Cube - all HitRecords" begin
+    # cube2
+
+    # ray from z, 2 intersections
+    test_all_intersections(cube2, ray_z, [hr_z_2_c, hr_z_5_c])
+
+    ## ray from Origin towards x
+    test_all_intersections(cube2, ray_origin_x, [nothing, hr_x_c])
+
+    ## ray from x in opposite direction, no intersection
+    test_all_intersections(sphere1, Ray(Point(1.5, 0.0, 0.0), VEC_X), [nothing])
+end
+
 @testset "CSG - 2 Sphere - all HitRecords" begin
     # union sphere and sphere in z=1
     # objects
@@ -155,7 +185,7 @@ end
     csg_F = CSG(sphere1, sphere2, RayTracer.FUSION)
     csg_D = CSG(sphere1, sphere2, RayTracer.DIFFERENCE)
 
-    # x - tests to check if surphace contect points are considered correctly
+    # x - tests to check if surface contect points are considered correctly
     # ray_x = Ray(Point(-2.0, 0.0, 0.5), VEC_X)
     # ⚠️ NOT CONSIDERED CORRECTLY due to floating-point precision issues:
     # A point exactly on the surface may fail the check due to rounding.
