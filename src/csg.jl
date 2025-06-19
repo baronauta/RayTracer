@@ -26,9 +26,9 @@ Fields:
 
 Notes:
 - **Shape order matters**: `obj1 - obj2` is not the same as `obj2 - obj1`.
-- **Shapes can be nested CSGs**: both `obj1` and `obj2` may themselves be `CSG` objects.
+- **Shapes can be nested CSGs**: both `obj1` and `obj2` may themselves be `Csg` objects.
 """
-struct CSG{T<:AbstractFloat} <: Shape{T}
+struct Csg{T<:AbstractFloat} <: Shape{T}
     obj1::Shape
     obj2::Shape
     operation::Operation
@@ -45,10 +45,10 @@ function ≈(obj1::Shape, obj2::Shape)
 end
 
 """
-Compares two CSG shapes for equality.
+Compares two Csg shapes for equality.
 Returns `true` if the CSGs have the same obj and operations.
 """
-function ≈(csg1::CSG, csg2::CSG)
+function ≈(csg1::Csg, csg2::Csg)
     if (csg1.operation == csg2.operation)
         if csg1.operation == UNION || csg1.operation == INTERSECTION
             a = ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
@@ -65,31 +65,31 @@ function ≈(csg1::CSG, csg2::CSG)
 end
 
 """
-Checks whether a CSG construction is valid.
+Checks whether a Csg construction is valid.
 
 Not accepted `csg` with 2 identical overlapped objects.
 """
-function valid_csg(csg::CSG)
+function valid_csg(csg::Csg)
     (csg.obj1 == csg.obj2) &&
         throw(CsgError("cannot make csg with two overlapped same objects"))
     return true
 end
 
 """
-CSG outer costructor.
+Csg outer costructor.
 validates the csg before returning it.
 """
-function CSG(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where {T<:AbstractFloat}
-    csg = CSG{T}(obj1, obj2, operation)
+function Csg(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where {T<:AbstractFloat}
+    csg = Csg{T}(obj1, obj2, operation)
     valid_csg(csg)
     return csg
 end
 
 """
 ---
-Check whether a `HitRecord hit` is inside a `CSG` object.
+Check whether a `HitRecord hit` is inside a `Csg` object.
 """
-function is_inside(hit::HitRecord, csg::CSG)
+function is_inside(hit::HitRecord, csg::Csg)
     if csg.operation == UNION || csg.operation == FUSION
         # hit records can be inside one obj or the other
         return (is_inside(hit, csg.obj1) || (is_inside(hit, csg.obj2)))
@@ -106,7 +106,7 @@ end
 
 "if a hit belongs to an obj"
 function _belongs(hr::HitRecord, obj::Shape)
-    if obj isa CSG
+    if obj isa Csg
         return ((hr.shape ≈ obj.obj1) || (hr.shape ≈ obj.obj2))
     else
         return (hr.shape ≈ obj)
@@ -114,18 +114,18 @@ function _belongs(hr::HitRecord, obj::Shape)
 end
 
 """
-    valid_hit(hr::HitRecord, obj::Shape, csg::CSG) -> Bool
+    valid_hit(hr::HitRecord, obj::Shape, csg::Csg) -> Bool
 
-Determines whether a given `HitRecord` is valid based on the CSG operation between two shapes.
+Determines whether a given `HitRecord` is valid based on the Csg operation between two shapes.
 
 Arguments:
 - `hr`: the hit record to evaluate.
-- `obj`: the *other* shape involved in the CSG operation (not the one that generated `hr`).
-- `csg`: the `CSG` object describing the two shapes and the boolean operation.
+- `obj`: the *other* shape involved in the Csg operation (not the one that generated `hr`).
+- `csg`: the `Csg` object describing the two shapes and the boolean operation.
 
-Returns `true` if the hit should be included according to the CSG operation (`UNION`, `INTERSECTION`, `FUSION`, or `DIFFERENCE`), `false` otherwise.
+Returns `true` if the hit should be included according to the Csg operation (`UNION`, `INTERSECTION`, `FUSION`, or `DIFFERENCE`), `false` otherwise.
 """
-function valid_hit(hr::HitRecord, obj::Shape, csg::CSG)
+function valid_hit(hr::HitRecord, obj::Shape, csg::Csg)
     is_obj1 = _belongs(hr, csg.obj1)
     op = csg.operation
 
@@ -143,15 +143,15 @@ function valid_hit(hr::HitRecord, obj::Shape, csg::CSG)
 end
 
 """
-    check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, csg::CSG{T}) -> Vector{HitRecord{T}}
+    check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, csg::Csg{T}) -> Vector{HitRecord{T}}
 
-Merges two sorted lists of hit records (`a` and `b`) from two shapes involved in a CSG operation.
+Merges two sorted lists of hit records (`a` and `b`) from two shapes involved in a Csg operation.
 
 Each hit is validated using `valid_hit`, based on whether it should be included in the final result according to the operation in `csg`.
 
-Returns a sorted vector of valid `HitRecord`s resulting from the CSG operation.
+Returns a sorted vector of valid `HitRecord`s resulting from the Csg operation.
 """
-function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, csg::CSG{T}) where T
+function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, csg::Csg{T}) where T
     result = Vector{HitRecord{T}}()
     i = 1
     j = 1
@@ -201,10 +201,10 @@ function check_sort_records(a::Vector{HitRecord{T}}, b::Vector{HitRecord{T}}, cs
 end
 
 """
-Checks if a `Ray` intersects the `CSG`.
+Checks if a `Ray` intersects the `Csg`.
 Return a sorted list of all `HitRecord`s or a list of `nothing` if no intersection is found.
 """
-function ray_intersection(csg::CSG, ray::Ray; all=false)
+function ray_intersection(csg::Csg, ray::Ray; all=false)
 
     hit_array_1 = ray_intersection(csg.obj1, ray; all = true)
     # debug: println("\n::::::::::\n",hit_array_1)

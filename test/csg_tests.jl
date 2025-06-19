@@ -87,7 +87,7 @@ hr_x_c = HitRecord(Point(1.0, 0.0, 0.0), Normal(-0.5, 0.0, 0.0), Vec2D(3/8, 0.5)
 
 
 # === Tests ===
-@testset "Generic CSG and Shapes" begin
+@testset "Generic Csg and Shapes" begin
     sphere1_copy = Sphere(Material(UniformPigment(RED)))
 
     # test for shapes comparison
@@ -95,14 +95,14 @@ hr_x_c = HitRecord(Point(1.0, 0.0, 0.0), Normal(-0.5, 0.0, 0.0), Vec2D(3/8, 0.5)
     @test !(sphere1 ≈ sphere2)
 
     # test check for unvalid and valid CSGs
-    @test_throws CsgError CSG(sphere1, sphere1, RayTracer.UNION)
-    csg = CSG(sphere1, sphere2, RayTracer.UNION)
+    @test_throws CsgError Csg(sphere1, sphere1, RayTracer.UNION)
+    csg = Csg(sphere1, sphere2, RayTracer.UNION)
 
     # test for csg comparison
-    csg_copy = CSG(sphere1, sphere2, RayTracer.UNION)
-    csg2 = CSG(sphere1, sphere2, RayTracer.DIFFERENCE)
-    csg3 = CSG(sphere2, sphere1, RayTracer.DIFFERENCE)
-    csg = CSG(sphere1, sphere2, RayTracer.UNION)
+    csg_copy = Csg(sphere1, sphere2, RayTracer.UNION)
+    csg2 = Csg(sphere1, sphere2, RayTracer.DIFFERENCE)
+    csg3 = Csg(sphere2, sphere1, RayTracer.DIFFERENCE)
+    csg = Csg(sphere1, sphere2, RayTracer.UNION)
     @test csg ≈ csg_copy
     @test !(csg ≈ csg2)
     @test !(csg2 ≈ csg3)
@@ -177,13 +177,13 @@ end
     test_all_intersections(sphere1, Ray(Point(1.5, 0.0, 0.0), VEC_X), [nothing])
 end
 
-@testset "CSG - 2 Sphere - all HitRecords" begin
+@testset "Csg - 2 Sphere - all HitRecords" begin
     # union sphere and sphere in z=1
     # objects
-    csg_U = CSG(sphere1, sphere2, RayTracer.UNION)
-    csg_I = CSG(sphere1, sphere2, RayTracer.INTERSECTION)
-    csg_F = CSG(sphere1, sphere2, RayTracer.FUSION)
-    csg_D = CSG(sphere1, sphere2, RayTracer.DIFFERENCE)
+    csg_U = Csg(sphere1, sphere2, RayTracer.UNION)
+    csg_I = Csg(sphere1, sphere2, RayTracer.INTERSECTION)
+    csg_F = Csg(sphere1, sphere2, RayTracer.FUSION)
+    csg_D = Csg(sphere1, sphere2, RayTracer.DIFFERENCE)
 
     # x - tests to check if surface contect points are considered correctly
     # ray_x = Ray(Point(-2.0, 0.0, 0.5), VEC_X)
@@ -206,13 +206,13 @@ end
     test_all_intersections(csg_D, ray_z, [hr_z_4, hr_z_5])
 end
 
-@testset "CSG - 2 Planes - all HitRecords" begin
+@testset "Csg - 2 Planes - all HitRecords" begin
     # objects
-    csg_union = CSG(plane1, plane2, RayTracer.UNION)
-    csg_inter = CSG(plane1, plane2, RayTracer.INTERSECTION)
-    csg_diff_1_2 = CSG(plane1, plane2, RayTracer.DIFFERENCE)  # plane1 minus plane2
-    csg_diff_2_1 = CSG(plane2, plane1, RayTracer.DIFFERENCE)  # plane2 minus plane1
-    csg_fusion = CSG(plane1, plane2, RayTracer.FUSION)
+    csg_union = Csg(plane1, plane2, RayTracer.UNION)
+    csg_inter = Csg(plane1, plane2, RayTracer.INTERSECTION)
+    csg_diff_1_2 = Csg(plane1, plane2, RayTracer.DIFFERENCE)  # plane1 minus plane2
+    csg_diff_2_1 = Csg(plane2, plane1, RayTracer.DIFFERENCE)  # plane2 minus plane1
+    csg_fusion = Csg(plane1, plane2, RayTracer.FUSION)
 
     test_all_intersections(csg_union, ray_z, [hr_z_3_p, hr_z_4_p])
     test_all_intersections(csg_inter, ray_z, [hr_z_4_p])
@@ -221,14 +221,14 @@ end
     test_all_intersections(csg_fusion, ray_z, [hr_z_3_p])
 end
 
-@testset "CSG - Sphere and Plane - all HitRecords" begin
+@testset "Csg - Sphere and Plane - all HitRecords" begin
     # union sphere and default plane
     # objects
-    csg_union = CSG(sphere1, plane1, RayTracer.UNION)
-    csg_inter = CSG(sphere1, plane1, RayTracer.INTERSECTION)
-    csg_diff_sphere_plane = CSG(sphere1, plane1, RayTracer.DIFFERENCE)  # sphere minus plane
-    csg_diff_plane_sphere = CSG(plane1, sphere1, RayTracer.DIFFERENCE)  # plane minus sphere
-    csg_fusion = CSG(sphere1, plane1, RayTracer.FUSION)
+    csg_union = Csg(sphere1, plane1, RayTracer.UNION)
+    csg_inter = Csg(sphere1, plane1, RayTracer.INTERSECTION)
+    csg_diff_sphere_plane = Csg(sphere1, plane1, RayTracer.DIFFERENCE)  # sphere minus plane
+    csg_diff_plane_sphere = Csg(plane1, sphere1, RayTracer.DIFFERENCE)  # plane minus sphere
+    csg_fusion = Csg(sphere1, plane1, RayTracer.FUSION)
 
     test_all_intersections(csg_union, ray_z, [hr_z_2, hr_z_4_p, hr_z_5])
     test_all_intersections(csg_inter, ray_z, [hr_z_4_p, hr_z_5])
@@ -239,23 +239,23 @@ end
 
 @testset "Multiple nested CSGs" begin
     # test if a hitrecord belongs to a csg correctly
-    csg_D = CSG(CSG(sphere1, sphere3, RayTracer.DIFFERENCE), sphere2, RayTracer.DIFFERENCE)
+    csg_D = Csg(Csg(sphere1, sphere3, RayTracer.DIFFERENCE), sphere2, RayTracer.DIFFERENCE)
 
     @test !RayTracer._belongs(hr_z_1, csg_D.obj1)
     @test RayTracer._belongs(hr_z_2, csg_D.obj1)
 
     @testset "3 OBJ" begin
         # 3 spheres
-        csg_U = CSG(CSG(sphere1, sphere2, RayTracer.UNION), sphere3, RayTracer.UNION)
-        csg_I = CSG(
-            CSG(sphere1, sphere2, RayTracer.INTERSECTION),
+        csg_U = Csg(Csg(sphere1, sphere2, RayTracer.UNION), sphere3, RayTracer.UNION)
+        csg_I = Csg(
+            Csg(sphere1, sphere2, RayTracer.INTERSECTION),
             sphere3,
             RayTracer.INTERSECTION,
         )
         csg_F =
-            CSG(CSG(sphere1, sphere2, RayTracer.INTERSECTION), sphere3, RayTracer.FUSION)
-        csg_D = CSG(
-            CSG(sphere1, sphere2, RayTracer.INTERSECTION),
+            Csg(Csg(sphere1, sphere2, RayTracer.INTERSECTION), sphere3, RayTracer.FUSION)
+        csg_D = Csg(
+            Csg(sphere1, sphere2, RayTracer.INTERSECTION),
             sphere3,
             RayTracer.DIFFERENCE,
         )
@@ -270,14 +270,14 @@ end
 
         # 2 Spheres, 1 Plane
         # hr_plane will be hr_z_3_p
-        csg_U = CSG(CSG(sphere1, sphere2, RayTracer.UNION), plane2, RayTracer.UNION)
-        csg_I = CSG(
-            CSG(sphere1, sphere2, RayTracer.INTERSECTION),
+        csg_U = Csg(Csg(sphere1, sphere2, RayTracer.UNION), plane2, RayTracer.UNION)
+        csg_I = Csg(
+            Csg(sphere1, sphere2, RayTracer.INTERSECTION),
             plane2,
             RayTracer.INTERSECTION,
         )
         csg_D =
-            CSG(CSG(sphere1, sphere2, RayTracer.INTERSECTION), plane2, RayTracer.DIFFERENCE)
+            Csg(Csg(sphere1, sphere2, RayTracer.INTERSECTION), plane2, RayTracer.DIFFERENCE)
 
         test_all_intersections(csg_U, ray_z, [hr_z_1, hr_z_2, hr_z_3_p, hr_z_4, hr_z_5])
         test_all_intersections(csg_I, ray_z, [hr_z_3_p, hr_z_4])
@@ -287,7 +287,7 @@ end
 
 @testset "World" begin
     world = World()
-    csg = CSG(sphere2, sphere1, RayTracer.DIFFERENCE)
+    csg = Csg(sphere2, sphere1, RayTracer.DIFFERENCE)
     sphere4 = Sphere(translation(Vec(2.,0.,0.)), Material())
 
     # Add shapes
