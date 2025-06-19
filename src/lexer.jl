@@ -43,6 +43,7 @@ const NUMBERS = "0123456789eE.+-"
     MATERIAL    
     PLANE    
     SPHERE    
+    CUBE
     DIFFUSE    
     SPECULAR    
     UNIFORM    
@@ -65,6 +66,7 @@ const KEYWORDS = Dict(
     "material" => MATERIAL,
     "plane" => PLANE,
     "sphere" => SPHERE,
+    "cube" => CUBE,
     "diffuse" => DIFFUSE,
     "specular" => SPECULAR,
     "uniform" => UNIFORM,

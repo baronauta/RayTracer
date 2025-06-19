@@ -392,6 +392,25 @@ function parse_plane(instream::InputStream, scene::Scene)
 end
 
 """
+Parse a cube:
+
+`cube(material_name, transformation)`
+
+Returns a `cube`.
+"""
+function parse_cube(instream::InputStream, scene::Scene)
+    expect_symbol(instream, "(")
+    material_name = expect_identifier(instream)
+    if !haskey(scene.materials, material_name)
+        throw(GrammarError(instream.location, "unknown material `$material_name`"))
+    end
+    expect_symbol(instream, ",")
+    transformation = parse_transformation(instream, scene)
+    expect_symbol(instream, ")")
+    return Cube(transformation, scene.materials[material_name])
+end
+
+"""
 Parse a camera:
 
 - `camera(perspective, transformation, screen_distance)`
@@ -426,7 +445,7 @@ Parses a scene description from `instream` and constructs a `Scene` object.
 - Internal variables can be defined once; redefinition raises a `GrammarError`.
 - Warns if external and internal variable names conflict.
 - Only one camera definition is allowed.
-- Recognized elements: `FLOAT`, `MATERIAL`, `PLANE`, `SPHERE`, `CAMERA`.
+- Recognized elements: `FLOAT`, `MATERIAL`, `PLANE`, `SPHERE`, `CUBE`, `CAMERA`.
 """
 function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; external_variables=Dict{String, AbstractFloat}())
     # This function parses scene.txt and builds the world to render.
@@ -495,6 +514,9 @@ function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; externa
 
         elseif token.keyword == SPHERE
             add!(scene.world, parse_sphere(instream, scene))
+
+        elseif token.keyword == CUBE
+            add!(scene.world, parse_cube(instream, scene))
 
         elseif token.keyword == CAMERA
             # Only one camera can be defined in the scene
