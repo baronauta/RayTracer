@@ -157,8 +157,6 @@ Responsible for:
 struct ImageTracer{T<:AbstractFloat}
     image::HdrImage
     camera::Camera{T}
-    ray_for_pixel::Integer
-    pcg::PCG
 end
 
 """
@@ -253,7 +251,6 @@ struct AntialiasingError <: CustomException
     msg::String
 end
 
-
 """
     fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
 
@@ -302,5 +299,4 @@ function fire_all_rays!(tracer::ImageTracer, func; samples_per_pixel=1, pcg=noth
     # for video i dont want a progress bar for all rows of all images, only for frames.
     # so i need  the progress_flag, if is an image the progress_flag is true, if video is false
     (progress_flag == true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
-
 end
