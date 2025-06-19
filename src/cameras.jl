@@ -243,6 +243,16 @@ function simple_progress_bar(i, total; item = "row", width = 40)
     flush(stdout)
 end
 
+function is_square(n::Integer) 
+    # `isqrt(n)`: returns the largest integer m such that m*m <= n
+    # Ex: isqrt(12) = 3
+    return isqrt(n)^2 == n
+end
+
+struct AntialiasingError <: CustomException
+    msg::String
+end
+
 
 """
     fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
@@ -258,15 +268,39 @@ Set all images pixels to calculated colors
 
 The function set all the pixels of the passed `HdrImage` to calculated colors.
 """
-function fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
+function fire_all_rays!(tracer::ImageTracer, func; samples_per_pixel=1, pcg=nothing, progress_flag = true)
+
+    sqrt_samples = round(Int, sqrt(samples_per_pixel))  # assume square grid
+    if !is_square(samples_per_pixel)
+        throw(AntialiasingError("'samples_per_pixel' must be a perfect square (e.g., 1, 4, 9, 16, ...)"))
+    end
+
     for row = 1:tracer.image.height
         for col = 1:tracer.image.width
-            ray = fire_ray(tracer, col, row) # if i want i can pass u_pixel and v_pixel ≠ 0.5 (default value)
-            color = func(ray)
-            set_pixel!(tracer.image, col, row, color)
+
+            if samples_per_pixel==1
+                ray = fire_ray(tracer, col, row) # if i want i can pass u_pixel and v_pixel ≠ 0.5 (default value)
+                color = func(ray)
+                set_pixel!(tracer.image, col, row, color)
+            else
+                accumulated_color = RGB(0, 0, 0)
+                for i = 1:sqrt_samples
+                    for j = 1:sqrt_samples
+                        # Jittered offset within the subpixel
+                        du = (i - random_float!(pcg)) / sqrt_samples
+                        dv = (j - random_float!(pcg)) / sqrt_samples
+                        ray = fire_ray(tracer, col, row; u_pixel=du, v_pixel=dv)
+                        accumulated_color += func(ray)
+                        averaged_color = accumulated_color * inv_samples
+                        set_pixel!(tracer.image, col, row, averaged_color)
+                    end
+                end
+            end
         end
-        # for video i dont want a progress bar for all rows of all images, only for frames.
-        # so i need  the progress_flag, if is an image the progress_flag is true, if video is false
-        (progress_flag == true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
+
     end
+    # for video i dont want a progress bar for all rows of all images, only for frames.
+    # so i need  the progress_flag, if is an image the progress_flag is true, if video is false
+    (progress_flag == true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
+
 end
