@@ -15,19 +15,19 @@ material sphere_sky_material(diffuse(image("./examples/reference_nightsky.jpg"))
 
 # Object definitions
 # Night sky sphere at position (1, 1, 2)
-sphere(sphere_sky_material, translation([-1, -2, 2.5]) * rotation_z(60) * scaling(1.2, 1.2, 1.2))
+sphere night_sphere(sphere_sky_material, translation([-1, -2, 2.5]) * rotation_z(60) * scaling(1.2, 1.2, 1.2))
 
 # Red little sphere
-sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
+sphere little_sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
 
 # Mirror sphere at origin
-sphere(mirror_material, scaling(1.5, 1.5, 1.5))
+sphere mirror_sphere(mirror_material, scaling(1.5, 1.5, 1.5))
 
 # Large sky sphere
-sphere(sky_material, scaling(50, 50, 50))
+sphere sky_sphere(sky_material, scaling(50, 50, 50))
 
 # Plane with checkered pattern
-plane(plane_material, identity)
+plane ground_plane(plane_material, identity)
 
 # Camera with CLI-overridable angle and screen distance 2
 camera(perspective, rotation_z(angle) * translation([-4, -1, 1]), 1.0)
