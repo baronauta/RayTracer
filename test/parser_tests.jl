@@ -124,8 +124,9 @@
 
 
     @test length(scene.world.shapes) == 2
-    @test scene.world.shapes[1] ≈ Plane(translation(Vec(0.0, 0.0, 100.0)) * rotation_y(150), sky_material)
-    @test scene.world.shapes[2] ≈ Csg(csg_1_name, cube_1_name, RayTracer.UNION, rotation_y(150))
+    # used_in_csg is a Dict, so objects are inserted into the world in alphabetical order by key (e.g., "csg" before "plane")
+    @test scene.world.shapes[2] ≈ Plane(translation(Vec(0.0, 0.0, 100.0)) * rotation_y(150), sky_material)
+    @test scene.world.shapes[1] ≈ Csg(csg_1_name, cube_1_name, RayTracer.UNION, rotation_y(150))
 
     # Check camera
     @test isa(scene.camera, PerspectiveCamera)
