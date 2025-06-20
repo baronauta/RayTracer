@@ -231,10 +231,13 @@ function ray_intersection(csg::Csg, ray::Ray; all=false)
     # debug: println("\n::::::::::\n",hit_array_1)
     hit_array_2 = ray_intersection(csg.obj2, ray; all = true)
     # debug: println("\n::::::::::\n",hit_array_2)
-    real_hits_1 = [h for h in hit_array_1 if h !== nothing]
-    real_hits_2 = [h for h in hit_array_2 if h !== nothing]
+    
+    # for real hits i need to know type of Float of Csg
+    T = typeof(csg).parameters[1]
+    real_hits_1 = HitRecord{T}[h for h in hit_array_1 if h !== nothing]
+    real_hits_2 = HitRecord{T}[h for h in hit_array_2 if h !== nothing]
 
-    if (!isempty(real_hits_1) && !isempty(real_hits_2))
+    if !(isempty(real_hits_1) && isempty(real_hits_2))
         hit_list = check_sort_records(real_hits_1, real_hits_2, csg)
         # debug: println("chosen:")
         for hit in hit_list

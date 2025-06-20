@@ -254,7 +254,11 @@ end
     csg_diff_sphere_plane = Csg(sphere1, plane1, RayTracer.DIFFERENCE)  # sphere minus plane
     csg_diff_plane_sphere = Csg(plane1, sphere1, RayTracer.DIFFERENCE)  # plane minus sphere
     csg_fusion = Csg(sphere1, plane1, RayTracer.FUSION)
+    ray_test = Ray(Point(-4.0, -4.0, 3.0), -VEC_Z)
+    h_r = HitRecord(Point(-4.0, -4.0, 0.), Normal(0.0, 0.0, 1.0), Vec2D(0.0, 0.0), 3., ray_test, plane1)
 
+    test_intersection(plane1, ray_test, h_r)
+    test_all_intersections(csg_union, ray_test, [h_r])
     test_all_intersections(csg_union, ray_z, [hr_z_2, hr_z_4_p, hr_z_5])
     test_all_intersections(csg_inter, ray_z, [hr_z_4_p, hr_z_5])
     test_all_intersections(csg_diff_sphere_plane, ray_z, [hr_z_2, hr_z_4_p])
