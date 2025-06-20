@@ -97,6 +97,11 @@
     @test cube_material.emitted_radiance.color ≈ RGB(0., 0., 0.)
 
     # Check shapes
+    sky_material = Material(DiffuseBRDF(UniformPigment(RGB(0.0, 0.0, 0.0))), UniformPigment(RGB(0.7, 0.5, 1.0)))
+    ground_material = Material(DiffuseBRDF(CheckeredPigment(RGB(0.3, 0.5, 0.1), RGB(0.1, 0.2, 0.5), 4)), UniformPigment(RGB(0.0, 0.0, 0.0)))
+    sphere_material = Material(SpecularBRDF(UniformPigment(RGB(0.5, 0.5, 0.5))), UniformPigment(RGB(0.0, 0.0, 0.0)))
+    cube_material = Material(DiffuseBRDF(UniformPigment(RGB(0.5, 0.5, 0.5))), UniformPigment(RGB(0.0, 0.0, 0.0)))
+
     @test length(scene.shapes) == 6
     @test haskey(scene.shapes, "plane_1_name")
     @test haskey(scene.shapes, "plane_2_name")
@@ -104,23 +109,23 @@
     @test haskey(scene.shapes, "cube_1_name")
     @test haskey(scene.shapes, "csg_1_name")
     @test haskey(scene.shapes, "csg_2_name")
-    @test length(scene.world.shapes) == 6
-    sky_material = Material(DiffuseBRDF(UniformPigment(RGB(0.0, 0.0, 0.0))), UniformPigment(RGB(0.7, 0.5, 1.0)))
-    ground_material = Material(DiffuseBRDF(CheckeredPigment(RGB(0.3, 0.5, 0.1), RGB(0.1, 0.2, 0.5), 4)), UniformPigment(RGB(0.0, 0.0, 0.0)))
-    sphere_material = Material(SpecularBRDF(UniformPigment(RGB(0.5, 0.5, 0.5))), UniformPigment(RGB(0.0, 0.0, 0.0)))
-    cube_material = Material(DiffuseBRDF(UniformPigment(RGB(0.5, 0.5, 0.5))), UniformPigment(RGB(0.0, 0.0, 0.0)))
 
     plane_2_name = Plane(ground_material)
     sphere_1_name = Sphere(translation(Vec(0.0, 0.0, 1.0)), sphere_material)
     cube_1_name = Cube(scaling(1.0, 2.0, 3.0), cube_material)
     csg_1_name = Csg(sphere_1_name, plane_2_name, RayTracer.DIFFERENCE, Transformation())
 
+    @test scene.shapes["plane_1_name"] ≈ Plane(translation(Vec(0.0, 0.0, 100.0)) * rotation_y(150), sky_material)
+    @test scene.shapes["plane_2_name"] ≈ plane_2_name
+    @test scene.shapes["sphere_1_name"] ≈ sphere_1_name
+    @test scene.shapes["cube_1_name"] ≈ cube_1_name
+    @test scene.shapes["csg_1_name"] ≈ csg_1_name
+    @test scene.shapes["csg_2_name"] ≈ Csg(csg_1_name, cube_1_name, RayTracer.UNION, rotation_y(150))
+
+
+    @test length(scene.world.shapes) == 2
     @test scene.world.shapes[1] ≈ Plane(translation(Vec(0.0, 0.0, 100.0)) * rotation_y(150), sky_material)
-    @test scene.world.shapes[2] ≈ plane_2_name
-    @test scene.world.shapes[3] ≈ sphere_1_name
-    @test scene.world.shapes[4] ≈ cube_1_name
-    @test scene.world.shapes[5] ≈ csg_1_name
-    @test scene.world.shapes[6] ≈ Csg(csg_1_name, cube_1_name, RayTracer.UNION, rotation_y(150))
+    @test scene.world.shapes[2] ≈ Csg(csg_1_name, cube_1_name, RayTracer.UNION, rotation_y(150))
 
     # Check camera
     @test isa(scene.camera, PerspectiveCamera)

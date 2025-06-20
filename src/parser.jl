@@ -40,7 +40,7 @@ A container representing a scene parsed from a scene description file.
 
 # Note
 - `Material`s and `Shape`s can be explicitly declared and named, e.g. `material ground_material(...)` or `sphere my_sphere(...)`.
-
+- A `Shape` used in a `Csg` cannot be included as a standalone object. If this is required, define a duplicate shape with a different name.
 - The `camera` field can also be `nothing` because the chosen camera is parsed at runtime,  
   so it is initially set to `nothing`.
 """
@@ -470,7 +470,7 @@ function parse_csg(instream::InputStream, scene::Scene)
     expect_symbol(instream, ",")
     transformation = parse_transformation(instream, scene)
     expect_symbol(instream, ")")
-    return csg_identifier, Csg(scene.shapes[obj1_name], scene.shapes[obj2_name], operation, transformation)
+    return obj1_name, obj2_name, csg_identifier, Csg(scene.shapes[obj1_name], scene.shapes[obj2_name], operation, transformation)
 end
 
 """
@@ -529,6 +529,8 @@ function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; externa
     # # Copy external variables into scene.float_variables
     # scene.float_variables = deepcopy(external_variables)
 
+        # need a list to handle shapes used in a csg to not add them to world
+    used_in_csg = Set{String}()
     while true
 
         token = read_token(instream)
@@ -566,7 +568,7 @@ function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; externa
                 scene.float_variables[var_name] = var_val
             end
             
-        # Handle other recognized keywords
+        # Handle shapes and material
 
         elseif token.keyword == MATERIAL
             material_name, material = parse_material(instream, scene)
@@ -575,23 +577,24 @@ function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; externa
         elseif token.keyword == PLANE
             plane_name, plane = parse_plane(instream, scene)
             scene.shapes[plane_name] = plane
-            add!(scene.world, plane)
+            
 
         elseif token.keyword == SPHERE
             sphere_name, sphere = parse_sphere(instream, scene)
-            scene.shapes[sphere_name] = sphere
-            add!(scene.world, sphere)
+            scene.shapes[sphere_name] = sphere            
 
         elseif token.keyword == CUBE
             cube_name, cube = parse_cube(instream, scene)
             scene.shapes[cube_name] = cube
-            add!(scene.world, cube)
 
         elseif token.keyword == CSG
-            csg_name, csg = parse_csg(instream, scene)
+            obj1_name, obj2_name, csg_name, csg = parse_csg(instream, scene)
             scene.shapes[csg_name] = csg
-            add!(scene.world, csg)
+            # add to the list obj1 and obj2
+            push!(used_in_csg, obj1_name)
+            push!(used_in_csg, obj2_name)
 
+        # Handle other recognized words
         elseif token.keyword == CAMERA
             # Only one camera can be defined in the scene
             !isnothing(scene.camera) && throw(
@@ -603,5 +606,12 @@ function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; externa
             throw(GrammarError(token.location, "unexpected keyword $token"))
         end
     end
+
+    for (name, shape) in scene.shapes
+        if !(name in used_in_csg)
+            add!(scene.world, shape)
+        end
+    end
+
     return scene
 end
