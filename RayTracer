@@ -79,6 +79,10 @@ soft shadows, and reflections.
     reducing computation while minimizing bias.
     Default: `3`.
 
+- `--samples-per-pixel=<Integer>`:
+    Number of samples per pixel for antialiasing; must be a perfect square (e.g., 1, 4, 9, 16).
+    Default: `1`.
+
 """
 Comonicon.@cast function pathtracer(
     scenefile::String, 
@@ -90,6 +94,7 @@ Comonicon.@cast function pathtracer(
     n_rays::Int=5,
     max_depth::Int=5,
     russian_roulette_limit::Int=3,
+    samples_per_pixel::Int=1
     )
 
     try
@@ -143,9 +148,12 @@ Comonicon.@cast function pathtracer(
                 russian_roulette_limit = russian_roulette_limit,
             )
 
-
-        RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
-        
+        if samples_per_pixel == 1
+            RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
+        else
+            pcg_antialiasing = RayTracer.PCG()
+            RayTracer.fire_all_rays!(tracer, f; samples_per_pixel=samples_per_pixel, pcg=pcg_antialiasing, progress_flag = true)
+        end
 
         write(pfm_path, img)
         
@@ -198,6 +206,11 @@ Useful for quick previews, geometry debugging, and visualizing base materials.
     Overrides the `angle` variable in the scene’s text-based description file if it is present. 
     If not specified, the value from the scene file is used by default. 
     This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.
+
+- `--samples-per-pixel=<Integer>`:
+    Number of samples per pixel for antialiasing; must be a perfect square (e.g., 1, 4, 9, 16).
+    Default: `1`.
+
 """
 Comonicon.@cast function flattracer(
     scenefile, 
@@ -206,6 +219,7 @@ Comonicon.@cast function flattracer(
     output_name::String="",
     extension::String = "",
     angle::Union{Float64, Nothing}=nothing,
+    samples_per_pixel::Int=1
     )
 
     try
@@ -259,8 +273,12 @@ Comonicon.@cast function flattracer(
             )
 
 
-        RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
-        println("\n")
+        if samples_per_pixel == 1
+            RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
+        else
+            pcg_antialiasing = RayTracer.PCG()
+            RayTracer.fire_all_rays!(tracer, f; samples_per_pixel=samples_per_pixel, pcg=pcg_antialiasing, progress_flag = true)
+        end
 
         write(pfm_path, img)
         
@@ -314,6 +332,11 @@ Useful for visibility checks and fast silhouette previews.
     Overrides the `angle` variable in the scene’s text-based description file if it is present. 
     If not specified, the value from the scene file is used by default. 
     This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.   
+
+- `--samples-per-pixel=<Integer>`:
+    Number of samples per pixel for antialiasing; must be a perfect square (e.g., 1, 4, 9, 16).
+    Default: `1`.
+
 """
 Comonicon.@cast function onofftracer(
     scenefile::String, 
@@ -322,6 +345,7 @@ Comonicon.@cast function onofftracer(
     output_name::String="",
     extension::String = "",
     angle::Union{Float64, Nothing}=nothing,
+    samples_per_pixel::Int=1
     )
 
     try
@@ -372,8 +396,12 @@ Comonicon.@cast function onofftracer(
             )
 
 
-        RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
-        println("\n")
+        if samples_per_pixel == 1
+            RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
+        else
+            pcg_antialiasing = RayTracer.PCG()
+            RayTracer.fire_all_rays!(tracer, f; samples_per_pixel=samples_per_pixel, pcg=pcg_antialiasing, progress_flag = true)
+        end
 
         write(pfm_path, img)
         

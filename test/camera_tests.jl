@@ -99,4 +99,33 @@
         end
 
     end
+
+    
+    @testset "Antialiasing" begin
+        samples_per_pixel = 16
+        @test RayTracer.is_square(samples_per_pixel)
+        sqrt_samples = round(Int, sqrt(samples_per_pixel))
+        pcg = RayTracer.PCG()
+
+        jitter_pairs = []
+
+        for i = 1:sqrt_samples
+            for j = 1:sqrt_samples
+                du, dv = RayTracer.jitter_sampling(i, j, sqrt_samples, pcg)
+                push!(jitter_pairs, (du, dv))
+
+                # Compute subpixel bounds
+                # Top-left is u=0, v=1
+                u_min = (i - 1) / sqrt_samples
+                u_max = i / sqrt_samples
+                v_min = 1.0 - j / sqrt_samples
+                v_max = 1.0 - (j - 1) / sqrt_samples
+
+                @test u_min <= du <= u_max
+                @test v_min <= dv <= v_max
+            end
+        end
+
+        @test length(jitter_pairs) == samples_per_pixel
+    end
 end
