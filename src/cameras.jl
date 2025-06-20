@@ -262,6 +262,13 @@ function is_square(n::Integer)
     return isqrt(n)^2 == n
 end
 
+"Jittered sampling within the subpixel (i, j)"
+function jitter_sampling(i::Integer, j::Integer, sqrt_samples::Integer, pcg::PCG)
+    du = (i - random_float!(pcg)) / sqrt_samples
+    dv = 1 - (j - random_float!(pcg)) / sqrt_samples
+    return du, dv
+end
+
 "Custom exception for antialiasing-related errors"
 struct AntialiasingError <: CustomException
     msg::String
@@ -329,8 +336,7 @@ function fire_all_rays!(
                 for i = 1:sqrt_samples
                     for j = 1:sqrt_samples
                         # Jittered offset within the subpixel
-                        du = (i - random_float!(pcg)) / sqrt_samples
-                        dv = 1 - (j - random_float!(pcg)) / sqrt_samples
+                        du, dv = jitter_sampling(i, j, sqrt_samples, pcg)
                         ray = fire_ray(tracer, col, row; u_pixel = du, v_pixel = dv)
                         accumulated_color += func(ray)
                     end
