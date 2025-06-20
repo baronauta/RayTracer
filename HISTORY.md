@@ -1,4 +1,7 @@
 ## HEAD
+- Implemented support for casting multiple rays per pixel with configurable `samples_per_pixel`, enabling antialiasing by averaging results [#20](https://github.com/baronauta/RayTracer/pull/20)
+
+# Version 1.0.0
 ## Breaking changes summary
 - **Breaking change:** Usage updated [#16](https://github.com/baronauta/RayTracer/pull/16):
   - `demo` is now limited to the `demo_scene.txt` file in `example/` folder
