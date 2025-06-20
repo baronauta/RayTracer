@@ -30,6 +30,8 @@ A container representing a scene parsed from a scene description file.
 # Fields
 - `materials::Dict{String, Material}`: a dictionary mapping identifiers to `Material` objects.
 
+- `shapes::Dict{String, Shape}`: a dictionary mapping identifiers to `Shapes` objects.
+
 - `world::World`: the top-level container holding all scene geometry.
 
 - `camera::Union{Camera, Nothing}`: a camera for the scene (only one allowed).
@@ -37,15 +39,14 @@ A container representing a scene parsed from a scene description file.
 - `float_variables::Dict{String, AbstractFloat}`: a dictionary that stores all named float variables used in the scene, mapping variable names to their respective float values.
 
 # Note
-- `Material`s can be explicitly declared and named, e.g. `material ground_material(...)`.  
-  In contrast, concrete shape types (e.g., `Sphere` and `Plane`) are not assigned to named variables;  
-  instead, they are stored as elements in the `world`’s list of shapes.
+- `Material`s and `Shape`s can be explicitly declared and named, e.g. `material ground_material(...)` or `sphere my_sphere(...)`.
 
 - The `camera` field can also be `nothing` because the chosen camera is parsed at runtime,  
   so it is initially set to `nothing`.
 """
 mutable struct Scene
     materials::Dict{String, Material}
+    shapes::Dict{String, Shape}
     world::World
     camera::Union{Camera, Nothing}
     float_variables::Dict{String, AbstractFloat}
@@ -66,7 +67,7 @@ meant to be private, use of this identifier by user is discouraged,
 """
 function Scene(aspect_ratio::AbstractFloat)
     float_variables = Dict{String, AbstractFloat}( "_aspect_ratio" => aspect_ratio)
-    Scene(Dict{String,Material}(), World(), nothing, float_variables)
+    Scene(Dict{String,Material}(), Dict{String, Shape}(), World(), nothing, float_variables)
 end
 
 
@@ -356,11 +357,12 @@ end
 """
 Parse a sphere:
 
-`sphere(material_name, transformation)`
+`sphere_name(material_name, transformation)`
 
-Returns a `Sphere`.
+Returns sphere identifier and `Sphere`.
 """
 function parse_sphere(instream::InputStream, scene::Scene)
+    sphere_identifier = expect_identifier(instream)
     expect_symbol(instream, "(")
     material_name = expect_identifier(instream)
     if !haskey(scene.materials, material_name)
@@ -369,17 +371,18 @@ function parse_sphere(instream::InputStream, scene::Scene)
     expect_symbol(instream, ",")
     transformation = parse_transformation(instream, scene)
     expect_symbol(instream, ")")
-    return Sphere(transformation, scene.materials[material_name])
+    return sphere_identifier, Sphere(transformation, scene.materials[material_name])
 end
 
 """
 Parse a plane:
 
-`plane(material_name, transformation)`
+`plane_name(material_name, transformation)`
 
-Returns a `Plane`.
+Returns plane identifier and `Plane`.
 """
 function parse_plane(instream::InputStream, scene::Scene)
+    plane_identifier = expect_identifier(instream)
     expect_symbol(instream, "(")
     material_name = expect_identifier(instream)
     if !haskey(scene.materials, material_name)
@@ -388,17 +391,18 @@ function parse_plane(instream::InputStream, scene::Scene)
     expect_symbol(instream, ",")
     transformation = parse_transformation(instream, scene)
     expect_symbol(instream, ")")
-    return Plane(transformation, scene.materials[material_name])
+    return plane_identifier, Plane(transformation, scene.materials[material_name])
 end
 
 """
 Parse a cube:
 
-`cube(material_name, transformation)`
+`cube_name(material_name, transformation)`
 
-Returns a `cube`.
+Returns cube identifier and `Cube`.
 """
 function parse_cube(instream::InputStream, scene::Scene)
+    cube_identifier = expect_identifier(instream)
     expect_symbol(instream, "(")
     material_name = expect_identifier(instream)
     if !haskey(scene.materials, material_name)
@@ -407,7 +411,66 @@ function parse_cube(instream::InputStream, scene::Scene)
     expect_symbol(instream, ",")
     transformation = parse_transformation(instream, scene)
     expect_symbol(instream, ")")
-    return Cube(transformation, scene.materials[material_name])
+    return cube_identifier, Cube(transformation, scene.materials[material_name])
+end
+
+"""
+Parse one operation:
+
+- `union`
+- `fusion`
+- `intersection`
+- `difference`
+
+Returns a `Operation`.
+"""
+function parse_operation(instream::InputStream, scene::Scene)
+    operation_name = expect_keywords(
+        instream,
+        [KW_UNION, KW_FUSION, KW_INTERSECTION, KW_DIFFERENCE],
+    )
+    if operation_name == KW_UNION
+        return UNION
+
+    elseif operation_name == KW_FUSION
+        return FUSION 
+
+    elseif operation_name == KW_INTERSECTION
+        return INTERSECTION
+
+    elseif operation_name == KW_DIFFERENCE
+        return DIFFERENCE
+
+    else
+        throw(GrammarError(instream.location, "invalid operation keyword"))
+    end
+end
+
+"""
+Parse a Csg:
+
+`csg_name(obj1, obj2, operation, transformation)`
+
+Returns csg identifier and `Csg`.
+"""
+function parse_csg(instream::InputStream, scene::Scene)
+    csg_identifier = expect_identifier(instream)
+    expect_symbol(instream, "(")
+    obj1_name = expect_identifier(instream)
+    if !haskey(scene.shapes, obj1_name)
+        throw(GrammarError(instream.location, "unknown shape `$obj1_name`"))
+    end
+    expect_symbol(instream, ",")
+    obj2_name = expect_identifier(instream)
+    if !haskey(scene.shapes, obj2_name)
+        throw(GrammarError(instream.location, "unknown shape `$obj2_name`"))
+    end
+    expect_symbol(instream, ",")
+    operation = parse_operation(instream, scene)
+    expect_symbol(instream, ",")
+    transformation = parse_transformation(instream, scene)
+    expect_symbol(instream, ")")
+    return csg_identifier, Csg(scene.shapes[obj1_name], scene.shapes[obj2_name], operation, transformation)
 end
 
 """
@@ -510,13 +573,24 @@ function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; externa
             scene.materials[material_name] = material
 
         elseif token.keyword == PLANE
-            add!(scene.world, parse_plane(instream, scene))
+            plane_name, plane = parse_plane(instream, scene)
+            scene.shapes[plane_name] = plane
+            add!(scene.world, plane)
 
         elseif token.keyword == SPHERE
-            add!(scene.world, parse_sphere(instream, scene))
+            sphere_name, sphere = parse_sphere(instream, scene)
+            scene.shapes[sphere_name] = sphere
+            add!(scene.world, sphere)
 
         elseif token.keyword == CUBE
-            add!(scene.world, parse_cube(instream, scene))
+            cube_name, cube = parse_cube(instream, scene)
+            scene.shapes[cube_name] = cube
+            add!(scene.world, cube)
+
+        elseif token.keyword == CSG
+            csg_name, csg = parse_csg(instream, scene)
+            scene.shapes[csg_name] = csg
+            add!(scene.world, csg)
 
         elseif token.keyword == CAMERA
             # Only one camera can be defined in the scene

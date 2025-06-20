@@ -54,11 +54,11 @@ function ≈(csg1::Csg, csg2::Csg)
     if (csg1.operation == csg2.operation)
         if csg1.transformation ≈ csg2.transformation
             if csg1.operation == UNION || csg1.operation == INTERSECTION || csg1.operation == FUSION
-                a = ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
-                b = ((csg1.obj2 == csg2.obj1) && (csg2.obj2 == csg1.obj1))
+                a = ((csg1.obj1 ≈ csg2.obj1) && (csg1.obj2 ≈ csg2.obj2))
+                b = ((csg1.obj2 ≈ csg2.obj1) && (csg2.obj2 ≈ csg1.obj1))
                 return a || b
             elseif csg1.operation == DIFFERENCE
-                return ((csg1.obj1 == csg2.obj1) && (csg1.obj2 == csg2.obj2))
+                return ((csg1.obj1 ≈ csg2.obj1) && (csg1.obj2 ≈ csg2.obj2))
             else
                 throw(CsgError("undefined operation $(csg1.operation)"))
             end
