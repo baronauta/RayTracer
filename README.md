@@ -84,6 +84,8 @@ RayTracer simulates a camera by casting rays—lines representing paths of light
 - **`pathtracer`**  
   A physically-based renderer that simulates realistic lighting, including global illumination, soft shadows, and reflections.
 
+  In addition to basic options, pathtracer also supports *antialiasing* (`--samples-per-pixel`). This technique reduces variance and visual artifacts caused by color variations at subpixel scale. An example comparing images with and without antialiasing can be found in [Feature Gallery](#feature-gallery) section.
+
 - **`flattracer`**  
   A fast, non-photorealistic renderer that returns the surface color and emitted light at the ray intersection. It ignores lighting, shadows, and reflections.  
   Useful for quick previews, geometry debugging, and visualizing base materials.
@@ -183,6 +185,27 @@ julia image2pfm <input_image>
     </td>
   </tr>
 </table>
+
+
+<table width="100%">
+  <tr>
+    <td align="center" width="33%">
+      <img src="./examples/reference_antia_1.png" width="100%"><br>
+      <code>samples-per-pixel=1</code>
+    </td>
+    <td align="center" width="33%">
+      <img src="./examples/reference_antia_4.png" width="100%"><br>
+      <code>samples-per-pixel=4</code>
+    </td>
+    <td align="center" width="33%">
+      <img src="./examples/reference_antia_9.png"  width="100%"><br>
+      <code>samples-per-pixel=1</code>
+    </td>
+  </tr>
+</table>
+<div style="text-align:center;">
+  <em>Comparison of images rendered with increasing levels of antialiasing. Higher sample counts result in smoother edges and reduced visual noise.</em>
+</div>
 
 ## History
 See the file [HISTORY.md](https://github.com/baronauta/RayTracer/blob/master/HISTORY.md).

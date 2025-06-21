@@ -80,9 +80,10 @@ soft shadows, and reflections.
     Default: `3`.
 
 - `--samples-per-pixel=<Integer>`:
-    Number of samples per pixel for antialiasing; must be a perfect square (e.g., 1, 4, 9, 16).
+    Number of samples per pixel for antialiasing, the final color is computed by averaging the radiance values obtained from each sample. This technique is used to reduce variance and visual artifacts caused by color variations at scales smaller than a pixel.
+    Must be a perfect square (e.g., 1, 4, 9, 16).
     Default: `1`.
-
+    
 """
 Comonicon.@cast function pathtracer(
     scenefile::String, 
