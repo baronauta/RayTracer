@@ -32,6 +32,8 @@
         plane plane_1_name(sky_material, translation([0, 0, 100]) * rotation_y(clock))
         plane plane_2_name(ground_material, identity)
 
+        copy new_plane(plane_2_name)
+
         sphere  sphere_1_name(sphere_material, translation([0, 0, 1]))
 
         cube cube_1_name(cube_material, scaling(1.,2.,3.))
@@ -101,14 +103,15 @@
     ground_material = Material(DiffuseBRDF(CheckeredPigment(RGB(0.3, 0.5, 0.1), RGB(0.1, 0.2, 0.5), 4)), UniformPigment(RGB(0.0, 0.0, 0.0)))
     sphere_material = Material(SpecularBRDF(UniformPigment(RGB(0.5, 0.5, 0.5))), UniformPigment(RGB(0.0, 0.0, 0.0)))
     cube_material = Material(DiffuseBRDF(UniformPigment(RGB(0.5, 0.5, 0.5))), UniformPigment(RGB(0.0, 0.0, 0.0)))
-
-    @test length(scene.shapes) == 6
+    # test for shapes list
+    @test length(scene.shapes) == 7
     @test haskey(scene.shapes, "plane_1_name")
     @test haskey(scene.shapes, "plane_2_name")
     @test haskey(scene.shapes, "sphere_1_name")
     @test haskey(scene.shapes, "cube_1_name")
     @test haskey(scene.shapes, "csg_1_name")
     @test haskey(scene.shapes, "csg_2_name")
+    @test haskey(scene.shapes, "new_plane")
 
     plane_1 = Plane(translation(Vec(0.0, 0.0, 100.0)) * rotation_y(150), sky_material)
     @test scene.shapes["plane_1_name"] ≈ plane_1
@@ -138,11 +141,12 @@
     csg_2 = Csg(csg_1, cube_1, RayTracer.UNION, transf_csg_2)
     @test scene.shapes["csg_2_name"] ≈ csg_2
     
-    @test length(scene.world.shapes) == 2
-    # used_in_csg is a Dict, so objects are inserted into the world in alphabetical order by key (e.g., "csg" before "plane")
-    @test scene.world.shapes[2] ≈ plane_1
+    #test for world shapes list
+    @test length(scene.world.shapes) == 3
     @test scene.world.shapes[1] ≈ csg_2
-    
+    @test scene.world.shapes[2] ≈ plane_1
+    @test scene.world.shapes[3] ≈ Plane() # test for copy
+
     # Check camera
     @test isa(scene.camera, PerspectiveCamera)
     @test scene.camera.transformation ≈ rotation_z(30) * translation(Vec(-4., 0., 1.))

@@ -64,6 +64,7 @@ const NUMBERS = "0123456789eE.+-"
     KW_FUSION
     KW_INTERSECTION
     KW_DIFFERENCE
+    COPY
 end
 
 const KEYWORDS = Dict(
@@ -92,6 +93,7 @@ const KEYWORDS = Dict(
     "fusion" => KW_FUSION,
     "intersection" => KW_INTERSECTION,
     "difference" => KW_DIFFERENCE,
+    "copy" => COPY,
 )
 
 

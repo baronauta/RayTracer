@@ -451,7 +451,7 @@ Parse a Csg:
 
 `csg_name(obj1, obj2, operation, transformation)`
 
-Returns csg identifier and `Csg`.
+Returns the 2 csg.obj identifiers, the csg identifier and the `Csg`.
 """
 function parse_csg(instream::InputStream, scene::Scene)
     csg_identifier = expect_identifier(instream)
@@ -471,6 +471,28 @@ function parse_csg(instream::InputStream, scene::Scene)
     transformation = parse_transformation(instream, scene)
     expect_symbol(instream, ")")
     return obj1_name, obj2_name, csg_identifier, Csg(scene.shapes[obj1_name], scene.shapes[obj2_name], operation, transformation)
+end
+
+"""
+Parse a copied shape:
+
+`copy new_object(original_object)`
+
+Returns the new_object identifier and the `new_object`
+"""
+function parse_copy(instream::InputStream, scene::Scene)
+    new_name = expect_identifier(instream)
+    expect_symbol(instream, "(")
+    original_name = expect_identifier(instream)
+
+    if !haskey(scene.shapes, original_name)
+        throw(GrammarError(instream.location, "unknown shape `$original_name`"))
+    end
+    expect_symbol(instream, ")")    
+
+    original = scene.shapes[original_name]
+    new_shape = deepcopy(original)  # Deep copy to ensure new independent object
+    return new_name, new_shape
 end
 
 """
@@ -594,6 +616,10 @@ function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; externa
             push!(used_in_csg, obj1_name)
             push!(used_in_csg, obj2_name)
 
+        elseif token.keyword == COPY
+            obj_name, obj = parse_copy(instream, scene)
+            scene.shapes[obj_name] = obj
+            
         # Handle other recognized words
         elseif token.keyword == CAMERA
             # Only one camera can be defined in the scene
