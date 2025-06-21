@@ -77,7 +77,7 @@ end
 """
 Define a xy-plane (z=0) with an associated transformation and material.
 """
-struct Plane{T<:AbstractFloat} <: Shape{T}
+mutable struct Plane{T<:AbstractFloat} <: Shape{T}
     transformation::Transformation{T}
     material::Material
 end
@@ -143,13 +143,10 @@ end
 ---
 Check whether a `HitRecord hit` is inside a `Plane`.
 (i.e. the antitransformed point's z-coordinate is < 0).
-
-Note: this function is used only in CSGs computation, it consider the overall CSG transformation as an external parameter to be passed.
 """
-function is_inside(hit::HitRecord, obj::Plane, t::Transformation)
+function is_inside(hit::HitRecord, obj::Plane)
     p = hit.world_point
-    transformation = t * obj.transformation
-    inv_p = inverse(transformation) * p
+    inv_p = inverse(obj.transformation) * p
     return (inv_p.z < 0)
 end
 # ─────────────────────────────────────────────────────────────
@@ -160,7 +157,7 @@ end
 Define a 3D unit sphere centered on the origin of the axes
 with an associated transformation and material.
 """
-struct Sphere{T<:AbstractFloat} <: Shape{T}
+mutable struct Sphere{T<:AbstractFloat} <: Shape{T}
     transformation::Transformation{T}
     material::Material
 end
@@ -316,13 +313,10 @@ end
 ---
 Check whether a `HitRecord hit` is inside a `Sphere`.
 (i.e. the antitransformed point's distance from the origin is < 1).
-
-Note: this function is used only in CSGs computation, it consider the overall CSG transformation as an external parameter to be passed.
 """
-function is_inside(hit::HitRecord, obj::Sphere, t::Transformation)
+function is_inside(hit::HitRecord, obj::Sphere)
     p = hit.world_point
-    transformation = t * obj.transformation
-    inv_p = inverse(transformation) * p
+    inv_p = inverse(obj.transformation) * p
     return (norm(point_to_vec(inv_p)) < 1.0)
 end
 
@@ -330,7 +324,11 @@ end
 # ─────────────────────────────────────────────────────────────
 # Cube definition and functions
 # ─────────────────────────────────────────────────────────────
-struct Cube{T<:AbstractFloat} <: Shape{T}
+"""
+Define a 3D [0,1]³ cube centered on (0.5,0.5,0.5)
+with an associated transformation and material.
+"""
+mutable struct Cube{T<:AbstractFloat} <: Shape{T}
     transformation::Transformation{T}
     material::Material
 end
@@ -349,6 +347,7 @@ function Cube(material::Material)
     Cube(transformation, material)
 end
 
+"Define a cube of edge lenght 1 centered in the origin"
 function centeredCube()
     Cube(translation(Vec(-0.5, -0.5, -0.5)), Material())
 end
@@ -459,12 +458,9 @@ end
 ---
 Check whether a `HitRecord hit` is inside a `Cube`.
 (i.e. the antitransformed point's x,y,z-coordinates are > 0 and < 1).
-
-Note: this function is used only in CSGs computation, it consider the overall CSG transformation as an external parameter to be passed.
 """
-function is_inside(hit::HitRecord, obj::Cube, t::Transformation)
+function is_inside(hit::HitRecord, obj::Cube)
     p = hit.world_point
-    transformation = t * obj.transformation
-    inv_p = inverse(transformation) * p
+    inv_p = inverse(obj.transformation) * p
     return ((0 < inv_p.x < 1) && (0 < inv_p.y < 1) && (0 < inv_p.z < 1))
 end

@@ -110,24 +110,39 @@
     @test haskey(scene.shapes, "csg_1_name")
     @test haskey(scene.shapes, "csg_2_name")
 
-    plane_2_name = Plane(ground_material)
-    sphere_1_name = Sphere(translation(Vec(0.0, 0.0, 1.0)), sphere_material)
-    cube_1_name = Cube(scaling(1.0, 2.0, 3.0), cube_material)
-    csg_1_name = Csg(sphere_1_name, plane_2_name, RayTracer.DIFFERENCE, Transformation())
+    plane_1 = Plane(translation(Vec(0.0, 0.0, 100.0)) * rotation_y(150), sky_material)
+    @test scene.shapes["plane_1_name"] ≈ plane_1
 
-    @test scene.shapes["plane_1_name"] ≈ Plane(translation(Vec(0.0, 0.0, 100.0)) * rotation_y(150), sky_material)
-    @test scene.shapes["plane_2_name"] ≈ plane_2_name
-    @test scene.shapes["sphere_1_name"] ≈ sphere_1_name
-    @test scene.shapes["cube_1_name"] ≈ cube_1_name
-    @test scene.shapes["csg_1_name"] ≈ csg_1_name
-    @test scene.shapes["csg_2_name"] ≈ Csg(csg_1_name, cube_1_name, RayTracer.UNION, rotation_y(150))
+    transf_csg_2 = rotation_y(150)
+    # plane_2 and sphere_1 are used in csg_1, that is used in csg_2.
+    # need to compose the csg_1 transformation, but is identity, with csg_2 transformation.
+    plane_2 = Plane(ground_material)
+    sphere_1 = Sphere(translation(Vec(0.0, 0.0, 1.0)), sphere_material)
+    plane_2_t = Plane(transf_csg_2,ground_material)
+    sphere_1_t = Sphere(transf_csg_2 * translation(Vec(0.0, 0.0, 1.0)), sphere_material)
+    @test scene.shapes["plane_2_name"] ≈ plane_2_t
+    @test scene.shapes["sphere_1_name"] ≈ sphere_1_t
 
+    # cube_1 is used in csg_2.
+    # need to compose the csg_2 transformation for the cube.
+    cube_1 = Cube(scaling(1.0, 2.0, 3.0), cube_material)
+    cube_1_t = Cube(transf_csg_2 * scaling(1.0, 2.0, 3.0), cube_material)
+    @test scene.shapes["cube_1_name"] ≈ cube_1_t
 
+    # csg_1 is used in csg_2.
+    # need to compose the csg_2 transformation for the csg.
+    csg_1 = Csg(sphere_1, plane_2, RayTracer.DIFFERENCE, Transformation())
+    csg_1_t = Csg(deepcopy(sphere_1), deepcopy(plane_2), RayTracer.DIFFERENCE, transf_csg_2 * Transformation())
+    @test scene.shapes["csg_1_name"] ≈ csg_1_t
+
+    csg_2 = Csg(csg_1, cube_1, RayTracer.UNION, transf_csg_2)
+    @test scene.shapes["csg_2_name"] ≈ csg_2
+    
     @test length(scene.world.shapes) == 2
     # used_in_csg is a Dict, so objects are inserted into the world in alphabetical order by key (e.g., "csg" before "plane")
-    @test scene.world.shapes[2] ≈ Plane(translation(Vec(0.0, 0.0, 100.0)) * rotation_y(150), sky_material)
-    @test scene.world.shapes[1] ≈ Csg(csg_1_name, cube_1_name, RayTracer.UNION, rotation_y(150))
-
+    @test scene.world.shapes[2] ≈ plane_1
+    @test scene.world.shapes[1] ≈ csg_2
+    
     # Check camera
     @test isa(scene.camera, PerspectiveCamera)
     @test scene.camera.transformation ≈ rotation_z(30) * translation(Vec(-4., 0., 1.))

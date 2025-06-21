@@ -17,7 +17,7 @@ end
 
 """
 A Constructive Solid Geometry (CSG) shape defined by applying an operation
-(`UNION`, `DIFFERENCE`, or `INTERSECTION`) between two shapes.
+(`UNION`, `FUSION`, `DIFFERENCE`, or `INTERSECTION`) between two shapes.
 
 Fields:
 - `obj1::Shape`: the first shape involved in the operation;
@@ -29,7 +29,7 @@ Notes:
 - **Shape order matters**: `obj1 - obj2` is not the same as `obj2 - obj1`.
 - **Shapes can be nested CSGs**: both `obj1` and `obj2` may themselves be `Csg` objects.
 """
-struct Csg{T<:AbstractFloat} <: Shape{T}
+mutable struct Csg{T<:AbstractFloat} <: Shape{T}
     obj1::Shape
     obj2::Shape
     operation::Operation
@@ -93,11 +93,25 @@ function Csg(obj1::Shape{T}, obj2::Shape{T}, operation::Operation) where {T<:Abs
     return csg
 end
 
+"Apply transformation to shapes for overall Csg transformation"
+function apply_transformation!(shape::Shape{T}, transformation::Transformation) where T
+    shape.transformation = transformation * shape.transformation
+end
+
+"Apply transformation to Csg for recursive overall Csg transformation"
+function apply_transformation!(csg::Csg{T}, transformation::Transformation) where T
+    apply_transformation!(csg.obj1, transformation)
+    apply_transformation!(csg.obj2, transformation)
+    csg.transformation = transformation * csg.transformation
+end
+
 """
 Csg outer costructor, with specified transformation.
 validates the csg before returning it.
 """
 function Csg(obj1::Shape{T}, obj2::Shape{T}, operation::Operation, transformation::Transformation) where {T<:AbstractFloat}
+    apply_transformation!(obj1, transformation)
+    apply_transformation!(obj2, transformation)
     csg = Csg{T}(obj1, obj2, operation, transformation)
     valid_csg(csg)
     return csg
@@ -106,26 +120,23 @@ end
 """
 ---
 Check whether a `HitRecord hit` is inside a `Csg` object.
-
-Note: this can be a nested csg, it consider the overall parent CSG transformation as an external parameter to be passed.
 """
-function is_inside(hit::HitRecord, csg::Csg, t::Transformation)
-    transformation = t * csg.transformation
+function is_inside(hit::HitRecord, csg::Csg)
     if csg.operation == UNION || csg.operation == FUSION
         # hit records can be inside one obj or the other
-        return (is_inside(hit, csg.obj1, transformation) || (is_inside(hit, csg.obj2, transformation)))
+        return (is_inside(hit, csg.obj1) || (is_inside(hit, csg.obj2)))
 
     elseif csg.operation == INTERSECTION
         # hit records must be in obj AND in obj 2
-        return (is_inside(hit, csg.obj1, transformation) && (is_inside(hit, csg.obj2, transformation)))
+        return (is_inside(hit, csg.obj1) && (is_inside(hit, csg.obj2)))
 
     elseif csg.operation == DIFFERENCE
         # hit records can be on obj1 if not in ob2 and in ob2 if not in on1
-        return (is_inside(hit, csg.obj1, transformation) && !is_inside(hit, csg.obj2, transformation))
+        return (is_inside(hit, csg.obj1) && !is_inside(hit, csg.obj2))
     end
 end
 
-"if a hit belongs to an obj"
+"Check if a hit belongs to an obj"
 function _belongs(hr::HitRecord, obj::Shape)
     if obj isa Csg
         return ((hr.shape ≈ obj.obj1) || (hr.shape ≈ obj.obj2))
@@ -153,11 +164,11 @@ function valid_hit(hr::HitRecord, obj::Shape, csg::Csg)
     if op == UNION
         return true
     elseif op == INTERSECTION
-        return is_inside(hr, obj, csg.transformation)
+        return is_inside(hr, obj)
     elseif op == FUSION
-        return !is_inside(hr, obj, csg.transformation)
+        return !is_inside(hr, obj)
     elseif op == DIFFERENCE
-        return (is_obj1 && !is_inside(hr, obj, csg.transformation)) || (!is_obj1 && is_inside(hr, obj, csg.transformation))
+        return (is_obj1 && !is_inside(hr, obj)) || (!is_obj1 && is_inside(hr, obj))
     else
         throw(CsgError("undefined operation $(op)"))
     end
