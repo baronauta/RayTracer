@@ -181,6 +181,90 @@ end
         )
         test_intersection(sphere, ray, hr)
     end
+
+    @testset "Cube" begin
+        cube = Cube()
+        # centered unit cube
+        ## ray from above
+        ray_above = Ray(Point(0.5, 0.5, 2.0), -(VEC_Z))
+        hr_above = HitRecord(
+            Point(0.5, 0.5, 1.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(5/8, 0.5),
+            1.0,
+            ray_above,
+            cube,
+        )
+        test_intersection(cube, ray_above, hr_above)
+
+        ## ray towards x, 1 intersection
+        ray_x = Ray(Point(0.5, 0.5, 0.5), VEC_X)
+        hr_x = HitRecord(
+            Point(1.0, 0.5, 0.5),
+            Normal(-1.0, 0.0, 0.0),
+            Vec2D(3/8, 0.5),
+            0.5,
+            ray_x,
+            cube,
+        )
+        test_intersection(cube, ray_x, hr_x)
+
+        ## ray from x in opposite direction, no intersection
+        test_intersection(cube, Ray(Point(1.5, 0.5, 0.5), VEC_X), nothing)
+
+        ## tangent ray
+        ray = Ray(Point(2.0, 0.0, 0.0), -VEC_X)
+        hr = HitRecord(
+            Point(1.0, 0.0, 0.0),
+            Normal(1.0, 0.0, 0.0),
+            Vec2D(1/4, 1/3),
+            1.,
+            ray,
+            cube,
+        )
+        test_intersection(cube, ray, hr)
+
+        ## ∦ to any axis, general case
+        ray = Ray(Point(1.5, 2.0, 1.5), Vec(-1.0, -1.0, -1.0))
+        hr = HitRecord(
+            Point(0.5, 1.0, 0.5),
+            Normal(0.0, 1.0, 0.0),
+            Vec2D(3/8, 5/6),
+            1.,
+            ray,
+            cube,
+        )
+        test_intersection(cube, ray, hr)
+
+        # cube translated
+        cube = Cube(translation(Vec(-1.,-1.,-1.,)), Material())
+        ## ray from above
+        ray_above = Ray(Point(-0.5, -0.5, 1.0), -(VEC_Z))
+        hr_above = HitRecord(
+            Point(-0.5, -0.5, 0.0),
+            Normal(0.0, 0.0, 1.0),
+            Vec2D(5/8, 0.5),
+            1.0,
+            ray_above,
+            cube,
+        )
+        test_intersection(cube, ray_above, hr_above)
+
+        # cube scaled
+        cube = Cube(scaling(2.,2.,2.), Material())
+        ## ray from above
+        ray_above = Ray(Point(1., 1., 3.), -(VEC_Z))
+        hr_above = HitRecord(
+            Point(1.0, 1.0, 2.0),
+            Normal(0.0, 0.0, 0.5),
+            Vec2D(5/8, 0.5),
+            1.0,
+            ray_above,
+            cube,
+        )
+        test_intersection(cube, ray_above, hr_above)
+
+    end
 end
 
 @testset "World" begin
