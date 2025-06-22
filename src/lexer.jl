@@ -59,6 +59,7 @@ const NUMBERS = "0123456789eE.+-"
     ORTHOGONAL
     PERSPECTIVE
     FLOAT
+    MOTION
 end
 
 const KEYWORDS = Dict(
@@ -82,6 +83,7 @@ const KEYWORDS = Dict(
     "orthogonal" => ORTHOGONAL,
     "perspective" => PERSPECTIVE,
     "float" => FLOAT,
+    "motion" => MOTION,
 )
 
 
