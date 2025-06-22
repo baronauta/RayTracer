@@ -30,6 +30,8 @@
         sphere(sphere_material, translation([0, 0, 1]))
 
         camera(perspective, rotation_z(30) * translation([-4, 0, 1]), 2.0)
+
+        motion(translation([10, 20, 30]), 10)
         """
     )
 
@@ -92,6 +94,10 @@
     @test scene.camera.transformation ≈ rotation_z(30) * translation(Vec(-4., 0., 1.))
     @test scene.camera.aspect_ratio ≈ aspect_ratio    # Parsed from scene.float_variables["_aspect_ratio"]
     @test scene.camera.distance ≈ 2.0
+
+    # Check motion
+    @test scene.motion.vec ≈ Vec(10., 20., 30.)
+    @test scene.motion.num_frames == 10
 end
 
 @testset "Parser exceptions" begin
@@ -213,5 +219,53 @@ end
             end
         end
         @test err_thrown
+    end
+
+    @testset "Wrong motion description" begin
+        
+        @testset "Unaccepted transformation composition" begin
+            stream = IOBuffer(
+                """
+                motion(translation([2, 4, 5]) * scaling_x(10), 10)
+                """
+            )
+
+            instream = RayTracer.InputStream(stream, "test")
+
+            err_thrown = false
+            try
+                _ = RayTracer.parse_scene(instream, 1.0)
+            catch e
+                if isa(e, GrammarError)
+                    err_thrown = true
+                else
+                    rethrow(e)  # Re-throw unexpected exceptions
+                end
+            end
+            @test err_thrown
+        end
+
+        @testset "Number of frames not integer" begin
+            
+            stream = IOBuffer(
+                """
+                motion(translation([2, 4, 5]), 10.2)
+                """
+            )
+
+            instream = RayTracer.InputStream(stream, "test")
+
+            err_thrown = false
+            try
+                _ = RayTracer.parse_scene(instream, 1.0)
+            catch e
+                if isa(e, GrammarError)
+                    err_thrown = true
+                else
+                    rethrow(e)  # Re-throw unexpected exceptions
+                end
+            end
+            @test err_thrown
+        end
     end
 end
