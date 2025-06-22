@@ -175,3 +175,23 @@ function my_renderer(
         )
     )
 end
+
+
+"""
+    pointlight_tracer(
+    world::World,
+    ray::Ray,
+    pcg::PCG;
+    bkg_color = BLACK,
+    )
+
+TBW
+"""
+function pointlight_tracer(
+    world::World,
+    ray::Ray,
+    pcg::PCG;
+    bkg_color = BLACK,
+    )
+    #...
+end
