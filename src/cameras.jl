@@ -1,5 +1,5 @@
-
-#_______________________________________________________________________________________
+#     __________________________________________________________
+#
 #     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
 #     __________________________________________________________
 #
@@ -24,83 +24,57 @@
 
 
 # ─────────────────────────────────────────────────────────────
-# Ray
-# ─────────────────────────────────────────────────────────────
-
-"""
-    Ray(origin::Point{T}, dir::Vec{T}, tmin::T, tmax::T, depth::Integer) where {T<:AbstractFloat}
-
-Represents a ray in 3D space.
-
-# Arguments
-- `origin::Point{T}`: The starting point of the ray in 3D space.
-- `dir::Vec{T}`: The direction vector of the ray.
-- `tmin::T`: The minimum parameter along the ray.
-- `tmax::T`: The maximum parameter along the ray.
-- `depth::Integer`: Allowed number of recursive calls (reflections / refractions).
-"""
-struct Ray{T<:AbstractFloat}
-    origin::Point{T}
-    dir::Vec{T}
-    tmin::T
-    tmax::T
-    depth::Integer
-end
-
-
-# Outer constructor with defaults
-function Ray(
-    origin::Point{T},
-    dir::Vec{T};
-    tmin::T = 1e-5,
-    tmax::T = typemax(T),
-    depth::Integer = 0,
-) where {T<:AbstractFloat}
-    Ray{T}(origin, dir, tmin, tmax, depth)
-end
-
-function ≈(ray1::Ray, ray2::Ray)
-    return ray1.origin ≈ ray2.origin && ray1.dir ≈ ray2.dir
-end
-
-"Compute the position of a ray at the given t."
-function at(ray::Ray, t::AbstractFloat)
-    # r(t) = O + t ⋅ d;
-    # O is a Point, d a vector and t a scalar.
-    return ray.origin + t * ray.dir
-end
-
-"Apply a transformation to a ray."
-function transform(ray::Ray, T::Transformation)
-    origin = T * ray.origin
-    dir = T * ray.dir
-    return Ray(origin, dir)
-end
-
-# ─────────────────────────────────────────────────────────────
-# Camera
+# CAMERA
+#
+# We define two types of camera:
 # - OrthogonalCamera
 # - PerspectiveCamera
 #
-# Spatial coordinates are named with (x, y, z).
-# Screen coordinates are named (u,v).
+# Each camera has a method `fire_ray` that is used to cast a ray
+# from a specified pixel with coordinates (u, v). 
+#
+# Note:
+# Spatial coordinates are named with (x, y, z), while screen 
+# coordinates are named (u,v).
 # ─────────────────────────────────────────────────────────────
+
 
 abstract type Camera{T<:AbstractFloat} end
 
-#Orthogonal Camera
+
+"""
+    OrthogonalCamera{T}
+
+Uses orthographic projection, which preserves object sizes regardless of depth.
+This is ideal for technical or architectural visualization where true dimensions are important.
+
+# Fields
+- `aspect_ratio::Union{Rational,T}`: width-to-height ratio of the view.
+- `transformation::Transformation`: transformation to be applied to th camera.
+"""
 struct OrthogonalCamera{T<:AbstractFloat} <: Camera{T}
     aspect_ratio::Union{Rational,T}
     transformation::Transformation
 end
 
-# Default constructor with implicit transformation (identity)
+"""
+    OrthogonalCamera(aspect_ratio::Union{Rational,T})
+
+Constructs an orthographic camera with the given `aspect_ratio` and identity transformation.
+"""
 function OrthogonalCamera(aspect_ratio::Union{Rational,T}) where {T<:AbstractFloat}
     transformation =
         Transformation(HomMatrix(IDENTITY_MATR4x4), HomMatrix(IDENTITY_MATR4x4))
     OrthogonalCamera{T}(aspect_ratio, transformation)
 end
 
+"""
+    fire_ray(cam::OrthogonalCamera, u::AbstractFloat, v::AbstractFloat)
+
+Generates a ray from the orthographic camera through screen coordinates `(u, v)`.
+
+The ray originates at `x = -1` on the image plane and points in the +X direction.
+"""
 function fire_ray(cam::OrthogonalCamera, u::AbstractFloat, v::AbstractFloat)
     x = -1.0
     y = (1.0 - 2.0 * u) * cam.aspect_ratio
@@ -111,14 +85,29 @@ function fire_ray(cam::OrthogonalCamera, u::AbstractFloat, v::AbstractFloat)
     return transform(ray, cam.transformation)
 end
 
-# Perspective Camera
+
+"""
+    PerspectiveCamera{T}
+
+Camera with perspective projection. Objects farther from the camera appear smaller.
+
+# Fields
+- `distance::T`: distance of the camera from the image plane (screen).
+- `aspect_ratio::Union{Rational,T}`: width-to-height ratio of the view.
+- `transformation::Transformation`: transformation to be applied to th camera.
+"""
 struct PerspectiveCamera{T<:AbstractFloat} <: Camera{T}
     distance::T
     aspect_ratio::Union{Rational,T}
     transformation::Transformation
 end
 
-# Default constructor with implicit transformation (identity)
+"""
+    PerspectiveCamera(aspect_ratio)
+
+Create a perspective camera with the given aspect ratio, default distance = 1, 
+and identity transformation.
+"""
 function PerspectiveCamera(aspect_ratio::Union{Rational,T}) where {T<:AbstractFloat}
     distance = 1
     transformation =
@@ -126,6 +115,13 @@ function PerspectiveCamera(aspect_ratio::Union{Rational,T}) where {T<:AbstractFl
     PerspectiveCamera{T}(distance, aspect_ratio, transformation)
 end
 
+"""
+    fire_ray(cam::PerspectiveCamera, u::AbstractFloat, v::AbstractFloat)
+
+Generates a perspective ray through normalized screen coordinates `(u, v)`.
+
+The ray originates at `(-distance, 0, 0)` and points toward the view plane.
+"""
 function fire_ray(cam::PerspectiveCamera, u::AbstractFloat, v::AbstractFloat)
     x = -cam.distance
     y = 0.0
@@ -136,49 +132,48 @@ function fire_ray(cam::PerspectiveCamera, u::AbstractFloat, v::AbstractFloat)
     return transform(ray, cam.transformation)
 end
 
-# ─────────────────────────────────────────────────────────────
-# ImageTracer
 
-# - fire_ray: sends a ray to a given pixel
-# - fire_all_rays: iterates over all pixels and calls fire_ray
+
+# ─────────────────────────────────────────────────────────────
+# IMAGETRACER
+#
+# ImageTracer binds together the HDR image and the camera.
+# The function `fire_ray` is responsible for firing a single ray
+# through a specified pixel of the image.
+#
+# Key functions:
+# - fire_ray: wrapper function that fires a single ray through a
+#   specified pixel by converting pixel coordinates to camera space.
+# - fire_all_rays: iterates over all pixels and calls fire_ray.
 # ─────────────────────────────────────────────────────────────
 
 """
     ImageTracer{T}
 
-Responsible for:
-- Sending rays to the corresponding pixels in an image
-- Converting between `HdrImage.pixels` indices `(column, row)` and the camera's `(u, v)` coordinates
-
-# Fields
-- `image::HdrImage`: the image to write ray results into
-- `camera::Camera{T}`: the camera generating the rays
+Handles ray generation from a camera through each pixel of an HDR image,
+mapping pixel coordinates to camera space and storing ray results.
 """
 struct ImageTracer{T<:AbstractFloat}
     image::HdrImage
     camera::Camera{T}
 end
 
+
 """
-    fire_ray(tracer::ImageTracer, col::Integer, row::Integer; u_pixel::AbstractFloat=0.5, v_pixel::AbstractFloat=0.5)
+    fire_ray(tracer::ImageTracer, col::Integer, row::Integer; u_pixel::AbstractFloat=0.5, v_pixel::AbstractFloat=0.5) -> Ray
 
-Convert the pixel coordinates `(col, row)` to screen coordinates `(u, v)`
-
-Generates a `Ray` directed towards a specific point on the pixel's surface of the image in `tracer` 
+Convert pixel coordinates `(col, row)` to screen coordinates `(u, v)` and generate a ray
+from the camera through the specified point within that pixel.
 
 # Arguments
-- `tracer::ImageTracer`: An object containing the camera and the image.
+- `tracer::ImageTracer`: The ImageTracer containing the camera and HDR image.
 - `col::Integer`: The pixel column (starting from 1).
 - `row::Integer`: The pixel row (starting from 1).
-- `u_pixel::AbstractFloat=0.5`: Horizontal position in the pixel (range 0 to 1).
-- `v_pixel::AbstractFloat=0.5`: Vertical position in the pixel (range 0 to 1).
+- `u_pixel::AbstractFloat=0.5`: Horizontal position in the pixel Horizontal offset inside the pixel (0 = left edge, 1 = right edge).
+- `v_pixel::AbstractFloat=0.5`: Vertical position in the pixel Vertical offset inside the pixel (0 = top edge, 1 = bottom edge).
 
 # Returns
 - A `Ray` generated from the camera towards the specified point within the pixel.
-
-# Example
-    ray = fire_ray(tracer, 100, 150) # center of pixel
-    ray = fire_ray(tracer, 100, 150; u_pixel=0.25, v_pixel=0.75)  # custom point in the pixel
 """
 function fire_ray(
     tracer::ImageTracer,
@@ -188,17 +183,34 @@ function fire_ray(
     v_pixel::AbstractFloat = 0.5,
 )
 
-    # all pixels have dimensions '(1,1)', so the pixel center is at the pixel coordinates '+ (0.5,0.5)'
-    # !!Attention!!
-    #         the coordinates of the pixel(row, col) are:        |        but the (u,v) coordinates are:
-    #      (col=1, row=1)  +--------+   (col=width, row=1)       |   (u=0, v=1)    +--------+    (u=1, v=1)
-    #                      |        |                            |                 |        |
-    #                      |        |                            |                 |        |
-    # (col=1, row=height)  +--------+   (col=width, row=height)  |   (u=0, v=0)    +--------+    (u=1, v=0)
+    # Pixels indexed by (col, row), starting top-left:
+    #
+    #  (1,1)   (2,1)   ...   (width,1)
+    #  +-----+ +-----+       +-----+
+    #  |     | |     |       |     |
+    #  +-----+ +-----+       +-----+
+    #
+    #  (1,2)   (2,2)   ...   (width,2)
+    #  +-----+ +-----+       +-----+
+    #  |     | |     |       |     |
+    #  +-----+ +-----+       +-----+
+    #
+    #  ...     ...            ...
+    #
+    #  (1,height) ...       (width,height)
+
+    # Each pixel has dimensions (1,1) in (u, v) coordinates,
+    # hence the center is (0.5, 0.5)
+    #
+    #   (u=0, v=1) +--------+ (u=1, v=1)
+    #              |        |
+    #              |        |
+    #   (u=0, v=0) +--------+ (u=1, v=0)
+
     #=
 
     u = (col - 1 + u_pixel) / (tracer.image.width)
-    v = 1 + (v_pixel - row) / (tracer.image.height)
+    v = 1 - (row - 1 + v_pixel) / (tracer.image.height)
 
     =#
 
@@ -206,6 +218,7 @@ function fire_ray(
     v = 1 - (row - 1 + v_pixel) / (tracer.image.height)
     return fire_ray(tracer.camera, u, v)
 end
+
 
 """
     simple_progress_bar(i, total; width=40)
@@ -242,29 +255,96 @@ function simple_progress_bar(i, total; item = "row", width = 40)
 end
 
 
+"Check that a number is a perfect square"
+function is_square(n::Integer)
+    # `isqrt(n)`: returns the largest integer m such that m*m <= n
+    # Ex: isqrt(12) = 3
+    return isqrt(n)^2 == n
+end
+
+"Jittered sampling within the subpixel (i, j)"
+function jitter_sampling(i::Integer, j::Integer, sqrt_samples::Integer, pcg::PCG)
+    du = (i - random_float!(pcg)) / sqrt_samples
+    dv = 1 - (j - random_float!(pcg)) / sqrt_samples
+    return du, dv
+end
+
+"Custom exception for antialiasing-related errors"
+struct AntialiasingError <: CustomException
+    msg::String
+end
+
 """
-    fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
+   fire_all_rays!(tracer::ImageTracer, func; samples_per_pixel::Integer=1, pcg::Union{PCG, Nothing}=nothing, progress_flag::Bool=true)
 
-Calculate the solution to the rendering equation with a specified method for all pixels in an image
+Renders the entire image by evaluating the rendering function `func` for each pixel.
 
-Set all images pixels to calculated colors
+For each pixel in the `HdrImage` inside `tracer`, this function fires rays through the pixel,
+optionally performing antialiasing by sampling multiple subpixel locations (jittered samples),
+and sets the pixel color to the computed result.
 
 # Arguments
-- `tracer::ImageTracer`: An object containing the camera and the image.
-- `func`: The function that resolve the rendering equation for one pixel
-- `progress_flag::Bool`: If `true`, display a progress bar during rendering (default: true).
+- `tracer::ImageTracer`: The object containing the camera and HDR image to be rendered.
+- `func`: A function that takes a `Ray` and returns the computed color for that ray.
+- `samples_per_pixel::Int=1`: Number of samples per pixel for antialiasing. Must be a perfect square (e.g., 1, 4, 9, 16).
+- `pcg`: Optional random number generator for jittering sample positions.
+- `progress_flag::Bool=true`: If `true`, displays a progress bar during rendering.
 
-The function set all the pixels of the passed `HdrImage` to calculated colors.
+# Behavior
+- If `samples_per_pixel == 1`, fires a single ray through the center of each pixel.
+- If `samples_per_pixel > 1`, uses jittered subpixel sampling for antialiasing, averaging the results.
+- Updates the pixels in-place on `tracer.image`.
 """
-function fire_all_rays!(tracer::ImageTracer, func; progress_flag = true)
+function fire_all_rays!(
+    tracer::ImageTracer,
+    func;
+    samples_per_pixel::Integer = 1,
+    pcg::Union{PCG,Nothing} = nothing,
+    progress_flag::Bool = true,
+)
     for row = 1:tracer.image.height
         for col = 1:tracer.image.width
-            ray = fire_ray(tracer, col, row) # if i want i can pass u_pixel and v_pixel ≠ 0.5 (default value)
-            color = func(ray)
-            set_pixel!(tracer.image, col, row, color)
+
+            if samples_per_pixel == 1
+                # Cast a single ray through the center of each pixel
+                # fire_ray default: u=0.5, v=0.5
+                ray = fire_ray(tracer, col, row)
+                color = func(ray)
+                set_pixel!(tracer.image, col, row, color)
+
+            else
+                # Antialiasing!
+                if !is_square(samples_per_pixel)
+                    throw(
+                        AntialiasingError(
+                            "'samples_per_pixel' must be a perfect square (e.g., 1, 4, 9, 16, ...)",
+                        ),
+                    )
+                end
+                if isnothing(pcg)
+                    throw(
+                        AntialiasingError(
+                            "a random number generator is required for jittered antialiasing"
+                        ),
+                    )
+                end
+                # Divide each pixel into `samples_per_pixel` sub-squares of size 1/√samples_per_pixel,
+                # and cast a ray through a random position inside each sub-square
+                sqrt_samples = round(Int, sqrt(samples_per_pixel))
+ 
+                accumulated_color = RGB(0, 0, 0)
+                for i = 1:sqrt_samples
+                    for j = 1:sqrt_samples
+                        # Jittered offset within the subpixel
+                        du, dv = jitter_sampling(i, j, sqrt_samples, pcg)
+                        ray = fire_ray(tracer, col, row; u_pixel = du, v_pixel = dv)
+                        accumulated_color += func(ray)
+                    end
+                end
+                averaged_color = accumulated_color / samples_per_pixel
+                set_pixel!(tracer.image, col, row, averaged_color)
+            end
         end
-        # for video i dont want a progress bar for all rows of all images, only for frames.
-        # so i need  the progress_flag, if is an image the progress_flag is true, if video is false
-        (progress_flag == true) && simple_progress_bar(row, tracer.image.height) # display the progress bar
+        progress_flag && simple_progress_bar(row, tracer.image.height)
     end
 end

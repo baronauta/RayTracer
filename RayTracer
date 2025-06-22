@@ -1,6 +1,7 @@
 #!/usr/bin/env julia
 
-#_______________________________________________________________________________________
+#     __________________________________________________________
+#
 #     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
 #     __________________________________________________________
 #
@@ -20,111 +21,121 @@
 #     Unless required by applicable law or agreed to in writing,
 #     this software is provided "AS IS", without warranties or conditions
 #     of any kind, either express or implied.
-#
-#_______________________________________________________________________________________
+
+
+#❗For name generation logic, see misc.jl
 
 using Pkg
 Pkg.activate(normpath(@__DIR__))
 
 using RayTracer
 using Comonicon
-using Dates
+
+
 
 # ─────────────────────────────────────────────────────────────
 # PATH TRACER
 # ─────────────────────────────────────────────────────────────
 
 """
-Path tracer command to render a scene.
-
-Each execution produces two output images:
-- a high dynamic range `.pfm` file
-- a tone-mapped image (`.png`, `.jpeg`, or `.tif`)
-
-Both images are saved in the `render/` folder. The tone-mapped image is generated using a basic built-in tone mapping, which may not produce optimal results for all scenes.  
-For higher-quality control, load the `.pfm` file and apply a custom tone mapping using the `tonemapping` function.
-
-Note: This command uses the path tracing algorithm, that estimates a solution of the rendering equation via Monte Carlo integration.
-    It allows to obtain an exact solution for the rendering equation, although rendering and producing the `.pfm` file can be time-consuming.
+A physically-based renderer that simulates realistic lighting, including global illumination, 
+soft shadows, and reflections.
 
 # Args
 
-- `scene_file`: Path to the scene description file (String).
-- `width`: Width of the output image (Integer).
-- `height`: Height of the output image (Integer).
+- `scenefile`: Path to the scene description file.
+- `width`: Width of the output image in pixels.
+- `height`: Height of the output image in pixels.
 
 # Options
 
-- `--output-name=<String>`: Base name for the output image files (without extension).  
-  If not provided, a timestamped name like `render_2025-06-07_135023` will be used.  
-  Output files will be saved as `render/<name>.<ext>` and `render/<name>.pfm`.
+- `--output-name=<String>`: 
+    Custom base name for the output files.
+    If omitted, a timestamp-based name is used (e.g., `pthtrc_2025-06-07_135023`).
+    All output files are saved inside a folder named `render_<scene_name>/`.
 
-- `--extension=<String>`: File format for the tone-mapped image (`.png`, `.jpeg`, or `.tif`). Default: `.png`.
+- `--extension=<String>`: 
+    Format of the tone-mapped output image: `.png,` `.jpeg`, or `.tif.
+    Default is `.png.`.
 
-- `--angle=<float>`: Angle for rotating the camera around the Z axis.  
-  The distance from the origin is maintained.  
-  Useful for quickly changing the view without modifying the `scene_file` (default: `0.0`).
+- `--angle=<float>`:
+    Overrides the `angle` variable in the scene’s text-based description file if it is present. 
+    If not specified, the value from the scene file is used by default. 
+    This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.
+    
+- `--n-rays=<Integer>`: 
+    Number of rays cast per pixel. 
+    Higher values improve quality but increase render time.
+    Default: `5`.
 
-- `--n-rays=<Integer>`: Number of rays per pixel (default: `5`).
-- `--max-depth=<Integer>`: Maximum ray recursion depth (default: `5`).
-- `--russian-roulette-limit=<Integer>`: Depth at which to start Russian roulette termination (default: `3`).
+- `--max-depth=<Integer>`:
+    Maximum recursion depth for ray bounces (reflections/refractions).
+    Increasing this allows capturing more indirect lighting and reflections, 
+    but causes exponentially longer rendering times.
+    Default: `5`.
+
+- `--russian-roulette-limit=<Integer>`: 
+    Recursion depth after which Russian roulette termination begins to probabilistically end ray paths, 
+    reducing computation while minimizing bias.
+    Default: `3`.
+
+- `--samples-per-pixel=<Integer>`:
+    Number of samples per pixel for antialiasing, the final color is computed by averaging the radiance values obtained from each sample. This technique is used to reduce variance and visual artifacts caused by color variations at scales smaller than a pixel.
+    Must be a perfect square (e.g., 1, 4, 9, 16).
+    Default: `1`.
+    
 """
 Comonicon.@cast function pathtracer(
-    scene_file, 
-    width, 
-    height; 
+    scenefile::String, 
+    width::Int, 
+    height::Int; 
     output_name::String="",
-    extension::String = ".png",
-    angle::Float64=0.0,
+    extension::String = "", # useful fix-it although without output name (so timestamp.extension)
+    angle::Union{Float64, Nothing}=nothing,
     n_rays::Int=5,
     max_depth::Int=5,
     russian_roulette_limit::Int=3,
+    samples_per_pixel::Int=1
     )
 
     try
+        print_welcome()
+        RayTracer.check_name(scenefile, [".txt"])
         println("📂 Preparing to parse the scene...")
-        # check if an output name is declared, if not use timestamp for default
-        if isempty(output_name)
-            timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
-            output_name = "render_$timestamp" 
-        end
+        # Determine the correct output file extension and construct output paths.
+        # This handles cases where the user may or may not specify output name and/or extension.
+        # If no output name is given, a timestamped name inside a folder named after the scene is created.
+        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scenefile, "pthtrc")
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
             throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
         end
 
-        # make the path for output images
-        base_path = "render"
-        mkpath(base_path)
-        ldr_path = joinpath(base_path, output_name * extension)
-        pfm_path = joinpath(base_path, output_name * ".pfm")
-
-        # convert width e height to Int
-        img_width = parse(Int, width)
-        img_height = parse(Int, height)
-        # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
-        aspect_ratio = img_width/img_height
-        variables = Dict(
-            "angle" => angle,
-            "aspect_ratio" => aspect_ratio,
-            )
+        aspect_ratio = width/height
+        if !isnothing(angle)
+            external_variables = Dict(
+                "angle" => angle,
+                )
+        else
+            external_variables = Dict{String, Float64}()
+        end
 
         # Parse the scene from text file
-        scene = open(scene_file, "r") do io
-            instream = RayTracer.InputStream(io, scene_file)
-            RayTracer.parse_scene(instream; variables)
+        scene = open(scenefile, "r") do io
+            instream = RayTracer.InputStream(io, scenefile)
+            RayTracer.parse_scene(instream, aspect_ratio; external_variables)
         end
         println("✓ Scene parsing completed.")
 
         println("🖼️  Setting up the image canvas and camera...")
         # Prepare the canva to draw on
-        img = HdrImage(img_width, img_height)
+        img = HdrImage(width, height)
         # Prepare the environment made of the canva and the observer
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
         
-        println("🚀 Starting ray tracing (this may take a while)...")
+        println("🚀 Starting ray tracing (this may take a while)...\n")
         # RayTracing algorithm that need as input ...
         pcg = PCG()
         f =
@@ -138,15 +149,18 @@ Comonicon.@cast function pathtracer(
                 russian_roulette_limit = russian_roulette_limit,
             )
 
-
-        RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
-        println("\n")
+        if samples_per_pixel == 1
+            RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
+        else
+            pcg_antialiasing = RayTracer.PCG()
+            RayTracer.fire_all_rays!(tracer, f; samples_per_pixel=samples_per_pixel, pcg=pcg_antialiasing, progress_flag = true)
+        end
 
         write(pfm_path, img)
         
-        # basic tone mapping
-        RayTracer.normalize_image!(img)
-        RayTracer.clamp_image!(img)
+        # Basic tone mapping
+        println("\n\nApplying basic tone mapping...\n")
+        RayTracer.tonemapping!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -162,98 +176,95 @@ Comonicon.@cast function pathtracer(
     end
 end
 
+
+
 # ─────────────────────────────────────────────────────────────
 # FLAT TRACER
 # ─────────────────────────────────────────────────────────────
 
 """
-Flat tracer command to render a 3D scene with a minimal ray tracer algorithm.
-
-This tool generates two output images for each rendering:
-- a high dynamic range `.pfm` file
-- a tone-mapped image (`.png`, `.jpeg`, or `.tif`)
-
-Both images are saved in the `render/` folder. The tone-mapped image is generated using a basic built-in tone mapping, which may not produce optimal results for all scenes.  
-For higher-quality control, load the `.pfm` file and apply a custom tone mapping using the `tonemapping` function.
-
-Note: This algorithm returns the sum of the surface color and
-    emitted radiance at the intersection point of a `ray`.
-    If the ray does not intersect any object, the function returns `bkg_color`.
-
-    This tracer ignores lighting, shadows, and reflections, and is typically used
-    for quick previews, debugging geometry, or visualizing base materials and emissive surfaces.
+A fast, non-photorealistic renderer that returns the surface color and emitted light at the ray intersection. It ignores lighting, shadows, and reflections.  
+Useful for quick previews, geometry debugging, and visualizing base materials.
 
 # Args
 
-- `scene_file`: Path to the scene description file (String).
-- `width`: Width of the output image (Integer).
-- `height`: Height of the output image (Integer).
+- `scenefile`: Path to the scene description file.
+- `width`: Width of the output image in pixels.
+- `height`: Height of the output image in pixels.
 
 # Options
 
-- `--output-name=<String>`: Base name for the output image files (without extension).  
-  If not provided, a timestamped name like `render_2025-06-07_135023` will be used.  
-  Output files will be saved as `render/<name>.<ext>` and `render/<name>.pfm`.
+- `--output-name=<String>`: 
+    Custom base name for the output files.
+    If omitted, a timestamp-based name is used (e.g., `flttrc_2025-06-07_135023`).
+    All output files are saved inside a folder named `render_<scene_name>/`.
 
-- `--extension=<String>`: File format for the tone-mapped image (`.png`, `.jpeg`, or `.tif`). Default: `.png`.
+- `--extension=<String>`: 
+    Format of the tone-mapped output image: `.png,` `.jpeg`, or `.tif.
+    Default is `.png.`.
 
-- `--angle=<float>`: Angle for rotating the camera around the Z axis.  
-  The distance from the origin is maintained.  
-  Useful for quickly changing the view without modifying the `scene_file` (default: `0.0`).
+- `--angle=<float>`:
+    Overrides the `angle` variable in the scene’s text-based description file if it is present. 
+    If not specified, the value from the scene file is used by default. 
+    This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.
+
+- `--samples-per-pixel=<Integer>`:
+    Number of samples per pixel for antialiasing; must be a perfect square (e.g., 1, 4, 9, 16).
+    Default: `1`.
+
 """
 Comonicon.@cast function flattracer(
-    scene_file, 
+    scenefile, 
     width, 
     height; 
     output_name::String="",
-    extension::String = ".png",
-    angle::Float64=0.0,
+    extension::String = "",
+    angle::Union{Float64, Nothing}=nothing,
+    samples_per_pixel::Int=1
     )
 
     try
+        print_welcome()
+        RayTracer.check_name(scenefile, [".txt"])
         println("📂 Preparing to parse the scene...")
-        # check if an output name is declared, if not use timestamp for default
-        if isempty(output_name)
-            timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
-            output_name = "render_$timestamp" 
-        end
+        # Determine the correct output file extension and construct output paths.
+        # This handles cases where the user may or may not specify output name and/or extension.
+        # If no output name is given, a timestamped name inside a folder named after the scene is created.
+        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scenefile, "flttrc")
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
             throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
         end
 
-        # make the path for output images
-        base_path = "render"
-        mkpath(base_path)
-        ldr_path = joinpath(base_path, output_name * extension)
-        pfm_path = joinpath(base_path, output_name * ".pfm")
-
         # convert width e height to Int
-        img_width = parse(Int, width)
-        img_height = parse(Int, height)
+        width = parse(Int, width)
+        height = parse(Int, height)
         # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
-        aspect_ratio = img_width/img_height
-        variables = Dict(
-            "angle" => angle,
-            "aspect_ratio" => aspect_ratio,
-            )
+        aspect_ratio = width/height
+        if !isnothing(angle)
+            external_variables = Dict(
+                "angle" => angle,
+                )
+        else
+            external_variables = Dict{String, Float64}()
+        end
 
         # Parse the scene from text file
-        scene = open(scene_file, "r") do io
-            instream = RayTracer.InputStream(io, scene_file)
-            RayTracer.parse_scene(instream; variables)
+        scene = open(scenefile, "r") do io
+            instream = RayTracer.InputStream(io, scenefile)
+            RayTracer.parse_scene(instream, aspect_ratio; external_variables)
         end
         println("✓ Scene parsing completed.")
 
         println("🖼️  Setting up the image canvas and camera...")
         # Prepare the canva to draw on
-        img = HdrImage(img_width, img_height)
+        img = HdrImage(width, height)
         # Prepare the environment made of the canva and the observer
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
         
-        println("🚀 Starting ray tracing (this may take a while)...")
+        println("🚀 Starting ray tracing (this may take a while)...\n")
         # RayTracing algorithm that need as input ...
         f =
             ray -> flat_tracer(
@@ -263,14 +274,18 @@ Comonicon.@cast function flattracer(
             )
 
 
-        RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
-        println("\n")
+        if samples_per_pixel == 1
+            RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
+        else
+            pcg_antialiasing = RayTracer.PCG()
+            RayTracer.fire_all_rays!(tracer, f; samples_per_pixel=samples_per_pixel, pcg=pcg_antialiasing, progress_flag = true)
+        end
 
         write(pfm_path, img)
         
-        # basic tone mapping
-        RayTracer.normalize_image!(img)
-        RayTracer.clamp_image!(img)
+        # Basic tone mapping
+        println("\n\nApplying basic tone mapping...\n")
+        RayTracer.tonemapping!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -286,95 +301,93 @@ Comonicon.@cast function flattracer(
     end
 end
 
+
+
 # ─────────────────────────────────────────────────────────────
 # ON-OFF TRACER
 # ─────────────────────────────────────────────────────────────
 
 """
-On-Off tracer command to render a 3D scene with a binary ray tracer algorithm
-that returns `WHITE` if the given `ray` intersects
-any object in the `world`, and `bkg_color` otherwise.
-
-This is a basic tracer useful for debugging or silhouette rendering.
-
-This tool generates two output images for each rendering:
-- a high dynamic range `.pfm` file
-- a tone-mapped image (`.png`, `.jpeg`, or `.tif`)
-
-Both images are saved in the `render/` folder. The tone-mapped image is generated using a basic built-in tone mapping, which may not produce optimal results for all scenes.  
-For higher-quality control, load the `.pfm` file and apply a custom tone mapping using the `tonemapping` function.
+A minimal tracer that detects ray-object intersections only, without computing lighting or color.
+Returns white for hits and black for misses. 
+Useful for visibility checks and fast silhouette previews.
 
 # Args
 
-- `scene_file`: Path to the scene description file (String).
-- `width`: Width of the output image (Integer).
-- `height`: Height of the output image (Integer).
+- `scenefile`: Path to the scene description file.
+- `width`: Width of the output image in pixels.
+- `height`: Height of the output image in pixels.
 
 # Options
 
-- `--output-name=<String>`: Base name for the output image files (without extension).  
-  If not provided, a timestamped name like `render_2025-06-07_135023` will be used.  
-  Output files will be saved as `render/<name>.<ext>` and `render/<name>.pfm`.
+- `--output-name=<String>`: 
+    Custom base name for the output files.
+    If omitted, a timestamp-based name is used (e.g., `onofftrc_2025-06-07_135023`).
+    All output files are saved inside a folder named `render_<scene_name>/`.
 
-- `--extension=<String>`: File format for the tone-mapped image (`.png`, `.jpeg`, or `.tif`). Default: `.png`.
+- `--extension=<String>`: 
+    Format of the tone-mapped output image: `.png,` `.jpeg`, or `.tif.
+    Default is `.png.`.
 
-- `--angle=<float>`: Angle for rotating the camera around the Z axis.  
-  The distance from the origin is maintained.  
-  Useful for quickly changing the view without modifying the `scene_file` (default: `0.0`).
+- `--angle=<float>`:
+    Overrides the `angle` variable in the scene’s text-based description file if it is present. 
+    If not specified, the value from the scene file is used by default. 
+    This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.   
+
+- `--samples-per-pixel=<Integer>`:
+    Number of samples per pixel for antialiasing; must be a perfect square (e.g., 1, 4, 9, 16).
+    Default: `1`.
+
 """
 Comonicon.@cast function onofftracer(
-    scene_file, 
-    width, 
-    height; 
+    scenefile::String, 
+    width::Int, 
+    height::Int; 
     output_name::String="",
-    extension::String = ".png",
-    angle::Float64=0.0,
+    extension::String = "",
+    angle::Union{Float64, Nothing}=nothing,
+    samples_per_pixel::Int=1
     )
 
     try
+        print_welcome()
+        RayTracer.check_name(scenefile, [".txt"])
         println("📂 Preparing to parse the scene...")
-        # check if an output name is declared, if not use timestamp for default
-        if isempty(output_name)
-            timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
-            output_name = "render_$timestamp" 
-        end
+        # Determine the correct output file extension and construct output paths.
+        # This handles cases where the user may or may not specify output name and/or extension.
+        # If no output name is given, a timestamped name inside a folder named after the scene is created.
+        extension, ldr_path, pfm_path = RayTracer.choose_name(output_name, extension, scenefile, "onofftrc")
 
         # check correct output extension
         if !(extension in SUPPORTED_EXTS)
             throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
         end
 
-        # make the path for output images
-        base_path = "render"
-        mkpath(base_path)
-        ldr_path = joinpath(base_path, output_name * extension)
-        pfm_path = joinpath(base_path, output_name * ".pfm")
-
-        # convert width e height to Int
-        img_width = parse(Int, width)
-        img_height = parse(Int, height)
         # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
-        aspect_ratio = img_width/img_height
-        variables = Dict(
-            "angle" => angle,
-            "aspect_ratio" => aspect_ratio,
-            )
+        aspect_ratio = width/height
+        if !isnothing(angle)
+            external_variables = Dict(
+                "angle" => angle,
+                )
+        else
+            external_variables = Dict{String, Float64}()
+        end
 
         # Parse the scene from text file
-        scene = open(scene_file, "r") do io
-            instream = RayTracer.InputStream(io, scene_file)
-            RayTracer.parse_scene(instream; variables)
+        scene = open(scenefile, "r") do io
+            instream = RayTracer.InputStream(io, scenefile)
+            RayTracer.parse_scene(instream, aspect_ratio; external_variables)
         end
         println("✓ Scene parsing completed.")
 
         println("🖼️  Setting up the image canvas and camera...")
         # Prepare the canva to draw on
-        img = HdrImage(img_width, img_height)
+        img = HdrImage(width, height)
         # Prepare the environment made of the canva and the observer
         tracer = ImageTracer(img, scene.camera)
         println("✓ Canvas and camera setup completed.")
         
-        println("🚀 Starting ray tracing (this may take a while)...")
+        println("🚀 Starting ray tracing (this may take a while)...\n")
         # RayTracing algorithm that need as input ...
         f =
             ray -> onoff_tracer(
@@ -384,14 +397,18 @@ Comonicon.@cast function onofftracer(
             )
 
 
-        RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
-        println("\n")
+        if samples_per_pixel == 1
+            RayTracer.fire_all_rays!(tracer, f; progress_flag = true)
+        else
+            pcg_antialiasing = RayTracer.PCG()
+            RayTracer.fire_all_rays!(tracer, f; samples_per_pixel=samples_per_pixel, pcg=pcg_antialiasing, progress_flag = true)
+        end
 
         write(pfm_path, img)
         
-        # basic tone mapping
-        RayTracer.normalize_image!(img)
-        RayTracer.clamp_image!(img)
+        # Basic tone mapping
+        println("\n\nApplying basic tone mapping...\n")
+        RayTracer.tonemapping!(img)
         RayTracer.write_ldr_image(ldr_path, img)
 
         println("✅ Rendering completed successfully. Output files:")
@@ -408,61 +425,77 @@ Comonicon.@cast function onofftracer(
 end
 
 
+
+# ─────────────────────────────────────────────────────────────
+# TONEMAPPING
+# ─────────────────────────────────────────────────────────────
+
 """
-Performs tone mapping on an HDR (High Dynamic Range) image read from the specified `filename`.
-The function reads a PFM image, normalizes its luminance, and then writes the result
-as an LDR (Low Dynamic Range) image with a specified extension and gamma correction.
+Perform tone mapping on an HDR image loaded from a PFM file, then save it as an LDR image.
 
 # Args
 
-- `filename`: The path to the input HDR image file (e.g., a PFM file).
+- `input_file`: Path to the input HDR image file (must have a `.pfm` extension).
 
 # Options
-
-- `--output-name=<String>`: Optional. The desired name for the output LDR image file, without an extension.
-                            If empty, the base name of the input `filename` will be used.
-- `--extension=<String>`: The desired file extension for the output LDR image (e.g., ".png", ".jpg").
-                        Defaults to ".png". Must be one of the `SUPPORTED_EXTS`.
-- `--factor=<Float64>`: A scaling factor applied during image normalization. Defaults to 1.0.
-- `--mean=<Symbol>`: The type of mean calculation to use during normalization. Defaults to `:`.
-                    (Note: The current `normalize_image!` call explicitly uses `:max_min`.)
+- `--output-name=<String>`: Custom name for the output tone-mapped image (default: auto-generated from parameters).
+- `--out-ext=<String>`: Desired file extension for the output LDR image (e.g., ".png", ".jpg").
+                        Defaults to ".png".
+- `--mean=<String>`: Method to compute the luminosity mean during normalization. Defaults use "max_min" method.
+- `--weights=<String>`: Weights for luminosity when mean=weighted. Format:< "[w1, w2, w3]" >.
+- `--a=<Float64>`: A scaling factor applied during image normalization. Defaults to 1.0.
 - `--gamma=<Float64>`: The gamma correction value applied when writing the LDR image. Defaults to 1.0.
-- `--weights=<Vector{Float64}>`: A vector of weights used for luminance calculation during normalization.
-                                Defaults to `[1., 1., 1.]` (typically for R, G, B channels).
 """
 Comonicon.@cast function tonemapping(
-    filename;
+    input_file;
     output_name::String="",
-    extension::String = ".png",
-    factor::Float64=1.,
-    mean::Symbol=:max_min,
+    out_ext::String = "",
+    mean::String="max_min",
+    weights::String="[]",  # default to empty
+    a::Float64 = 1.,
     gamma::Float64=1.,
-    weights::Vector{Float64}=[1., 1., 1.]
 )
     try
-        hdrimage = read_pfm_image(filename)
-        RayTracer.normalize_image!(
-            hdrimage;
-            factor = factor,
-            lumi = nothing,
-            delta = 1e-10,
+        print_welcome()
+        # Check extension
+        println("Reading .pfm image...")
+        RayTracer.check_name(input_file, [".pfm"])
+
+        (weights=="[]") ? (weights = nothing) : (weights = parse.(Float64, strip.(split(strip(weights, ['[', ']']), ","))))
+        
+        println("🖼️  Applying tone mapping...")
+        img = RayTracer.read_pfm_image(input_file)
+        RayTracer.tonemapping!(
+            img;
             mean_type = mean,
             weights = weights,
-            )
-        RayTracer.clamp_image!(hdrimage)
-        # Determine the base output filename
+            a = a
+        )
+
+        # Create the default name (summarizing params, see misc.jl)
         base_output_name = if isempty(output_name)
-            splitext(filename)[1] # Get filename without its original extension
+            # Get filename without its original extension
+            RayTracer.tonemapping_name(
+                splitext(input_file)[1],
+                mean,
+                weights,
+                a,
+                gamma,
+            )
         else
-            output_name
+            splitext(output_name)[1] # Get output_name without its original extension
         end
         
+        extension = RayTracer.choose_ext(output_name, out_ext)
+
         if !(extension in SUPPORTED_EXTS)
             throw(ExtensionError("unsupported file extension. Please use one of: $(join(SUPPORTED_EXTS, ", "))"))
         end
         newfilename = base_output_name * extension
-        @info "Saving figure to $newfilename...\n"
-        RayTracer.write_ldr_image(newfilename, hdrimage; gamma=gamma)
+        @info "Saving image to disk...\n"
+        RayTracer.write_ldr_image(newfilename, img; gamma = gamma)
+        println("\n✅ Tone mapping completed successfully. Output file:")
+        println("  • $newfilename")
     catch e
         if isa(e, CustomException)
             println(e)
