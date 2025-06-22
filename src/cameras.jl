@@ -132,6 +132,67 @@ function fire_ray(cam::PerspectiveCamera, u::AbstractFloat, v::AbstractFloat)
     return transform(ray, cam.transformation)
 end
 
+# ─────────────────────────────────────────────────────────────
+# MOTION
+#
+# The motion can be either a translation or a rotation.
+# ─────────────────────────────────────────────────────────────
+
+"""
+    Motion
+
+Represents a motion applied to the camera over a sequence of frames.
+The motion can be either a translation or a rotation.
+
+# Fields
+- `vec::Union{Vec, Nothing}`: A translation vector.
+- `axis::Union{String, Nothing}`: The axis for rotation (e.g., `"x"`, `"y"`, `"z"`).
+- `angle::Union{AbstractFloat, Nothing}`: The angle of rotation.
+- `num_frames:Integer`: The number of frames over which the motion is applied.
+"""
+struct Motion
+    vec::Union{Vec, Nothing}
+    axis::Union{String, Nothing}
+    angle::Union{AbstractFloat, Nothing}
+    num_frames::Integer
+end
+
+"Update the transformation field of Camera, return a new Camera"
+function update_camera(cam::OrthogonalCamera, movement::Transformation)
+    return OrthogonalCamera(cam.aspect_ratio, movement * cam.transformation)
+end
+
+"Update the transformation field of Camera, return a new Camera"
+function update_camera(cam::PerspectiveCamera, movement::Transformation)
+    return PerspectiveCamera(cam.distance, cam.aspect_ratio, movement * cam.transformation)
+end
+
+"Performs a single step in the camera's motion sequence and returns a new Camera 
+with an updated transformation"
+function animation_step(cam::Camera, motion::Motion, frame::Integer)
+
+    frac = frame / motion.num_frames
+    if !isnothing(motion.vec)
+        new_transform = translation(frac * motion.vec)
+
+    elseif !isnothing(motion.axis) && !isnothing(motion.angle)
+        angle = frac * motion.angle
+        if motion.axis == "X"
+            new_transform = rotation_x(angle)
+        elseif motion.axis == "Y"
+            new_transform = rotation_y(angle)
+        elseif motion.axis == "Z"
+            new_transform = rotation_z(angle)
+        else
+            error("Invalid axis: $(motion.axis). Must be 'X', 'Y', or 'Z'.")
+        end
+    
+    else
+        error("Invalid motion: either a translation vector or both axis and angle must be provided.")
+    end
+    
+    return update_camera(cam, new_transform)
+end
 
 
 # ─────────────────────────────────────────────────────────────
