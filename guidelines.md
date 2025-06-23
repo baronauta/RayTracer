@@ -53,31 +53,78 @@ This defines a material named plane_material with the following characteristics:
 
 ### 🧱 3. Objects
 
-To create an object decide its **shape**, assign a **material** and place it into the scene choosing a **transformation**.
+To create an object, define its **shape**, assign a **material**, and place it into the scene using a **transformation**.
 
-#### **Shapes**
-- `sphere` — unit sphere with center in $(0,0,0)$.
-- `plane` — $z=0$ plane.
+Each shape **must** be declared with an **identifier**. This is required to enable referencing in complex scenes, particularly when using **Constructive Solid Geometry ([CSG](#-4-constructive-solid-geometry-csg))**.  
+The general syntax to define a shape is:
+
+```julia
+shape <shape_name>(<material>, <transformation>)
+```
+
+Each object can be duplicated using the `copy` keyword. This is useful when you want to reuse the same [CSG](#-4-constructive-solid-geometry-csg) structure in different compositions within the same scene.  
+
+```julia
+copy new_shape(original_shape)
+```
+
+---
+
+#### **Basic Shapes**
+- `sphere` $-$ Unit sphere centered at $(0, 0, 0)$. 
+- `plane` $-$ Infinite plane at $z = 0$. 
+- `cube` $-$ Cube with $l = 1.0$ centered at $(0.5, 0.5, 0.5)$. 
+
+---
 
 #### **Transformation**
 - `identity` — No transformation.
-- `translation([x, y, z])` —  Translates the object by the vector $\vec{v} = \left( x, y, z \right)$.
+- `translation([x, y, z])` — Translates the object by the vector $\vec{v} = \left( x, y, z \right)$.
 - `scaling(sx, sy, sz)` — Scales the object along each axis. All values must be non-zero. Use negative values to apply reflections.
 - `rotation_x(deg)` — Rotates the object around the **x-axis** by the given angle in degrees.
 - `rotation_y(deg)` — Rotates the object around the **y-axis** by the given angle in degrees.
 - `rotation_z(deg)` — Rotates the object around the **z-axis** by the given angle in degrees.
 
-
 You can **combine transformations** using the `*` operator. Transformations are applied **right to left**.
-
 
 #### **Example**:
 ```julia
-sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
+shape small_sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
 ```
 This creates a `sphere` with the material `sphere_material`, a radius of $0.2$, and origin at $(-2.5, -1, 0.2)$.
 
-### 🎥 4. Camera
+---
+
+### 🧩 4. Constructive Solid Geometry (CSG)
+
+CSG allows the composition of shapes using boolean operations: `union`, `fusion`, `intersection`, and `difference`.  
+A CSG is a shape object, so it must be declared with an identifier. Since it behaves like any other shape, you can build complex objects by nesting multiple CSGs.
+
+- A global transformation can be applied to the entire CSG block, preserving the relative positions of its internal components (if no needed use *identity*).
+- Shapes inside a CSG are not automatically added to the world. If you want to use them independently, you must duplicate them using `copy` and assign a new name.
+The general syntax to define a CSG is:
+
+```julia
+csg my_csg_shape(<shape_1>, <shape_2>, <operation>, <transformation>)
+```
+**Operations**
+- `Union` $-$ Merges the volumes: both shapes are kept, and all intersections between them are detected and included.
+- `Fusion` $-$ Like union, but only the external surfaces are retained, removing internal overlaps (useful in the future for transparent objects).
+- `Intersection` $-$ Only the common volume is preserved: intersections are kept only if occur on a part of one shape that lies inside the other.
+- `Difference` $-$ Subtracts the second shape from the first: only the parts of the first shape that are **not** inside the second are retained, or intersections from the second shape that occur within the first.
+
+#### **Example**:
+```julia
+csg partial_csg(sphere_1, cube_2, difference, identity)
+csg total_csg(partial_csg, plane_3, fusion, translation([1.0, 2.0, 3.0]))
+copy cube_2_copy(cube_2)  # This creates a copy of object cube_2 that will be visible in the scene
+
+```
+This sequence builds a CSG object by subtracting `cube_2` from `sphere_1`, then combining the result with `plane_3` using a `fusion` operation. `cube_2_copy` is a duplicate of `cube_2`, placed in the scene independently.
+
+---
+
+### 🎥 5. Camera
 
 The `camera` represents the viewpoint that **sees** the scene. It defines where the observer is located and how the scene is projected onto the image plane. The camera’s position and orientation are set using a **transformation**.
 
@@ -105,7 +152,7 @@ julia RayTracer <tracer> --angle <value>
 If `--angle` is not specified, the value from the scene file ($90$) is used. This setup allows convenient previewing by adjusting the camera rotation without modifying the scene file.
 
 
-### Working example
+### 6. Working example
 *Note* — You can write comment using `#`
 ```julia
 # Float variable (can be overridden via CLI: --angle <value>)

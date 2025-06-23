@@ -58,7 +58,7 @@ RayTracer is a Julia-based library that runs on:
 
 ### Scene Rendering
 
-RayTracer uses a simple text-based format for scene description. See [guidelines.md](https://github.com/baronauta/RayTracer/blob/master/guidelines.md) for the details on how to define your own scenes.
+RayTracer uses a simple text-based format for scene description. See [guidelines.md](./guidelines.md) for the details on how to define your own scenes.
 
 To render a scene, run the following command:
 ```bash
@@ -72,7 +72,8 @@ For more control over the LDR output, apply custom tone mapping — see the [Ton
 A typical scene description consists of two main parts:
 
 - **Shapes**  
-  The geometric objects that make up the scene — such as spheres or planes. 
+  The geometric objects that make up the scene $-$ spheres, planes and cubes. 
+  They can be combined into complex objects using Constructive Solid Geometry ([CSG](#constructive-solid-geometry)). For more information on available shapes see [guidelines.md](./guidelines.md#-3-objects).
 - **Camera**  
  Defines the viewpoint, orientation, and perspective from which the scene is rendered.
 
@@ -152,6 +153,29 @@ Two types of cameras are available:
 <p><strong>Figure 2:</strong> Perspective and orthogonal camera views. Minor adjustments to camera positions were made for aesthetic presentation.</p>
 
 
+### Constructive Solid Geometry
+
+*Constructive Solid Geometry (CSG)* is a modeling technique used to build complex shapes by combining simpler ones through boolean operations (`union`, `fusion`, `intersection`, and `difference`). Each operation defines how the volumes of the input shapes interact — for example, by merging them or subtracting one from another. CSGs can be nested to create intricate hierarchical structures. For usage details, see [guidelines.md](./guidelines.md#-4-constructive-solid-geometry-csg).
+
+
+<table width="100%">
+  <tr>
+    <td align="center" width="33%">
+      <img src="./examples/reference_union.png" width="100%"><br>
+      <em>Union</em>
+    </td>
+    <td align="center" width="33%">
+      <img src="./examples/reference_diff.png" width="100%"><br>
+      <em>Difference</em>
+    </td>
+    <td align="center" width="33%">
+      <img src="./examples/reference_inter.png" width="100%"><br>
+      <em>Intersection</em>
+    </td>
+  </tr>
+</table>
+<p><strong>Figure 3:</strong> Examples of CSGs created with different boolean operations.</p>
+
 ---
 ### Tone Mapping
 
@@ -176,6 +200,15 @@ julia image2pfm <input_image>
 ```
 ---
 ### Feature Gallery
+
+<table width="100%">
+  <tr>
+    <td align="center" width="100%">
+      <img src="./examples/reference_cornell_antia.png" width="100%"><br>
+      <em>Cornell box - CSG in action.</em>
+    </td>
+  </tr>
+</table>
 
 <table width="100%">
   <tr>
