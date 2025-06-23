@@ -1,0 +1,541 @@
+#!/usr/bin/env julia
+
+#     __________________________________________________________
+#
+#     LICENSE NOTICE: European Union Public Licence (EUPL) v.1.2
+#     __________________________________________________________
+#
+#   This file is licensed under the European Union Public Licence (EUPL), version 1.2.
+#
+#   You are free to use, modify, and distribute this software under the conditions
+#   of the EUPL v.1.2, as published by the European Commission.
+#
+#   Obligations include:
+#     - Retaining this notice and the licence terms
+#     - Providing access to the source code
+#     - Distributing derivative works under the same or a compatible licence
+#
+#   Full licence text: see the LICENSE file or visit https://eupl.eu
+#
+#   Disclaimer:
+#     Unless required by applicable law or agreed to in writing,
+#     this software is provided "AS IS", without warranties or conditions
+#     of any kind, either express or implied.
+
+
+using Pkg
+Pkg.activate(normpath(@__DIR__))
+
+using RayTracer
+using Dates
+using Comonicon
+
+
+
+# ─────────────────────────────────────────────────────────────
+# Helper functions
+#
+# ─────────────────────────────────────────────────────────────
+
+function check_and_parse_scene(scenefile::String, aspect_ratio::Float64, angle)
+    RayTracer.check_name(scenefile, [".txt"])
+    external_variables = (angle==0.) ? Dict{String, Float64}() : Dict("angle" => angle)
+
+    scene = open(scenefile, "r") do io
+        instream = RayTracer.InputStream(io, scenefile)
+        RayTracer.parse_scene(instream, aspect_ratio; external_variables)
+    end
+
+    if isnothing(scene.motion)
+        throw(RuntimeError("'motion' not provided, define it before proceeding with animating the scene"))
+    end
+
+    return scene
+end
+
+function prepare_output_paths(scenefile::String, tracername::String; output_name="")
+    # Save .pfm images
+    #   - 'animation_<scenename>/<tracername>_timestamp'
+    #   - 'animation_<scenename>/<output_name>'
+    scenename = splitext(basename(scenefile))[1]
+    output_name = isempty(output_name) ? "$(tracername)_$(Dates.format(Dates.now(), "yyyy-mm-dd_HHMMSS"))" : output_name
+    frames_path = joinpath("animation_$scenename", output_name)
+    mkpath(frames_path)
+
+    # Save .png images in a temporary directory
+    img_dir = tempdir()
+
+    return scenename, output_name, frames_path, img_dir
+end
+
+function load_scene(scenefile, width, height, angle, tracername; output_name="")
+    print_welcome()
+    println("📂 Preparing to parse the scene...")
+
+    aspect_ratio = width / height
+    scene = check_and_parse_scene(scenefile, aspect_ratio, angle)
+    scenename, output_name, frames_path, img_dir = prepare_output_paths(scenefile, tracername; output_name)
+
+    println("✓ Scene parsing completed\n")
+
+    return (
+        scene = scene,
+        scenename = scenename,
+        output_name = output_name,
+        frames_path = frames_path,
+        img_dir = img_dir
+    )
+end
+
+function prepare_tracer(width, height, scene, i)
+    img = HdrImage(width, height)
+    camera = RayTracer.animation_step(scene.camera, scene.motion, i)
+    tracer = ImageTracer(img, camera)
+    return img, tracer
+end
+
+function render_frame!(tracer, f, samples_per_pixel)
+    if samples_per_pixel == 1
+        RayTracer.fire_all_rays!(tracer, f; progress_flag = false)
+    else
+        pcg_antialiasing = RayTracer.PCG()
+        RayTracer.fire_all_rays!(tracer, f; samples_per_pixel=samples_per_pixel, pcg=pcg_antialiasing, progress_flag = false)
+    end
+end
+
+function save_frame(frames_path, img_dir, img, i, num_frames)
+    num_digits = length(string(num_frames))
+    frame_filename(i) = "frame$(lpad(i, num_digits, '0'))"
+    # Save .pfm image
+    write(joinpath(frames_path, frame_filename(i) * ".pfm"), img)
+    # Save .png image, needed a basic tone mapping
+    RayTracer.tonemapping!(img)
+    RayTracer.write_ldr_image(joinpath(img_dir, frame_filename(i) * ".png"), img)
+end
+
+function make_video(input_dir, out_dir, filename, num_frames, framerate)
+    num_digits = length(string(num_frames))
+    pattern = "frame%0$(num_digits)d.png"
+    cmd = `ffmpeg -y -r $framerate -i $input_dir/$pattern -vcodec libx264 -pix_fmt yuv420p $out_dir/$filename.mp4`
+    run(pipeline(cmd, stdout=devnull, stderr=devnull))
+end
+
+
+
+# ─────────────────────────────────────────────────────────────
+# Available tracers:
+# - pathtracer
+# - flattracer
+# - onofftracer
+# ─────────────────────────────────────────────────────────────
+
+"""
+A physically-based renderer that simulates realistic lighting, including global illumination, 
+soft shadows, and reflections.
+
+This command returns an animation of the rendered scene, provided that a camera motion
+is specified in the text-based scene description.
+
+# Args
+
+- `scenefile`: Path to the scene description file.
+- `width`: Width of the output image in pixels.
+- `height`: Height of the output image in pixels.
+
+# Options
+
+- `--output-name=<String>`: 
+    Custom base name for the output files.
+    If omitted, a timestamp-based name is used (e.g., `pthtrc_2025-06-07_135023`).
+    All output files are saved inside a folder named `animation_<scenename>/`.
+
+- `--angle=<float>`:
+    Overrides the `angle` variable in the scene’s text-based description file if it is present. 
+    If not specified, the value from the scene file is used by default. 
+    This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.
+    
+- `--n-rays=<Integer>`: 
+    Number of rays cast per pixel. 
+    Higher values improve quality but increase render time.
+    Default: `5`.
+
+- `--max-depth=<Integer>`:
+    Maximum recursion depth for ray bounces (reflections/refractions).
+    Increasing this allows capturing more indirect lighting and reflections, 
+    but causes exponentially longer rendering times.
+    Default: `3`.
+
+- `--russian-roulette-limit=<Integer>`: 
+    Recursion depth after which Russian roulette termination begins to probabilistically end ray paths, 
+    reducing computation while minimizing bias.
+    Default: `3`.
+
+- `--samples-per-pixel=<Integer>`:
+    Number of samples per pixel for antialiasing, the final color is computed by averaging the radiance values obtained from each sample. This technique is used to reduce variance and visual artifacts caused by color variations at scales smaller than a pixel.
+    Must be a perfect square (e.g., 1, 4, 9, 16).
+    Default: `1`.
+
+- `--framerate=<Integer>`:
+    Number of frames per second for the animation.
+    Default: `20`.
+    
+"""
+Comonicon.@cast function pathtracer(
+    scenefile::String, 
+    width::Int, 
+    height::Int;
+    output_name::String="",
+    angle::Float64=0.,
+    n_rays::Int=5,
+    max_depth::Int=3,
+    russian_roulette_limit::Int=3,
+    samples_per_pixel::Int=1,
+    framerate::Int=20
+)
+
+    try
+        
+        info = load_scene(scenefile, width, height, angle, "pthtrc"; output_name=output_name)
+
+        println("\n🚀 Ray tracing in progress...\n")
+
+        num_frames = info.scene.motion.num_frames
+
+        for i = 1:num_frames
+
+            RayTracer.simple_progress_bar(i, num_frames; item="frame")
+
+            img, tracer = prepare_tracer(width, height, info.scene, i)
+            
+            # RayTracing algorithm
+            pcg = PCG()
+            f =
+                ray -> path_tracer(
+                    info.scene.world,
+                    ray,
+                    pcg;
+                    bkg_color = BLACK,
+                    n_rays = n_rays,
+                    max_depth = max_depth,
+                    russian_roulette_limit = russian_roulette_limit,
+                )
+
+            render_frame!(tracer, f, samples_per_pixel)
+
+            # Save .pfm image
+            save_frame(info.frames_path, info.img_dir, img, i, num_frames)
+        end
+
+        # Save .mp4 video as 'animation_<scenename>/<output_name>.mp4
+        make_video(info.img_dir, "animation_$(info.scenename)", info.output_name, num_frames, framerate)
+
+        println("\n✅ Rendering completed successfully. Output files:")
+        println("  • High dynamic range frames (.pfm): $(info.frames_path)")
+        println("  • Animation (.mp4): $(joinpath("animation_$(info.scenename)", "$(info.output_name).mp4"))")
+
+    catch e
+        if isa(e, CustomException)
+            println(e)
+        else
+            rethrow()
+        end
+    end
+end
+
+
+
+"""
+A fast, non-photorealistic renderer that returns the surface color and emitted light at the ray intersection. It ignores lighting, shadows, and reflections.  
+Useful for quick previews, geometry debugging, and visualizing base materials.
+
+This command returns an animation of the rendered scene, provided that a camera motion
+is specified in the text-based scene description.
+
+# Args
+
+- `scenefile`: Path to the scene description file.
+- `width`: Width of the output image in pixels.
+- `height`: Height of the output image in pixels.
+
+# Options
+
+- `--output-name=<String>`: 
+    Custom base name for the output files.
+    If omitted, a timestamp-based name is used (e.g., `flttrc_2025-06-07_135023`).
+    All output files are saved inside a folder named `render_<scene_name>/`.
+
+- `--extension=<String>`: 
+    Format of the tone-mapped output image: `.png,` `.jpeg`, or `.tif.
+    Default is `.png.`.
+
+- `--angle=<float>`:
+    Overrides the `angle` variable in the scene’s text-based description file if it is present. 
+    If not specified, the value from the scene file is used by default. 
+    This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.
+
+- `--samples-per-pixel=<Integer>`:
+    Number of samples per pixel for antialiasing; must be a perfect square (e.g., 1, 4, 9, 16).
+    Default: `1`.
+
+- `--framerate=<Integer>`:
+    Number of frames per second for the animation.
+    Default: `20`.
+    
+"""
+Comonicon.@cast function flattracer(
+    scenefile, 
+    width, 
+    height; 
+    output_name::String="",
+    angle::Float64=0.,
+    samples_per_pixel::Int=1,
+    framerate::Int=20
+)
+
+    try
+        
+        info = load_scene(scenefile, width, height, angle, "flttrc"; output_name=output_name)
+
+        println("\n🚀 Ray tracing in progress...\n")
+
+        num_frames = info.scene.motion.num_frames
+
+        for i = 1:num_frames
+
+            RayTracer.simple_progress_bar(i, num_frames; item="frame")
+
+            img, tracer = prepare_tracer(width, height, info.scene, i)
+            
+            # RayTracing algorithm
+            f =
+                ray -> flat_tracer(
+                    scene.world,
+                    ray;
+                    bkg_color = BLACK,
+                )
+
+            render_frame!(tracer, f, samples_per_pixel)
+
+            # Save .pfm image
+            save_frame(info.frames_path, info.img_dir, img, i, num_frames)
+        end
+
+        # Save .mp4 video as 'animation_<scenename>/<output_name>.mp4
+        make_video(info.img_dir, "animation_$(info.scenename)", info.output_name, num_frames, framerate)
+
+        println("\n✅ Rendering completed successfully. Output files:")
+        println("  • High dynamic range frames (.pfm): $(info.frames_path)")
+        println("  • Animation (.mp4): $(joinpath("animation_$(info.scenename)", "$(info.output_name).mp4"))")
+
+    catch e
+        if isa(e, CustomException)
+            println(e)
+        else
+            rethrow()
+        end
+    end
+end
+
+
+
+"""
+A minimal tracer that detects ray-object intersections only, without computing lighting or color.
+Returns white for hits and black for misses. 
+Useful for visibility checks and fast silhouette previews.
+
+This command returns an animation of the rendered scene, provided that a camera motion
+is specified in the text-based scene description.
+
+# Args
+
+- `scenefile`: Path to the scene description file.
+- `width`: Width of the output image in pixels.
+- `height`: Height of the output image in pixels.
+
+# Options
+
+- `--output-name=<String>`: 
+    Custom base name for the output files.
+    If omitted, a timestamp-based name is used (e.g., `onofftrc_2025-06-07_135023`).
+    All output files are saved inside a folder named `render_<scene_name>/`.
+
+- `--extension=<String>`: 
+    Format of the tone-mapped output image: `.png,` `.jpeg`, or `.tif.
+    Default is `.png.`.
+
+- `--angle=<float>`:
+    Overrides the `angle` variable in the scene’s text-based description file if it is present. 
+    If not specified, the value from the scene file is used by default. 
+    This option is primarily used to adjust camera rotation for quick previews without modifying the scene file.   
+
+- `--samples-per-pixel=<Integer>`:
+    Number of samples per pixel for antialiasing; must be a perfect square (e.g., 1, 4, 9, 16).
+    Default: `1`.
+
+- `--framerate=<Integer>`:
+    Number of frames per second for the animation.
+    Default: `20`.
+    
+"""
+Comonicon.@cast function onofftracer(
+    scenefile::String, 
+    width::Int, 
+    height::Int; 
+    output_name::String="",
+    angle::Float64=0.,
+    samples_per_pixel::Int=1,
+    framerate::Int=20
+    )
+
+    try
+            
+        info = load_scene(scenefile, width, height, angle, "onofftrc"; output_name=output_name)
+
+        println("\n🚀 Ray tracing in progress...\n")
+
+        num_frames = info.scene.motion.num_frames
+
+        for i = 1:num_frames
+
+            RayTracer.simple_progress_bar(i, num_frames; item="frame")
+
+            img, tracer = prepare_tracer(width, height, info.scene, i)
+            
+            # RayTracing algorithm
+            f =
+                ray -> onoff_tracer(
+                    scene.world,
+                    ray;
+                    bkg_color = BLACK,
+                )
+
+            render_frame!(tracer, f, samples_per_pixel)
+
+            # Save .pfm image
+            save_frame(info.frames_path, info.img_dir, img, i, num_frames)
+        end
+
+        # Save .mp4 video as 'animation_<scenename>/<output_name>.mp4
+        make_video(info.img_dir, "animation_$(info.scenename)", info.output_name, num_frames, framerate)
+
+        println("\n✅ Rendering completed successfully. Output files:")
+        println("  • High dynamic range frames (.pfm): $(info.frames_path)")
+        println("  • Animation (.mp4): $(joinpath("animation_$(info.scenename)", "$(info.output_name).mp4"))")
+
+    catch e
+        if isa(e, CustomException)
+            println(e)
+        else
+            rethrow()
+        end
+    end
+end
+
+
+
+# ─────────────────────────────────────────────────────────────
+# TONEMAPPING
+#
+# Parse all the .pfm images in the given directory, perform tonemapping
+# as specified by command line, merge the images in a .mp4.
+# The images in png format—obtained from tonemapping and needed
+# for .mp4 generation—are stored in a temporary directory.
+# ─────────────────────────────────────────────────────────────
+
+"""
+Processes a sequence of HDR images in `.pfm` format from the specified directory, applies tone mapping 
+to convert them to LDR images, and generates an animation (e.g., `.mp4`) from the resulting frames.
+
+Each `.pfm` image is tone-mapped according to the specified method and parameters. The intermediate LDR 
+images (e.g., `.png`) are saved in a temporary directory and are used to assemble the final video.
+
+# Args
+
+- `input_dir`: Path to the directory containing input `.pfm` images.
+
+# Options
+
+- `--output-name=<String>`: 
+    Custom base name for the output video (default: auto-generated from parameters).
+
+- `--mean=<String>`: 
+    Method for computing the normalization mean during tone mapping. 
+    Available options: `"max_min"` (default), `"weighted"`, or `"arithmetic"`.
+
+- `--weights=<String>`: 
+    Luminosity weights used when `mean="weighted"`. 
+    Format: `"[w1, w2, w3]"` as a string.
+
+- `--a=<Float64>`: 
+    Scaling factor used during normalization. 
+    Default: `1.0`.
+
+- `--gamma=<Float64>`: 
+    Gamma correction value applied when saving LDR images. 
+    Default: `1.0`.
+
+- `--framerate=<Integer>`: 
+    Frames per second for the output animation. 
+    Default: `20`.
+"""
+Comonicon.@cast function tonemapping(
+    input_dir;
+    output_name::String="",
+    mean::String="max_min",
+    weights::String="",
+    a::Float64 = 1.,
+    gamma::Float64=1.,
+    framerate::Int = 20,
+)
+    try
+        print_welcome()
+        
+        # Parse weights
+        if isempty(weights)
+            weights = nothing
+        else
+            weights = parse.(Float64, strip.(split(strip(weights, ['[', ']']), ",")))
+        end
+
+        # Collect .pfm frames and sort them
+        pfm_files = sort(filter(f -> endswith(f, ".pfm"), readdir(input_dir; join=true)))
+        if isempty(pfm_files)
+            error("No .pfm files found in directory: $input_dir")
+        end
+
+        num_frames = length(pfm_files)
+        println("🖼️  Found $(num_frames) frames. Starting tone mapping...")
+
+        # Create temporary dir for .png images
+        png_dir = mktempdir()
+
+        for (i, pfm_path) in enumerate(pfm_files)
+            img = RayTracer.read_pfm_image(pfm_path)
+            RayTracer.tonemapping!(img; mean_type=mean, weights=weights, a=a)
+            RayTracer.write_ldr_image(joinpath(png_dir, "frame$(lpad(i, length(string(num_frames)), '0')).png"), img; gamma=gamma)
+        end
+
+        # Define output .mp4 path
+        dir = dirname(input_dir)
+        scenename = basename(normpath(input_dir))
+        base_name = isempty(output_name) ?  RayTracer.tonemapping_name(scenename, mean, weights, a, gamma) : output_name
+
+        # Call ffmpeg
+        make_video(png_dir, dir, base_name, num_frames, framerate)
+
+        println("\n✅ Tone mapping completed. Animation saved as:")
+        println("  • $(joinpath(dir, base_name))")
+
+    catch e
+        if isa(e, CustomException)
+            println(e)
+        else
+            rethrow()
+        end
+    end
+end
+
+
+
+# Leave @main empty; it just activates the CLI parser and dispatcher
+Comonicon.@main
