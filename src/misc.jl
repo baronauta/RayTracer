@@ -71,6 +71,17 @@ struct GeometryError <: CustomException
     msg::String
 end
 
+"""
+    struct CsgError <: CustomException
+Custom exception for errors encountered during Csg creation and operations.
+
+# Fields
+- `msg::String`: Error message describing the issue.
+"""
+struct CsgError <: CustomException
+    msg::String
+end
+
 # --- Warning ---
 "Print a warning message to the standard output in yellow text."
 function print_warning(msg)

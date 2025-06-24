@@ -11,23 +11,25 @@ material plane_material(
 material sky_material(diffuse(uniform(<0, 0, 0>)), uniform(<0.5, 0.5, 1>))
 material mirror_material(specular(uniform(<0.5, 0.5, 0.5>)), uniform(<0, 0, 0>))
 material sphere_material(diffuse(uniform(<1, 0.314, 0.314>)), uniform(<0, 0, 0>))
-material sphere_sky_material(diffuse(image("./examples/reference_nightsky.jpg")), uniform(<0, 0, 0>))
+
+# Jupiter texture © Solar System Scope – CC BY 4.0 (https://www.solarsystemscope.com/textures/)
+material jupiter_material(diffuse(image("./examples/jupiter_texture.jpg")), uniform(<0, 0, 0>))
 
 # Object definitions
-# Night sky sphere at position (1, 1, 2)
-sphere(sphere_sky_material, translation([-1, -2, 2.5]) * rotation_z(60) * scaling(1.2, 1.2, 1.2))
+# jupiter sphere at position (1, 1, 2)
+sphere jupiter_sphere(jupiter_material, translation([-1, -2, 2.5]) * rotation_y(10) * scaling(1.2, 1.2, 1.2))
 
 # Red little sphere
-sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
+sphere little_sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
 
 # Mirror sphere at origin
-sphere(mirror_material, scaling(1.5, 1.5, 1.5))
+sphere mirror_sphere(mirror_material, scaling(1.5, 1.5, 1.5))
 
 # Large sky sphere
-sphere(sky_material, scaling(50, 50, 50))
+sphere sky_sphere(sky_material, scaling(50, 50, 50))
 
 # Plane with checkered pattern
-plane(plane_material, identity)
+plane ground_plane(plane_material, identity)
 
 # Camera with CLI-overridable angle and screen distance 2
 camera(perspective, rotation_z(angle) * translation([-4, -1, 1]), 1.0)

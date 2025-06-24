@@ -3,8 +3,8 @@
     @testset "On/Off Tracer" begin
         # Create a small sphere, scale it down and translate it so that its projection
         # fits exactly into a single centered pixel in the image
-        trasforme_to_little = translation(Vec(2.0, 0.0, 0.0)) * scaling(0.2, 0.2, 0.2)
-        sphere = Sphere(trasforme_to_little, Material())
+        transforme_to_little = translation(Vec(2.0, 0.0, 0.0)) * scaling(0.2, 0.2, 0.2)
+        sphere = Sphere(transforme_to_little, Material())
         img = HdrImage(3, 3)
         cam = OrthogonalCamera(1.0)
         tracer = ImageTracer(img, cam)
@@ -33,10 +33,10 @@
     @testset "Flat Tracer" begin
         # Create a small sphere, scale it down and translate it so that its projection
         # fits exactly into a single centered pixel in the image
-        trasforme_to_little = translation(Vec(2.0, 0.0, 0.0)) * scaling(0.2, 0.2, 0.2)
+        transforme_to_little = translation(Vec(2.0, 0.0, 0.0)) * scaling(0.2, 0.2, 0.2)
         sphere_color = RGB(1.0, 2.0, 3.0)
         brdf = DiffuseBRDF(UniformPigment(sphere_color))
-        sphere = Sphere(trasforme_to_little, Material(brdf))
+        sphere = Sphere(transforme_to_little, Material(brdf))
         img = HdrImage(3, 3)
         cam = OrthogonalCamera(1.0)
         tracer = ImageTracer(img, cam)

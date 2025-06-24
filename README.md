@@ -31,7 +31,7 @@ RayTracer is a Julia-based library that runs on:
 
 ### Steps
 
-1. Download the [v1.1.0 release](https://github.com/baronauta/RayTracer/releases/tag/v1.1.0) and extract the archive.
+1. Download the [v2.0.0 release](https://github.com/baronauta/RayTracer/releases/tag/v2.0.0) and extract the archive.
 
 2. Open a terminal and navigate to the extracted directory.
 
@@ -58,7 +58,7 @@ RayTracer is a Julia-based library that runs on:
 
 ### Scene Rendering
 
-RayTracer uses a simple text-based format for scene description. See [guidelines.md](https://github.com/baronauta/RayTracer/blob/master/guidelines.md) for the details on how to define your own scenes.
+RayTracer uses a simple text-based format for scene description. See [guidelines.md](./guidelines.md) for the details on how to define your own scenes.
 
 To render a scene, run the following command:
 ```bash
@@ -72,7 +72,8 @@ For more control over the LDR output, apply custom tone mapping — see the [Ton
 A typical scene description consists of two main parts:
 
 - **Shapes**  
-  The geometric objects that make up the scene — such as spheres or planes. 
+  The geometric objects that make up the scene $-$ spheres, planes and cubes. 
+  They can be combined into complex objects using Constructive Solid Geometry ([CSG](#constructive-solid-geometry)). For more information on available shapes see [guidelines.md](./guidelines.md#-3-objects).
 - **Camera**  
  Defines the viewpoint, orientation, and perspective from which the scene is rendered.
 
@@ -84,8 +85,6 @@ RayTracer simulates a camera by casting rays—lines representing paths of light
 - **`pathtracer`**  
   A physically-based renderer that simulates realistic lighting, including global illumination, soft shadows, and reflections.
 
-  In addition to basic options, pathtracer also supports *antialiasing* (`--samples-per-pixel`). This technique reduces variance and visual artifacts caused by color variations at subpixel scale. An example comparing images with and without antialiasing can be found in [Feature Gallery](#feature-gallery) section.
-
 - **`flattracer`**  
   A fast, non-photorealistic renderer that returns the surface color and emitted light at the ray intersection. It ignores lighting, shadows, and reflections.  
   Useful for quick previews, geometry debugging, and visualizing base materials.
@@ -96,34 +95,43 @@ RayTracer simulates a camera by casting rays—lines representing paths of light
   Useful for visibility checks and fast silhouette previews.
 
 
+### Antialiasing
+
+All tracers support *antialiasing* via the `--samples-per-pixel` option, a technique that reduces variance and visual artifacts by casting multiple rays per pixel.  
+An example comparing images with and without antialiasing can be found in the [Feature Gallery](#feature-gallery) section.
+
+
+### Usage
+
 To display usage instructions and available options for a specific tracer, use the `-h` flag:
 ```bash
 julia RayTracer <tracer> -h
 ```
-
+<div id="figure-1"></div>
 <table width="100%">
   <tr>
     <td align="center" width="33%">
-      <img src="./examples/cf_onofftracer.png" width="100%"><br>
+      <img src="./examples/demo_onof.png" width="100%"><br>
       <code>onofftracer</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/cf_flattracer.png" width="100%"><br>
+      <img src="./examples/demo_flat.png" width="100%"><br>
       <code>flattracer</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/cf_pathtracer.png"  width="100%"><br>
+      <img src="./examples/demo_path.png"  width="100%"><br>
       <code>pathtracer</code>
     </td>
   </tr>
 </table>
-<p><em><strong>Figure 1</strong></em>: The same <a href="https://github.com/baronauta/RayTracer/blob/master/examples/demo.txt">scene</a> rendered using the three available tracer algorithms.
-For the <code>onofftracer</code>, the large sphere simulating the sky was commented out to avoid it being treated as a hit surface.</p>
+<p><em><strong>Figure 1</strong></em>: The same <a href="./examples/demo.txt">scene</a> rendered using the three available tracer algorithms.
+For the <code>onofftracer</code>, the large sphere simulating the sky was commented out to avoid it being treated as a hit surface. (Texture source: <a href="https://www.solarsystemscope.com/textures/">Jupiter texture © Solar System Scope</a> – <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).
+</p>
 
 > ⚠️ **Note:** Rendering your scene when using the `pathtracer`, may take a considerable amount of time due to the complexity of realistic light simulations.
 
 
-#### Try by yourself
+### Try by yourself
 You can reproduce these results by using the input file `examples/demo.txt` and selecting one of the available tracers:
 
 ```bash
@@ -137,6 +145,7 @@ Two types of cameras are available:
 
 - **Orthogonal** — Uses orthographic projection, which preserves object sizes regardless of depth. This is ideal for technical or architectural visualization where true dimensions are important.
 
+<div id="figure-2"></div>
 <table width="100%">
   <tr>
     <td align="center" width="50%">
@@ -152,7 +161,32 @@ Two types of cameras are available:
 <p><strong>Figure 2:</strong> Perspective and orthogonal camera views. Minor adjustments to camera positions were made for aesthetic presentation.</p>
 
 
+### Constructive Solid Geometry
+
+*Constructive Solid Geometry (CSG)* is a modeling technique used to build complex shapes by combining simpler ones through boolean operations such as `union`, `fusion`, `intersection`, and `difference`. These operations define how the volumes of the input shapes interact—for example, by merging them or subtracting one from another. CSG operations can be nested to create intricate hierarchical structures. For usage details, see [guidelines.md](./guidelines.md#-4-constructive-solid-geometry-csg).
+
+
+<div id="figure-3"></div>
+<table width="100%">
+  <tr>
+    <td align="center" width="33%">
+      <img src="./examples/csg_union.png" width="100%"><br>
+      <em>Union</em>
+    </td>
+    <td align="center" width="33%">
+      <img src="./examples/csg_diff.png" width="100%"><br>
+      <em>Difference</em>
+    </td>
+    <td align="center" width="33%">
+      <img src="./examples/csg_inter.png" width="100%"><br>
+      <em>Intersection</em>
+    </td>
+  </tr>
+</table>
+<p><strong>Figure 3:</strong> Examples of shapes built using Constructive Solid Geometry (CSG) with different boolean operations.</p>
+
 ---
+
 ### Tone Mapping
 
 Once you have the `.pfm` file, you can apply **tone mapping**—the process of converting HDR images into LDR ones suitable for standard displays.  
@@ -176,35 +210,48 @@ julia image2pfm <input_image>
 ```
 ---
 ### Feature Gallery
-
+<div id="image-1"></div>
 <table width="100%">
   <tr>
     <td align="center" width="100%">
-      <img src="./examples/mirror_and_spheres.png" width="100%"><br>
-      <em>Two spheres with a mirror</em>
+      <img src="./examples/mirror_and_spheres.png" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
+      <em style="display:block; margin-bottom: 24px;"><strong>Image 1</strong>: Two spheres with a mirror</em>
     </td>
   </tr>
 </table>
 
-
-<table width="100%">
+<div id="image-2"></div>
+<table width="100%" style="margin-bottom: 24px;">
   <tr>
     <td align="center" width="33%">
-      <img src="./examples/reference_antia_1.png" width="100%"><br>
-      <code>samples-per-pixel=1</code>
+      <img src="./examples/cornellbox_antia_1.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
+      <code style="display:block; margin-bottom: 16px;">samples-per-pixel=1</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/reference_antia_4.png" width="100%"><br>
-      <code>samples-per-pixel=4</code>
+      <img src="./examples/cornellbox_antia_4.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
+      <code style="display:block; margin-bottom: 16px;">samples-per-pixel=4</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/reference_antia_9.png"  width="100%"><br>
-      <code>samples-per-pixel=9</code>
+      <img src="./examples/cornellbox_antia_9.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
+      <code style="display:block; margin-bottom: 16px;">samples-per-pixel=9</code>
     </td>
   </tr>
 </table>
-<div style="text-align:center;">
-  <em>Comparison of images rendered with increasing levels of antialiasing. Higher sample counts result in smoother edges and reduced visual noise.</em>
+<div style="text-align:center; margin-bottom: 32px;">
+  <em><strong>Image 2</strong>: Effect of increasing antialiasing: higher sample counts yield smoother edges and less noise.</em>
+</div>
+
+
+<div id="image-3"></div>
+<div style="text-align:center; width:100%; max-width:600px; margin:auto;">
+  <img src="./examples/csg_cornellbox.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
+  <em style="display:block; margin-bottom: 24px;"><strong>Image 3</strong>: Example of a complex shape created with CSG union operation.</em>
+</div>
+
+<div id="image-4"></div>
+<div style="text-align:center; width:100%; max-width:600px; margin:auto;">
+  <img src=".\examples\satellite3.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
+  <em style="display:block; margin-bottom: 24px;"><strong>Image 4</strong>: When Cubes Dream of Stars: The Majesty of CSG and ImagePigment (Texture source: <a href="https://www.solarsystemscope.com/textures/">Mars texture © Solar System Scope</a> – <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</em>
 </div>
 
 ## History

@@ -43,6 +43,8 @@ const NUMBERS = "0123456789eE.+-"
     MATERIAL    
     PLANE    
     SPHERE    
+    CUBE
+    CSG
     DIFFUSE    
     SPECULAR    
     UNIFORM    
@@ -58,6 +60,11 @@ const NUMBERS = "0123456789eE.+-"
     ORTHOGONAL
     PERSPECTIVE
     FLOAT
+    KW_UNION
+    KW_FUSION
+    KW_INTERSECTION
+    KW_DIFFERENCE
+    COPY
 end
 
 const KEYWORDS = Dict(
@@ -65,6 +72,8 @@ const KEYWORDS = Dict(
     "material" => MATERIAL,
     "plane" => PLANE,
     "sphere" => SPHERE,
+    "cube" => CUBE,
+    "csg" => CSG,
     "diffuse" => DIFFUSE,
     "specular" => SPECULAR,
     "uniform" => UNIFORM,
@@ -80,6 +89,11 @@ const KEYWORDS = Dict(
     "orthogonal" => ORTHOGONAL,
     "perspective" => PERSPECTIVE,
     "float" => FLOAT,
+    "union" => KW_UNION,
+    "fusion" => KW_FUSION,
+    "intersection" => KW_INTERSECTION,
+    "difference" => KW_DIFFERENCE,
+    "copy" => COPY,
 )
 
 
