@@ -61,13 +61,6 @@ The general syntax to define a shape is:
 ```julia
 shape <shape_name>(<material>, <transformation>)
 ```
-
-Each object can be duplicated using the `copy` keyword.  This is useful for reusing the same [CSG](#-4-constructive-solid-geometry-csg) structure in multiple compositions within a single scene:
-
-```julia
-copy <new_shape_name>(<original_shape_name>)
-```
-
 ---
 
 #### **Basic Shapes**
@@ -101,7 +94,16 @@ CSG allows the composition of shapes using boolean operations: `union`, `fusion`
 A `csg` is a shape object, so it must be declared with an identifier. Since it behaves like any other shape, you can build complex objects by nesting multiple CSGs.
 
 - A global transformation can be applied to the entire CSG block, preserving the relative positions of its internal components (if no needed use `identity`).
-- Shapes inside a CSG are not automatically added to the world. If you want to use them independently, you must duplicate them using `copy` and assign a new name.
+
+- Shapes used inside a CSG are not added to the world as standalone objects. They only exist as part of the CSG.  
+To use a shape both inside and outside a CSG, you must duplicate it using the `copy` command with a new name.
+
+```julia
+copy <new_shape_name>(<original_shape_name>)
+```
+> ℹ️ **Note:** This is especially useful when working with a complex CSG (e.g., `csg1`) that you want to reuse multiple times inside a larger structure (e.g., `csg_global`).  
+Instead of reconstructing `csg1` every time, you can define it once and then duplicate it wherever needed using `copy`, saving time and avoiding repetition.
+
 The general syntax to define a CSG is:
 
 ```julia
@@ -154,38 +156,65 @@ If `--angle` is not specified, the value from the scene file ($90$) is used. Thi
 
 ### 6. Working example
 *Note* — You can write comment using `#`
-```julia
+```bash
 # Float variable (can be overridden via CLI: --angle <value>)
 float angle(0.0)
 
-# Materials
-material plane_material(
-    diffuse(
-        checkered(<1.0, 1.0, 0.2>, <0.1, 0.2, 0.5>, 4)
-    ),
+#============== MATERIALS ==============
+# SKY
+material sky_material(
+    diffuse(uniform(<0.3, 0.3, 0.3>)),
     uniform(<0, 0, 0>)
 )
-material sky_material(diffuse(uniform(<0, 0, 0>)), uniform(<0.5, 0.5, 1>))
-material mirror_material(specular(uniform(<0.5, 0.5, 0.5>)), uniform(<0, 0, 0>))
-material sphere_material(diffuse(uniform(<1, 0.314, 0.314>)), uniform(<0, 0, 0>))
-material sphere_sky_material(diffuse(image("./examples/reference_nightsky.jpg")), uniform(<0, 0, 0>))
 
-# Object definitions
-# Night sky sphere at position (1, 1, 2)
-sphere(sphere_sky_material, translation([-1, -2, 2.5]) * rotation_z(60) * scaling(1.2, 1.2, 1.2))
+# FLOOR
+material ground_material(
+    diffuse(checkered(<0.5, 0.5, 0.5>, <0, 0, 0>, 2)),
+    uniform(<0, 0, 0>)
+)
 
-# Red little sphere
-sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
+# RED CUBE
+material red_material(
+    diffuse(uniform(<10, 0.1, 0.1>)),
+    uniform(<0, 0, 0>)
+)
 
-# Mirror sphere at origin
-sphere(mirror_material, scaling(1.5, 1.5, 1.5))
+# BLUE SPHERE
+material blue_material(
+    diffuse(uniform(<0.1, 0.1, 10>)),
+    uniform(<0, 0, 0>)
+)
 
-# Large sky sphere
-sphere(sky_material, scaling(50, 50, 50))
+#============== OBJECTS ==============
+# SKY
+sphere sky(sky_material, scaling(50,50,50))
 
-# Plane with checkered pattern
-plane(plane_material, identity)
+#---
 
-# Camera with CLI-overridable angle and screen distance 1
-camera(perspective, rotation_z(angle) * translation([-4, -1, 1]), 1.0)
+# FLOOR PLANE
+plane ground(ground_material, identity)
+
+#---
+
+# SPHERE - lifted and slightly offset to cut into cube
+sphere sphere_1(blue_material, translation([1, -1, 2]) * scaling(0.8,0.8,0.8))
+
+#---
+
+# CUBE - scaled and translated
+cube cube_1(red_material, translation([-1, -1, 0]) * scaling(2, 2, 2))
+
+#---
+
+# CSG - cube and sphere
+
+# To change the CSG operation, uncomment one of the alternatives below and comment out the current operation.
+
+csg csg_diff(cube_1, sphere_1, difference, rotation_z(-60))
+# csg csg_union(cube_1, sphere_1, union, rotation_z(-60))
+# csg csg_inter(cube_1, sphere_1, intersection, rotation_z(-60))
+
+#============== CAMERA ==============
+
+camera(perspective, translation([-4, 0, 3]) * rotation_y(25), 2)
 ```

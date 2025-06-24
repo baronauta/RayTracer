@@ -31,7 +31,7 @@ RayTracer is a Julia-based library that runs on:
 
 ### Steps
 
-1. Download the [v1.1.0 release](https://github.com/baronauta/RayTracer/releases/tag/v1.1.0) and extract the archive.
+1. Download the [v2.0.0 release](https://github.com/baronauta/RayTracer/releases/tag/v2.0.0) and extract the archive.
 
 2. Open a terminal and navigate to the extracted directory.
 
@@ -107,25 +107,26 @@ To display usage instructions and available options for a specific tracer, use t
 ```bash
 julia RayTracer <tracer> -h
 ```
-
+<div id="figure-1"></div>
 <table width="100%">
   <tr>
     <td align="center" width="33%">
-      <img src="./examples/cf_onofftracer.png" width="100%"><br>
+      <img src="./examples/demo_onof.png" width="100%"><br>
       <code>onofftracer</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/cf_flattracer.png" width="100%"><br>
+      <img src="./examples/demo_flat.png" width="100%"><br>
       <code>flattracer</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/cf_pathtracer.png"  width="100%"><br>
+      <img src="./examples/demo_path.png"  width="100%"><br>
       <code>pathtracer</code>
     </td>
   </tr>
 </table>
-<p><em><strong>Figure 1</strong></em>: The same <a href="https://github.com/baronauta/RayTracer/blob/master/examples/demo.txt">scene</a> rendered using the three available tracer algorithms.
-For the <code>onofftracer</code>, the large sphere simulating the sky was commented out to avoid it being treated as a hit surface.</p>
+<p><em><strong>Figure 1</strong></em>: The same <a href="./examples/demo.txt">scene</a> rendered using the three available tracer algorithms.
+For the <code>onofftracer</code>, the large sphere simulating the sky was commented out to avoid it being treated as a hit surface. (Texture source: <a href="https://www.solarsystemscope.com/textures/">Jupiter texture © Solar System Scope</a> – <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).
+</p>
 
 > ⚠️ **Note:** Rendering your scene when using the `pathtracer`, may take a considerable amount of time due to the complexity of realistic light simulations.
 
@@ -144,6 +145,7 @@ Two types of cameras are available:
 
 - **Orthogonal** — Uses orthographic projection, which preserves object sizes regardless of depth. This is ideal for technical or architectural visualization where true dimensions are important.
 
+<div id="figure-2"></div>
 <table width="100%">
   <tr>
     <td align="center" width="50%">
@@ -164,18 +166,19 @@ Two types of cameras are available:
 *Constructive Solid Geometry (CSG)* is a modeling technique used to build complex shapes by combining simpler ones through boolean operations such as `union`, `fusion`, `intersection`, and `difference`. These operations define how the volumes of the input shapes interact—for example, by merging them or subtracting one from another. CSG operations can be nested to create intricate hierarchical structures. For usage details, see [guidelines.md](./guidelines.md#-4-constructive-solid-geometry-csg).
 
 
+<div id="figure-3"></div>
 <table width="100%">
   <tr>
     <td align="center" width="33%">
-      <img src="./examples/reference_union.png" width="100%"><br>
+      <img src="./examples/csg_union.png" width="100%"><br>
       <em>Union</em>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/reference_diff.png" width="100%"><br>
+      <img src="./examples/csg_diff.png" width="100%"><br>
       <em>Difference</em>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/reference_inter.png" width="100%"><br>
+      <img src="./examples/csg_inter.png" width="100%"><br>
       <em>Intersection</em>
     </td>
   </tr>
@@ -207,39 +210,48 @@ julia image2pfm <input_image>
 ```
 ---
 ### Feature Gallery
+<div id="image-1"></div>
 <table width="100%">
   <tr>
     <td align="center" width="100%">
       <img src="./examples/mirror_and_spheres.png" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
-      <em style="display:block; margin-bottom: 24px;"><strong>Figure 1</strong>: Two spheres with a mirror</em>
+      <em style="display:block; margin-bottom: 24px;"><strong>Image 1</strong>: Two spheres with a mirror</em>
     </td>
   </tr>
 </table>
 
+<div id="image-2"></div>
 <table width="100%" style="margin-bottom: 24px;">
   <tr>
     <td align="center" width="33%">
-      <img src="./examples/reference_antia_1.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
+      <img src="./examples/cornellbox_antia_1.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
       <code style="display:block; margin-bottom: 16px;">samples-per-pixel=1</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/reference_antia_4.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
+      <img src="./examples/cornellbox_antia_4.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
       <code style="display:block; margin-bottom: 16px;">samples-per-pixel=4</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/reference_antia_9.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
+      <img src="./examples/cornellbox_antia_9.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
       <code style="display:block; margin-bottom: 16px;">samples-per-pixel=9</code>
     </td>
   </tr>
 </table>
-
 <div style="text-align:center; margin-bottom: 32px;">
-  <em><strong>Figure 2</strong>: Effect of increasing antialiasing: higher sample counts yield smoother edges and less noise.</em>
+  <em><strong>Image 2</strong>: Effect of increasing antialiasing: higher sample counts yield smoother edges and less noise.</em>
 </div>
 
+
+<div id="image-3"></div>
 <div style="text-align:center; width:100%; max-width:600px; margin:auto;">
-  <img src="./examples/reference_cornell_antia.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
-  <em style="display:block; margin-bottom: 24px;"><strong>Figure 3</strong>: Example of a complex shape created with CSG union operation.</em>
+  <img src="./examples/csg_cornellbox.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
+  <em style="display:block; margin-bottom: 24px;"><strong>Image 3</strong>: Example of a complex shape created with CSG union operation.</em>
+</div>
+
+<div id="image-4"></div>
+<div style="text-align:center; width:100%; max-width:600px; margin:auto;">
+  <img src="./examples/setellite.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
+  <em style="display:block; margin-bottom: 24px;"><strong>Image 4</strong>: When Cubes Dream of Stars: The Majesty of CSG and ImagePigment (Texture source: <a href="https://www.solarsystemscope.com/textures/">Mars texture © Solar System Scope</a> – <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</em>
 </div>
 
 ## History
