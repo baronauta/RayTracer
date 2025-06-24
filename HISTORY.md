@@ -1,5 +1,19 @@
 ## HEAD
 
+## Breaking changes summary
+- **Breaking change:** Usage updated [#21](https://github.com/baronauta/RayTracer/pull/21):
+  - Add shapes identifier. Now Shapes **must** be named. To proper use complex CSG all shapes must be named in the `scene file` with an identifier. 
+    - before: `shape(shape_materal, transformation)`; 
+    - now: `shape my_shape(shape_materal, transformation)`.
+  - All shapes that are used in a CSG wont be considered in the world as indipendent shapes If you need please use the `copy` option.
+---
+- Fix: correct bug when parsing angle argument (see [this commit](https://github.com/baronauta/RayTracer/pull/21/commits/242c65d1da5df755d3a983469f43c86bccac3ee8)).
+- *New Feature*: Add possibility to copy Shapes as a new object $-$ (`copy new_copy_shape(original_shape)`). This feature is very useful during complex Csg and for building scenes where the same complex shape (imagine a multiple nested Csg) is reused multiple times in different positions or combinations, or inside and outside a Csg [#21](https://github.com/baronauta/RayTracer/pull/21).
+- Implement Constructive Solid Geometry and Cube [#21](https://github.com/baronauta/RayTracer/pull/21)
+  - *New Feature*: Add the `Csg` shape. Now multiple shapes can be composed using basic operations to create complex objects.
+  - *New Feature*: Add the `Cube` shape.
+
+
 # Version 1.1.0
 - Implemented support for casting multiple rays per pixel with configurable `samples_per_pixel`, enabling antialiasing by averaging results [#20](https://github.com/baronauta/RayTracer/pull/20).
 
