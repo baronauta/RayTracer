@@ -199,7 +199,7 @@ julia image2pfm <input_image>
     </td>
     <td align="center" width="33%">
       <img src="./examples/reference_antia_9.png"  width="100%"><br>
-      <code>samples-per-pixel=1</code>
+      <code>samples-per-pixel=9</code>
     </td>
   </tr>
 </table>
