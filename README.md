@@ -85,8 +85,6 @@ RayTracer simulates a camera by casting rays—lines representing paths of light
 - **`pathtracer`**  
   A physically-based renderer that simulates realistic lighting, including global illumination, soft shadows, and reflections.
 
-  In addition to basic options, pathtracer also supports *antialiasing* (`--samples-per-pixel`). This technique reduces variance and visual artifacts caused by color variations at subpixel scale. An example comparing images with and without antialiasing can be found in [Feature Gallery](#feature-gallery) section.
-
 - **`flattracer`**  
   A fast, non-photorealistic renderer that returns the surface color and emitted light at the ray intersection. It ignores lighting, shadows, and reflections.  
   Useful for quick previews, geometry debugging, and visualizing base materials.
@@ -96,6 +94,14 @@ RayTracer simulates a camera by casting rays—lines representing paths of light
   Returns white for hits and black for misses.  
   Useful for visibility checks and fast silhouette previews.
 
+
+### Antialiasing
+
+All tracers support *antialiasing* via the `--samples-per-pixel` option, a technique that reduces variance and visual artifacts by casting multiple rays per pixel.  
+An example comparing images with and without antialiasing can be found in the [Feature Gallery](#feature-gallery) section.
+
+
+### Usage
 
 To display usage instructions and available options for a specific tracer, use the `-h` flag:
 ```bash
@@ -124,7 +130,7 @@ For the <code>onofftracer</code>, the large sphere simulating the sky was commen
 > ⚠️ **Note:** Rendering your scene when using the `pathtracer`, may take a considerable amount of time due to the complexity of realistic light simulations.
 
 
-#### Try by yourself
+### Try by yourself
 You can reproduce these results by using the input file `examples/demo.txt` and selecting one of the available tracers:
 
 ```bash
@@ -155,7 +161,7 @@ Two types of cameras are available:
 
 ### Constructive Solid Geometry
 
-*Constructive Solid Geometry (CSG)* is a modeling technique used to build complex shapes by combining simpler ones through boolean operations (`union`, `fusion`, `intersection`, and `difference`). Each operation defines how the volumes of the input shapes interact — for example, by merging them or subtracting one from another. CSGs can be nested to create intricate hierarchical structures. For usage details, see [guidelines.md](./guidelines.md#-4-constructive-solid-geometry-csg).
+*Constructive Solid Geometry (CSG)* is a modeling technique used to build complex shapes by combining simpler ones through boolean operations such as `union`, `fusion`, `intersection`, and `difference`. These operations define how the volumes of the input shapes interact—for example, by merging them or subtracting one from another. CSG operations can be nested to create intricate hierarchical structures. For usage details, see [guidelines.md](./guidelines.md#-4-constructive-solid-geometry-csg).
 
 
 <table width="100%">
@@ -174,9 +180,10 @@ Two types of cameras are available:
     </td>
   </tr>
 </table>
-<p><strong>Figure 3:</strong> Examples of CSGs created with different boolean operations.</p>
+<p><strong>Figure 3:</strong> Examples of shapes built using Constructive Solid Geometry (CSG) with different boolean operations.</p>
 
 ---
+
 ### Tone Mapping
 
 Once you have the `.pfm` file, you can apply **tone mapping**—the process of converting HDR images into LDR ones suitable for standard displays.  
@@ -200,44 +207,39 @@ julia image2pfm <input_image>
 ```
 ---
 ### Feature Gallery
-
 <table width="100%">
   <tr>
     <td align="center" width="100%">
-      <img src="./examples/reference_cornell_antia.png" width="100%"><br>
-      <em>Cornell box - CSG in action.</em>
+      <img src="./examples/mirror_and_spheres.png" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
+      <em style="display:block; margin-bottom: 24px;"><strong>Figure 1</strong>: Two spheres with a mirror</em>
     </td>
   </tr>
 </table>
 
-<table width="100%">
-  <tr>
-    <td align="center" width="100%">
-      <img src="./examples/mirror_and_spheres.png" width="100%"><br>
-      <em>Two spheres with a mirror</em>
-    </td>
-  </tr>
-</table>
-
-
-<table width="100%">
+<table width="100%" style="margin-bottom: 24px;">
   <tr>
     <td align="center" width="33%">
-      <img src="./examples/reference_antia_1.png" width="100%"><br>
-      <code>samples-per-pixel=1</code>
+      <img src="./examples/reference_antia_1.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
+      <code style="display:block; margin-bottom: 16px;">samples-per-pixel=1</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/reference_antia_4.png" width="100%"><br>
-      <code>samples-per-pixel=4</code>
+      <img src="./examples/reference_antia_4.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
+      <code style="display:block; margin-bottom: 16px;">samples-per-pixel=4</code>
     </td>
     <td align="center" width="33%">
-      <img src="./examples/reference_antia_9.png"  width="100%"><br>
-      <code>samples-per-pixel=1</code>
+      <img src="./examples/reference_antia_9.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
+      <code style="display:block; margin-bottom: 16px;">samples-per-pixel=9</code>
     </td>
   </tr>
 </table>
-<div style="text-align:center;">
-  <em>Comparison of images rendered with increasing levels of antialiasing. Higher sample counts result in smoother edges and reduced visual noise.</em>
+
+<div style="text-align:center; margin-bottom: 32px;">
+  <em><strong>Figure 2</strong>: Effect of increasing antialiasing: higher sample counts yield smoother edges and less noise.</em>
+</div>
+
+<div style="text-align:center; width:100%; max-width:600px; margin:auto;">
+  <img src="./examples/reference_cornell_antia.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
+  <em style="display:block; margin-bottom: 24px;"><strong>Figure 3</strong>: Example of a complex shape created with CSG union operation.</em>
 </div>
 
 ## History
