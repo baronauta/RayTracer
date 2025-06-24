@@ -250,7 +250,7 @@ julia image2pfm <input_image>
 
 <div id="image-4"></div>
 <div style="text-align:center; width:100%; max-width:600px; margin:auto;">
-  <img src="./examples/setellite.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
+  <img src=".\examples\satellite3.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
   <em style="display:block; margin-bottom: 24px;"><strong>Image 4</strong>: When Cubes Dream of Stars: The Majesty of CSG and ImagePigment (Texture source: <a href="https://www.solarsystemscope.com/textures/">Mars texture © Solar System Scope</a> – <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</em>
 </div>
 
