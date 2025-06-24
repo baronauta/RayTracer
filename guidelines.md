@@ -31,9 +31,7 @@ Supported properties for both `<surface>` and `<emittance>`:
 - **Pigments** (color or texture) used inside each type:
     - `uniform(<r, g, b>)` — solid color.
     - `checkered(<color1>, <color2>, squares_per_unit)` — checkerboard pattern.
-    - `image("path/to/image.pfm")` — image-based texture.
-
-       > ℹ️ **Note**: both HDR (`.pfm`) and LDR (`.jpg`, `.png`, `.tif`) image formats are supported for uploading as pigments.
+    - `image("path/to/image.pfm")` — image-based texture, both HDR (`.pfm`) and LDR (`.jpg`, `.png`, `.tif`) image formats are supported.
 
 #### **Example**:
 ```julia
@@ -44,7 +42,9 @@ material plane_material(
     uniform(<0, 0, 0>)
 )
 ```
-This defines a material named plane_material with the following characteristics:
+
+This defines a material named `plane_material` with the following characteristics:
+
 
 - A **diffuse surface** that uses a checkered pattern made of two colors: `<1.0, 1.0, 0.2>` (britght yellow) and `<0.1, 0.2, 0.5>` (dark blue).
 
@@ -55,17 +55,17 @@ This defines a material named plane_material with the following characteristics:
 
 To create an object, define its **shape**, assign a **material**, and place it into the scene using a **transformation**.
 
-Each shape **must** be declared with an **identifier**. This is required to enable referencing in complex scenes, particularly when using **Constructive Solid Geometry ([CSG](#-4-constructive-solid-geometry-csg))**.  
+Each shape **must** be declared with an **identifier**. This is required because it facilitates constructing more complex shapes using *Constructive Solid Geometry ([CSG](#-4-constructive-solid-geometry-csg))*.  
 The general syntax to define a shape is:
 
 ```julia
 shape <shape_name>(<material>, <transformation>)
 ```
 
-Each object can be duplicated using the `copy` keyword. This is useful when you want to reuse the same [CSG](#-4-constructive-solid-geometry-csg) structure in different compositions within the same scene.  
+Each object can be duplicated using the `copy` keyword.  This is useful for reusing the same [CSG](#-4-constructive-solid-geometry-csg) structure in multiple compositions within a single scene:
 
 ```julia
-copy new_shape(original_shape)
+copy <new_shape_name>(<original_shape_name>)
 ```
 
 ---
@@ -91,16 +91,16 @@ You can **combine transformations** using the `*` operator. Transformations are 
 ```julia
 shape small_sphere(sphere_material, translation([-2.5, -1, 0.2]) * scaling(0.2, 0.2, 0.2))
 ```
-This creates a `sphere` with the material `sphere_material`, a radius of $0.2$, and origin at $(-2.5, -1, 0.2)$.
+This creates a `sphere` with the material `sphere_material`, a radius of $0.2$, and origin at $(-2.5,\, -1,\, 0.2)$.
 
 ---
 
 ### 🧩 4. Constructive Solid Geometry (CSG)
 
 CSG allows the composition of shapes using boolean operations: `union`, `fusion`, `intersection`, and `difference`.  
-A CSG is a shape object, so it must be declared with an identifier. Since it behaves like any other shape, you can build complex objects by nesting multiple CSGs.
+A `csg` is a shape object, so it must be declared with an identifier. Since it behaves like any other shape, you can build complex objects by nesting multiple CSGs.
 
-- A global transformation can be applied to the entire CSG block, preserving the relative positions of its internal components (if no needed use *identity*).
+- A global transformation can be applied to the entire CSG block, preserving the relative positions of its internal components (if no needed use `identity`).
 - Shapes inside a CSG are not automatically added to the world. If you want to use them independently, you must duplicate them using `copy` and assign a new name.
 The general syntax to define a CSG is:
 
@@ -109,7 +109,7 @@ csg my_csg_shape(<shape_1>, <shape_2>, <operation>, <transformation>)
 ```
 **Operations**
 - `Union` $-$ Merges the volumes: both shapes are kept, and all intersections between them are detected and included.
-- `Fusion` $-$ Like union, but only the external surfaces are retained, removing internal overlaps (useful in the future for transparent objects).
+- `Fusion` $-$ Like union, but only the external surfaces are retained, removing internal overlaps.
 - `Intersection` $-$ Only the common volume is preserved: intersections are kept only if occur on a part of one shape that lies inside the other.
 - `Difference` $-$ Subtracts the second shape from the first: only the parts of the first shape that are **not** inside the second are retained, or intersections from the second shape that occur within the first.
 
