@@ -1,5 +1,6 @@
 ## HEAD
 
+# Version 2.0.0
 ## Breaking changes summary
 - **Breaking change:** Usage updated [#21](https://github.com/baronauta/RayTracer/pull/21):
   - Add shapes identifier. Now Shapes **must** be named. To proper use complex CSG all shapes must be named in the `scene file` with an identifier. 
