@@ -158,7 +158,7 @@ Two types of cameras are available:
     </td>
   </tr>
 </table>
-<p><strong>Figure 2:</strong> Perspective and orthogonal camera views. Minor adjustments to camera positions were made for aesthetic presentation.</p>
+<p><em><strong>Figure 2</strong></em>: Perspective and orthogonal camera views. Minor adjustments to camera positions were made for aesthetic presentation.</p>
 
 
 ### Constructive Solid Geometry
@@ -183,7 +183,7 @@ Two types of cameras are available:
     </td>
   </tr>
 </table>
-<p><strong>Figure 3:</strong> Examples of shapes built using Constructive Solid Geometry (CSG) with different boolean operations.</p>
+<p><em><strong>Figure 3</strong></em>: Examples of shapes built using Constructive Solid Geometry (CSG) with different boolean operations.</p>
 
 ---
 
@@ -210,18 +210,21 @@ julia image2pfm <input_image>
 ```
 ---
 ### Feature Gallery
+
+
 <div id="image-1"></div>
 <table width="100%">
   <tr>
     <td align="center" width="100%">
       <img src="./examples/mirror_and_spheres.png" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
-      <em style="display:block; margin-bottom: 24px;"><strong>Image 1</strong>: Two spheres with a mirror</em>
+      <em style="display:block; margin-bottom: 24px;"><strong>Image 1</strong>: Two spheres with a mirror.</em>
     </td>
   </tr>
 </table>
 
+
 <div id="image-2"></div>
-<table width="100%" style="margin-bottom: 24px;">
+<table width="100%" style="margin-bottom: 32px;">
   <tr>
     <td align="center" width="33%">
       <img src="./examples/cornellbox_antia_1.png" style="display:block; margin:auto; width:100%; max-width:180px; margin-bottom: 8px;">
@@ -236,23 +239,36 @@ julia image2pfm <input_image>
       <code style="display:block; margin-bottom: 16px;">samples-per-pixel=9</code>
     </td>
   </tr>
+  <tr>
+    <td colspan="3" align="center">
+      <em><strong>Image 2</strong>: Effect of increasing antialiasing: higher sample counts yield smoother edges and less noise.</em>
+    </td>
+  </tr>
 </table>
-<div style="text-align:center; margin-bottom: 32px;">
-  <em><strong>Image 2</strong>: Effect of increasing antialiasing: higher sample counts yield smoother edges and less noise.</em>
-</div>
+
 
 
 <div id="image-3"></div>
-<div style="text-align:center; width:100%; max-width:600px; margin:auto;">
-  <img src="./examples/csg_cornellbox.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
-  <em style="display:block; margin-bottom: 24px;"><strong>Image 3</strong>: Example of a complex shape created with CSG union operation.</em>
-</div>
+<table width="100%">
+  <tr>
+    <td align="center" width="100%">
+      <img src="./examples/csg_cornellbox.png" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
+      <em style="display:block; margin-bottom: 24px;"><strong>Image 3</strong>: Example of a complex shape created with CSG union operation.</em>
+    </td>
+  </tr>
+</table>
+
 
 <div id="image-4"></div>
-<div style="text-align:center; width:100%; max-width:600px; margin:auto;">
-  <img src=".\examples\satellite3.png" style="max-width:100%; height:auto; margin-bottom: 12px;">
-  <em style="display:block; margin-bottom: 24px;"><strong>Image 4</strong>: When Cubes Dream of Stars: The Majesty of CSG and ImagePigment (Texture source: <a href="https://www.solarsystemscope.com/textures/">Mars texture © Solar System Scope</a> – <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</em>
-</div>
+<table width="100%">
+  <tr>
+    <td align="center" width="100%">
+      <img src="./examples/satellite3.png" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
+      <em style="display:block; margin-bottom: 24px;"><strong>Image 4</strong>: When Cubes Dream of Stars: The Majesty of CSG and ImagePigment (Texture source: <a href="https://www.solarsystemscope.com/textures/">Mars texture © Solar System Scope</a> – <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</em>
+    </td>
+  </tr>
+</table>
+
 
 ## History
 See the file [HISTORY.md](https://github.com/baronauta/RayTracer/blob/master/HISTORY.md).
