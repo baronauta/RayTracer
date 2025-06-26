@@ -91,7 +91,7 @@ Comonicon.@cast function pathtracer(
     height::Int; 
     output_name::String="",
     extension::String = "", # useful fix-it although without output name (so timestamp.extension)
-    angle::Union{Float64, Nothing}=nothing,
+    angle::Float64=0.0,
     n_rays::Int=5,
     max_depth::Int=5,
     russian_roulette_limit::Int=3,
@@ -113,7 +113,7 @@ Comonicon.@cast function pathtracer(
         end
 
         aspect_ratio = width/height
-        if !isnothing(angle)
+        if angle != 0
             external_variables = Dict(
                 "angle" => angle,
                 )
@@ -219,7 +219,7 @@ Comonicon.@cast function flattracer(
     height; 
     output_name::String="",
     extension::String = "",
-    angle::Union{Float64, Nothing}=nothing,
+    angle::Float64=0.0,
     samples_per_pixel::Int=1
     )
 
@@ -242,7 +242,7 @@ Comonicon.@cast function flattracer(
         height = parse(Int, height)
         # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
         aspect_ratio = width/height
-        if !isnothing(angle)
+        if angle != 0
             external_variables = Dict(
                 "angle" => angle,
                 )
@@ -345,7 +345,7 @@ Comonicon.@cast function onofftracer(
     height::Int; 
     output_name::String="",
     extension::String = "",
-    angle::Union{Float64, Nothing}=nothing,
+    angle::Float64=0.0,
     samples_per_pixel::Int=1
     )
 
@@ -365,7 +365,7 @@ Comonicon.@cast function onofftracer(
 
         # check if there are variables passed from outside (e.g. angle, calculate aspect_ratio)
         aspect_ratio = width/height
-        if !isnothing(angle)
+        if angle != 0
             external_variables = Dict(
                 "angle" => angle,
                 )
