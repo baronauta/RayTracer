@@ -253,7 +253,7 @@ julia image2pfm <input_image>
   <tr>
     <td align="center" width="100%">
       <img src="./examples/csg_cornellbox.png" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
-      <em style="display:block; margin-bottom: 24px;"><strong>Image 3</strong>: Example of a complex shape created with CSG union operation.</em>
+      <em style="display:block; margin-bottom: 24px;"><strong>Image 3</strong>: Example of a complex shape created with CSG 'difference' operation.</em>
     </td>
   </tr>
 </table>
