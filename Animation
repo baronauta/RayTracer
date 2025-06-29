@@ -114,6 +114,11 @@ function save_frame(frames_path, img_dir, img, i, num_frames)
 end
 
 function make_video(input_dir, out_dir, filename, num_frames, framerate)
+    # Check if ffmpeg is installed
+    if isnothing(Sys.which("ffmpeg"))
+        throw(RuntimeError("❌ `ffmpeg` is not installed or not available in the system PATH. Please install it to generate the video."))
+    end
+
     num_digits = length(string(num_frames))
     pattern = "frame%0$(num_digits)d.png"
     cmd = `ffmpeg -y -r $framerate -i $input_dir/$pattern -vcodec libx264 -pix_fmt yuv420p $out_dir/$filename.mp4`
