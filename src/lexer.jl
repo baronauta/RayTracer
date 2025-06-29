@@ -49,7 +49,8 @@ const NUMBERS = "0123456789eE.+-"
     SPECULAR    
     UNIFORM    
     CHECKERED    
-    IMAGE    
+    IMAGE
+    TRANSFORMATION
     IDENTITY
     TRANSLATION
     ROTATION_X
@@ -65,6 +66,7 @@ const NUMBERS = "0123456789eE.+-"
     KW_INTERSECTION
     KW_DIFFERENCE
     COPY
+    MOTION
 end
 
 const KEYWORDS = Dict(
@@ -79,6 +81,7 @@ const KEYWORDS = Dict(
     "uniform" => UNIFORM,
     "checkered" => CHECKERED,
     "image" => IMAGE,
+    "transformation" => TRANSFORMATION,
     "identity" => IDENTITY,
     "translation" => TRANSLATION,
     "rotation_x" => ROTATION_X,
@@ -94,6 +97,7 @@ const KEYWORDS = Dict(
     "intersection" => KW_INTERSECTION,
     "difference" => KW_DIFFERENCE,
     "copy" => COPY,
+    "motion" => MOTION,
 )
 
 

@@ -36,6 +36,8 @@ A container representing a scene parsed from a scene description file.
 
 - `camera::Union{Camera, Nothing}`: a camera for the scene (only one allowed).
 
+- `motion::Union{Motion, Nothing}`: a motion for the camera (used in animations).
+
 - `float_variables::Dict{String, AbstractFloat}`: a dictionary that stores all named float variables used in the scene, mapping variable names to their respective float values.
 
 # Note
@@ -49,6 +51,7 @@ mutable struct Scene
     shapes::Dict{String, Shape}
     world::World
     camera::Union{Camera, Nothing}
+    motion::Union{Motion, Nothing}
     float_variables::Dict{String, AbstractFloat}
 end
 
@@ -62,12 +65,13 @@ Initializes a `Scene` with:
 - an empty dictionary of named `Material`s,
 - a new empty `World`,
 - no camera (`nothing`),
-- an dictionary for float variables containing the key "_aspect_ratio"; underscore to denote that is
-meant to be private, use of this identifier by user is discouraged,
+- no motion (`nothing`),
+- a dictionary for float variables containing the key "_aspect_ratio"; underscore to denote that is
+  meant to be private, use of this identifier by user is discouraged,
 """
 function Scene(aspect_ratio::AbstractFloat)
     float_variables = Dict{String, AbstractFloat}( "_aspect_ratio" => aspect_ratio)
-    Scene(Dict{String,Material}(), Dict{String, Shape}(), World(), nothing, float_variables)
+    Scene(Dict{String,Material}(), Dict{String, Shape}(), World(), nothing, nothing, float_variables)
 end
 
 
@@ -521,6 +525,61 @@ function parse_camera(instream::InputStream, scene::Scene)
 end
 
 """
+Parse a motion:
+
+- `motion(translation(1, 2, 3), 30)`
+- `motion(rotation_x(30), 5)`
+
+Returns a motion object.
+"""
+function parse_motion(instream::InputStream, scene::Scene)
+    vec = nothing
+    axis = nothing
+    angle = nothing
+
+    expect_symbol(instream, "(")
+
+    transformation = expect_keywords(
+        instream,
+        [TRANSLATION, ROTATION_X, ROTATION_Y, ROTATION_Z],
+    )
+
+    if transformation == TRANSLATION
+        expect_symbol(instream, "(")
+        vec = parse_vector(instream, scene)
+        expect_symbol(instream, ")")
+
+    elseif transformation == ROTATION_X
+        axis = "X"
+        expect_symbol(instream, "(")
+        angle = expect_number(instream, scene)
+        expect_symbol(instream, ")")
+
+    elseif transformation == ROTATION_Y
+        axis = "Y"
+        expect_symbol(instream, "(")
+        angle = expect_number(instream, scene)
+        expect_symbol(instream, ")")
+
+    elseif transformation == ROTATION_Z
+        axis = "Z"
+        expect_symbol(instream, "(")
+        angle = expect_number(instream, scene)
+        expect_symbol(instream, ")")
+
+    else
+        throw(GrammarError(instream.location, "invalid transformation keyword for motion"))
+    end
+
+    expect_symbol(instream, ",")
+    num_frames = expect_number(instream, scene)
+    !isinteger(num_frames) && throw(GrammarError(instream.location, "number of frames must be integer"))
+    expect_symbol(instream, ")")
+
+    return Motion(vec, axis, angle, num_frames)
+end
+
+"""
     parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; external_variables=Dict{String, AbstractFloat}())
 
 Parses a scene description from `instream` and constructs a `Scene` object.
@@ -627,6 +686,14 @@ function parse_scene(instream::InputStream, aspect_ratio::AbstractFloat; externa
                 GrammarError(token.location, "you cannot define more than one camera"),
             )
             scene.camera = parse_camera(instream, scene)
+        
+        elseif token.keyword == MOTION
+            # Only one motion is allowed
+            !isnothing(scene.motion) && throw(
+                GrammarError(token.location, "you cannot define more than one motion"),
+            )
+            scene.motion = parse_motion(instream, scene)
+
         else
             # Raise an error for any unexpected keyword
             throw(GrammarError(token.location, "unexpected keyword $token"))
