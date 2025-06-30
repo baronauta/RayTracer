@@ -128,4 +128,50 @@
 
         @test length(jitter_pairs) == samples_per_pixel
     end
+
+    @testset "Camera motion" begin
+
+        @testset "Update camera position" begin
+            aspect_ratio = 1.
+            start_pos = translation(Vec(1., 0., 0.))
+            movement = translation(Vec(3., 2., 1.))
+
+            # PerspetiveCamera
+            screen_distance = 2.
+            p_camera = PerspectiveCamera(screen_distance, aspect_ratio, start_pos)
+            new_p_camera = RayTracer.update_camera(p_camera, movement)
+            @test p_camera.transformation ≈ start_pos
+            @test new_p_camera.transformation ≈ translation(Vec(4., 2., 1.))
+            @test new_p_camera.distance == screen_distance
+            @test new_p_camera.aspect_ratio == aspect_ratio
+
+            # OrthogonalCamera
+            o_camera = OrthogonalCamera(aspect_ratio, start_pos)
+            new_o_camera = RayTracer.update_camera(o_camera, movement)
+            @test o_camera.transformation ≈ start_pos
+            @test new_o_camera.transformation ≈ translation(Vec(4., 2., 1.))
+            @test new_p_camera.aspect_ratio == aspect_ratio
+        end
+
+        @testset "Animation step" begin
+            initial_trans = rotation_x(30.) * translation(Vec(1.,1.,1.))
+            camera = PerspectiveCamera(1., 1., initial_trans)
+
+            translation_motion = RayTracer.Motion(Vec(10., 20., 30.), nothing, nothing, 10)
+            for i in 1:translation_motion.num_frames
+                new_camera = RayTracer.animation_step(camera, translation_motion, i)
+                expected_transformation = translation(i*Vec(1., 2., 3.)) * initial_trans
+                @test new_camera.transformation ≈ expected_transformation
+            end
+
+            rotation_motion = RayTracer.Motion(nothing, "Y", 30., 10)
+            for i in 1:rotation_motion.num_frames
+                new_camera = RayTracer.animation_step(camera, rotation_motion, i)
+                expected_transformation = rotation_y(i*3.) * initial_trans
+                @test new_camera.transformation ≈ expected_transformation
+            end
+
+        end
+
+    end
 end

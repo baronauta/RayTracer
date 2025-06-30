@@ -1,5 +1,8 @@
 ## HEAD
 
+# Version 2.1.0
+- Provide dynamic camera movements to create scene animations [#19](https://github.com/baronauta/RayTracer/pull/19).
+
 # Version 2.0.0
 ## Breaking changes summary
 - **Breaking change:** Usage updated [#21](https://github.com/baronauta/RayTracer/pull/21):

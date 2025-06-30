@@ -13,7 +13,7 @@ _Photorealistic Image Renderer – Built with Julia_
 ### Core Features
 
 - 🖼️ **Ray Tracing Renderer**  
-  Renders photorealistic images from 3D scenes using multiple ray tracing algorithms ([Scene Rendering](#scene-rendering)).
+  Renders photorealistic images from 3D scenes using multiple ray tracing algorithms ([Scene Rendering](#scene-rendering)). It also supports dynamic camera movements to create scene animations ([Animationn](#animation)).
 
 - 🌈 **Tone Mapping**  
   Converts high-dynamic-range `.pfm` images into standard low-dynamic-range formats (e.g. `.png`) for display and sharing ([Tone Mapping](#tone-mapping)).
@@ -28,10 +28,13 @@ RayTracer is a Julia-based library that runs on:
 
 - **Julia v1.x** – [Install Julia](https://julialang.org/downloads/)
 - **Supported OS**: Linux or Windows
+- **ffmpeg** – [Install ffmpeg](https://ffmpeg.org/download.html) [^1]
+
+[^1]: `ffmpeg` is required only for animation rendering and video compilation.
 
 ### Steps
 
-1. Download the [v2.0.0 release](https://github.com/baronauta/RayTracer/releases/tag/v2.0.0) and extract the archive.
+1. Download the [v2.1.0 release](https://github.com/baronauta/RayTracer/releases/tag/v2.1.0) and extract the archive.
 
 2. Open a terminal and navigate to the extracted directory.
 
@@ -200,6 +203,28 @@ where `<input_file>` is the PFM file you want to convert.
 
 > ℹ️ **Note**: The LDR formats supported are `.jpg`, `.png`, `.tif`.
 ---
+### Animation
+
+Once a scene is defined, you are not limited to rendering it from a fixed point of view. You can explore the scene dynamically by adding the following line to the scene description file:
+```bash
+motion(<transformation>, <num_of_frames>)
+```
+Then, generate the animation by running:
+```bash
+julia Animation <tracer> <scenefile>
+```
+This command applies the specified transformation over the given number of frames and renders each frame. Finally, the frames are compiled into an MP4 video.
+
+#### Tonemapping is also available for animations
+
+To apply it to all the .pfm images in a folder and generate a tone-mapped animation, use:
+```bash
+julia Animation tonemapping <frame_folder>
+```
+
+> ⚠️ **Note:** Frame creation in PFM format is always performed. However, if [_ffmpeg_](https://ffmpeg.org/download.html) is not installed, the MP4 animation will not be generated automatically. In this case, you can manually combine the PFM frames into a video using your preferred tools.
+
+---
 ### LDR to HDR Conversion
 
 RayTracer also supports converting **low-dynamic-range (LDR)** images (e.g., `.png`, `.jpg`) into **high-dynamic-range (HDR)** `.pfm` format. This feature is useful for integrating external images or textures into HDR-based rendering.
@@ -268,6 +293,22 @@ julia image2pfm <input_image>
     </td>
   </tr>
 </table>
+
+<table width="100%">
+  <tr>
+    <td align="center" width="100%">
+      <img src="./examples/babel.gif" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
+      <em>
+        <strong>Image 5</strong>: "The universe (which others call the Library)..."<br>
+        — Jorge Luis Borges, The Library of Babel.<br>
+        <small>
+          Image texture from <a href="https://www.vecteezy.com/free-vector/academic" target="_blank" rel="noopener noreferrer">Academic Vectors by Vecteezy</a>
+        </small>
+      </em>
+    </td>
+  </tr>
+</table>
+
 
 
 ## History
