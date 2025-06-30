@@ -63,7 +63,8 @@ function prepare_output_paths(scenefile::String, tracername::String; output_name
     mkpath(frames_path)
 
     # Save .png images in a temporary directory
-    img_dir = tempdir()
+    img_path = joinpath("animation_$scenename", "tmp")
+    img_dir = mkpath(img_path)
 
     return scenename, output_name, frames_path, img_dir
 end
@@ -121,8 +122,12 @@ function make_video(input_dir, out_dir, filename, num_frames, framerate)
 
     num_digits = length(string(num_frames))
     pattern = "frame%0$(num_digits)d.png"
-    cmd = `ffmpeg -y -r $framerate -i $input_dir/$pattern -vcodec libx264 -pix_fmt yuv420p $out_dir/$filename.mp4`
+    read_from_dir = joinpath(input_dir, pattern)
+    write_to_dir = joinpath(out_dir, filename * ".mp4")
+    cmd = `ffmpeg -y -r $framerate -i $read_from_dir -vcodec libx264 -pix_fmt yuv420p $write_to_dir`
     run(pipeline(cmd, stdout=devnull, stderr=devnull))
+    
+    rm(input_dir, recursive=true)
 end
 
 
@@ -240,6 +245,7 @@ Comonicon.@cast function pathtracer(
 
     catch e
         if isa(e, CustomException)
+            println()
             println(e)
         else
             rethrow()
@@ -288,9 +294,9 @@ is specified in the text-based scene description.
     
 """
 Comonicon.@cast function flattracer(
-    scenefile, 
-    width, 
-    height; 
+    scenefile::String, 
+    width::Int, 
+    height::Int; 
     output_name::String="",
     angle::Float64=0.,
     samples_per_pixel::Int=1,
@@ -314,7 +320,7 @@ Comonicon.@cast function flattracer(
             # RayTracing algorithm
             f =
                 ray -> flat_tracer(
-                    scene.world,
+                    info.scene.world,
                     ray;
                     bkg_color = BLACK,
                 )
@@ -334,6 +340,7 @@ Comonicon.@cast function flattracer(
 
     catch e
         if isa(e, CustomException)
+            println()
             println(e)
         else
             rethrow()
@@ -409,7 +416,7 @@ Comonicon.@cast function onofftracer(
             # RayTracing algorithm
             f =
                 ray -> onoff_tracer(
-                    scene.world,
+                    info.scene.world,
                     ray;
                     bkg_color = BLACK,
                 )
@@ -429,6 +436,7 @@ Comonicon.@cast function onofftracer(
 
     catch e
         if isa(e, CustomException)
+            println()
             println(e)
         else
             rethrow()
@@ -533,14 +541,13 @@ Comonicon.@cast function tonemapping(
 
     catch e
         if isa(e, CustomException)
+            println()
             println(e)
         else
             rethrow()
         end
     end
 end
-
-
 
 # Leave @main empty; it just activates the CLI parser and dispatcher
 Comonicon.@main
