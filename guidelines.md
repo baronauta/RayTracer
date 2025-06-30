@@ -153,8 +153,20 @@ julia RayTracer <tracer> --angle <value>
 ```
 If `--angle` is not specified, the value from the scene file ($90$) is used. This setup allows convenient previewing by adjusting the camera rotation without modifying the scene file.
 
+### 🎬 6. Animations 
+Rendering a scene from a single, static viewpoint can be limiting—animations allow you to explore the scene through dynamic camera movements over time.
 
-### 6. Working example
+To define an animation, add the following line to your scene description file:
+```bash
+motion(<transformation>, <num_of_frames>)
+```
+- `<transformation>`: a predefined movement or transformation (e.g., `rotatation_x`, `translation`)
+
+- `<num_of_frames>`: the number of frames to render along the motion path
+
+**Note**: concatenation of multiple transformations using `*` is _not_ supported—only a single transformation can be applied per animation.
+
+### 7. Working example
 *Note* — You can write comment using `#`
 ```bash
 # Float variable (can be overridden via CLI: --angle <value>)
