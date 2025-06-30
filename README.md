@@ -297,7 +297,7 @@ julia image2pfm <input_image>
 <table width="100%">
   <tr>
     <td align="center" width="100%">
-      <img src="./examples/babel.mp4" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
+      <img src="./examples/babel.gif" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
       <em>
         <strong>Image 5</strong>: "The universe (which others call the Library)..."<br>
         — Jorge Luis Borges, The Library of Babel.<br>
