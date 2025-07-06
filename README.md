@@ -34,7 +34,7 @@ RayTracer is a Julia-based library that runs on:
 
 ### Steps
 
-1. Download the [v2.1.0 release](https://github.com/baronauta/RayTracer/releases/tag/v2.1.0) and extract the archive.
+1. Download the [v2.1.1 release](https://github.com/baronauta/RayTracer/releases/tag/v2.1.1) and extract the archive.
 
 2. Open a terminal and navigate to the extracted directory.
 
