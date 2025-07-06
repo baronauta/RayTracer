@@ -236,7 +236,7 @@ julia image2pfm <input_image>
 ---
 ### Feature Gallery
 
-
+<div align="center">
 <div id="image-1"></div>
 <table width="100%">
   <tr>
@@ -246,6 +246,7 @@ julia image2pfm <input_image>
     </td>
   </tr>
 </table>
+</div>
 
 
 <div id="image-2"></div>
@@ -294,6 +295,7 @@ julia image2pfm <input_image>
   </tr>
 </table>
 
+<div align="center">
 <table width="100%">
   <tr>
     <td align="center" width="100%">
@@ -309,7 +311,7 @@ julia image2pfm <input_image>
     </td>
   </tr>
 </table>
-
+</div>
 
 
 ## History
