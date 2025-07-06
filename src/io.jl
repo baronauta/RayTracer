@@ -30,9 +30,10 @@ Read a ldr Image (.png, .jpg, ...) from a file and returns the corresponding Hdr
 """
 function read_ldr_image(filename::String)
     img_ldr = Images.load(filename)
-    img_pfm = convert.(ColorTypes.RGB{Float32}, img_ldr)
+    img_float = convert.(ColorTypes.RGB{Float32}, img_ldr)
+    img_linear = map(c -> RGB(c.r^(2.2), c.g^(2.2), c.b^(2.2)), img_float) # gamma expansion
     height, width = size(img_ldr)
-    img = HdrImage(width, height, img_pfm)
+    img = HdrImage(width, height, img_linear)
     return img
 end
 

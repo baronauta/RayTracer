@@ -1,4 +1,5 @@
 ## HEAD
+- Fix issue with LDR to HDR conversion [#27](https://github.com/baronauta/RayTracer/issues/27).
 
 # Version 2.1.0
 - Provide dynamic camera movements to create scene animations [#19](https://github.com/baronauta/RayTracer/pull/19).
