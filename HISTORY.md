@@ -1,4 +1,6 @@
 ## HEAD
+
+# Version 2.1.1
 - Fix issue with LDR to HDR conversion [#27](https://github.com/baronauta/RayTracer/issues/27).
 
 # Version 2.1.0
