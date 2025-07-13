@@ -13,7 +13,7 @@ _Photorealistic Image Renderer – Built with Julia_
 ### Core Features
 
 - 🖼️ **Ray Tracing Renderer**  
-  Renders photorealistic images from 3D scenes using multiple ray tracing algorithms ([Scene Rendering](#scene-rendering)). It also supports dynamic camera movements to create scene animations ([Animationn](#animation)).
+  Renders photorealistic images from 3D scenes using multiple ray tracing algorithms ([Scene Rendering](#scene-rendering)). It also supports dynamic camera movements to create scene animations ([Animation](#animation)).
 
 - 🌈 **Tone Mapping**  
   Converts high-dynamic-range `.pfm` images into standard low-dynamic-range formats (e.g. `.png`) for display and sharing ([Tone Mapping](#tone-mapping)).
@@ -306,6 +306,23 @@ julia image2pfm <input_image>
         — Jorge Luis Borges, The Library of Babel.<br>
         <small>
           Image texture from <a href="https://www.vecteezy.com/free-vector/academic" target="_blank" rel="noopener noreferrer">Academic Vectors by Vecteezy</a>
+        </small>
+      </em>
+    </td>
+  </tr>
+</table>
+</div>
+
+<div align="center">
+<table width="100%">
+  <tr>
+    <td align="center" width="100%">
+      <img src="./examples/room_carpet.png" style="display:block; margin:auto; width:100%; max-width:600px; margin-bottom: 12px;">
+      <br>
+      <em>
+        <strong>Image 6</strong>: Reflections of Precision: A Glimpse into the Fabric of Reality. <br>
+        <small>
+          Every cabinet element — from the side panels, to the drawers, to the knobs and cabinet door hinges — is not simply a texture but the result of complex CSG.</a>
         </small>
       </em>
     </td>
